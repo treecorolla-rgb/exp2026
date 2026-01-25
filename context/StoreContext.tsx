@@ -1,93 +1,172 @@
 import React, { createContext, useState, useContext, ReactNode, useEffect } from 'react';
 import { Product, Category, CartItem, StoreContextType, ProductPackage, Order, PaymentMethod, CustomerDetails, AdminProfile, DeliveryOption } from '../types';
 import { INITIAL_PRODUCTS, INITIAL_CATEGORIES, INITIAL_PAYMENT_METHODS, STANDARD_DELIVERY } from '../constants';
+import { supabase } from '../lib/supabaseClient';
 
 const StoreContext = createContext<StoreContextType | undefined>(undefined);
 
 export const StoreProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [products, setProducts] = useState<Product[]>(() => {
-    const saved = localStorage.getItem('hfs_products');
-    return saved ? JSON.parse(saved) : INITIAL_PRODUCTS;
-  });
+  // --- STATE ---
+  const [products, setProducts] = useState<Product[]>(INITIAL_PRODUCTS); 
+  const [categories, setCategories] = useState<Category[]>(INITIAL_CATEGORIES);
+  const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>(INITIAL_PAYMENT_METHODS);
+  const [deliveryOptions, setDeliveryOptions] = useState<DeliveryOption[]>(STANDARD_DELIVERY);
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const [categories, setCategories] = useState<Category[]>(() => {
-    const saved = localStorage.getItem('hfs_categories');
-    return saved ? JSON.parse(saved) : INITIAL_CATEGORIES;
-  });
-  
-  const [activeCategoryId, setActiveCategoryId] = useState('cat_bestsellers'); // Default Home View
-
-  const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>(() => {
-    const saved = localStorage.getItem('hfs_payments');
-    return saved ? JSON.parse(saved) : INITIAL_PAYMENT_METHODS;
-  });
-
-  const [deliveryOptions, setDeliveryOptions] = useState<DeliveryOption[]>(() => {
-    const saved = localStorage.getItem('hfs_delivery_options');
-    return saved ? JSON.parse(saved) : STANDARD_DELIVERY;
-  });
-
-  // Admin Profile State
-  const [adminProfile, setAdminProfile] = useState<AdminProfile>(() => {
-    const saved = localStorage.getItem('hfs_admin_profile');
-    if (saved) return JSON.parse(saved);
-    return {
+  // Admin Profile State with Default fallback
+  const [adminProfile, setAdminProfile] = useState<AdminProfile>({
         email: 'admin@example.com',
         telegramBotToken: '',
         telegramChatId: '',
-        // Default Contact Numbers
         usPhoneNumber: '+1 (888) 243-74-06',
         ukPhoneNumber: '+44 (800) 041-87-44',
-        // Default values for demo visibility
-        whatsappNumber: '15551234567', 
+        whatsappNumber: '', 
         telegramUsername: 'HappyFamilyStore',
         receiveEmailNotifications: true,
         receiveTelegramNotifications: false,
-        showFloatingChat: true
-    };
+        showFloatingChat: true,
+        logoUrl: ''
   });
 
+  // --- SUPABASE FETCHING ---
+  useEffect(() => {
+    const fetchAllData = async () => {
+      if (!supabase) {
+        console.log('Supabase keys not found, using demo data.');
+        setIsLoading(false);
+        return;
+      }
+
+      try {
+        // Use Promise.allSettled so one missing table doesn't break the whole app
+        const results = await Promise.allSettled([
+          supabase.from('categories').select('*'),
+          supabase.from('products').select('*'),
+          supabase.from('payment_methods').select('*'),
+          supabase.from('delivery_options').select('*'),
+          supabase.from('orders').select('*').order('date', { ascending: false }),
+          supabase.from('store_settings').select('*').single()
+        ]);
+
+        const [catRes, prodRes, pmRes, delRes, ordRes, settingsRes] = results;
+
+        // 1. Categories
+        if (catRes.status === 'fulfilled' && catRes.value.data && catRes.value.data.length > 0) {
+          setCategories(catRes.value.data);
+        }
+
+        // 2. Products
+        if (prodRes.status === 'fulfilled' && prodRes.value.data && prodRes.value.data.length > 0) {
+          setProducts(prodRes.value.data.map((p: any) => ({
+            id: p.id,
+            name: p.name,
+            activeIngredient: p.active_ingredient,
+            price: Number(p.price),
+            image: p.image,
+            categoryIds: p.category_ids || [],
+            isPopular: p.is_popular,
+            enabled: p.enabled,
+            otherNames: p.other_names,
+            description: p.description,
+            packages: p.packages,
+            deliveryOptions: p.delivery_options
+          })));
+        }
+
+        // 3. Payment Methods
+        if (pmRes.status === 'fulfilled' && pmRes.value.data && pmRes.value.data.length > 0) {
+          setPaymentMethods(pmRes.value.data.map((pm: any) => ({
+             id: pm.id,
+             name: pm.name,
+             iconUrl: pm.icon_url,
+             enabled: pm.enabled
+          })));
+        }
+
+        // 4. Delivery Options
+        if (delRes.status === 'fulfilled' && delRes.value.data && delRes.value.data.length > 0) {
+          setDeliveryOptions(delRes.value.data.map((d: any) => ({
+             id: d.id,
+             name: d.name,
+             price: Number(d.price),
+             minDays: d.min_days,
+             maxDays: d.max_days,
+             icon: d.icon,
+             enabled: d.enabled
+          })));
+        }
+
+        // 5. Orders
+        if (ordRes.status === 'fulfilled' && ordRes.value.data && ordRes.value.data.length > 0) {
+           setOrders(ordRes.value.data.map((o: any) => ({
+              id: o.id,
+              customerName: o.customer_name,
+              total: Number(o.total),
+              status: o.status,
+              date: o.date,
+              details: o.details
+           })));
+        }
+
+        // 6. Settings
+        if (settingsRes.status === 'fulfilled' && settingsRes.value.data) {
+           const s = settingsRes.value.data;
+           setAdminProfile({
+              email: s.email,
+              telegramBotToken: s.telegram_bot_token || '',
+              telegramChatId: s.telegram_chat_id || '',
+              receiveEmailNotifications: s.receive_email_notifications,
+              receiveTelegramNotifications: s.receive_telegram_notifications,
+              usPhoneNumber: s.us_phone_number,
+              ukPhoneNumber: s.uk_phone_number,
+              whatsappNumber: s.whatsapp_number,
+              telegramUsername: s.telegram_username,
+              showFloatingChat: s.show_floating_chat,
+              logoUrl: s.logo_url
+           });
+        }
+
+      } catch (err) {
+        console.error('Unexpected error loading data from Supabase:', err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchAllData();
+  }, []);
+
+  const [activeCategoryId, setActiveCategoryId] = useState('cat_bestsellers');
   const [cart, setCart] = useState<CartItem[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   
-  // Admin State
   const [isAdminMode, setIsAdminMode] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   
-  // Customer State
   const [customerUser, setCustomerUser] = useState<CustomerDetails | null>(null);
   const [isCustomerAuthenticated, setIsCustomerAuthenticated] = useState(false);
 
-  // Favorites State
   const [favorites, setFavorites] = useState<string[]>(() => {
     const saved = localStorage.getItem('hfs_favorites');
     return saved ? JSON.parse(saved) : [];
   });
 
-  // Currency State
   const [currency, setCurrency] = useState<'USD' | 'EUR' | 'GBP'>('USD');
-  // Simple static rates for demo
   const rates = { USD: 1, EUR: 0.92, GBP: 0.79 };
 
-  // Device Detection
   const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
     const checkMobile = () => {
       setIsMobile(window.innerWidth < 768);
     };
-    
-    // Check on mount
     checkMobile();
-    
-    // Check on resize
     window.addEventListener('resize', checkMobile);
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
-  // IP Geolocation for Currency
   useEffect(() => {
-    // Only run if user hasn't manually set currency (simulated by just running once on mount for this demo)
     fetch('https://ipwho.is/')
         .then(res => res.json())
         .then(data => {
@@ -103,35 +182,13 @@ export const StoreProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         .catch(() => setCurrency('USD'));
   }, []);
 
-  // Navigation State
   const [currentView, setCurrentView] = useState<'grid' | 'details' | 'cart' | 'login' | 'admin_dashboard' | 'not_found' | 'customer_auth'>('grid');
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
 
-  // Modal State
   const [isCallbackModalOpen, setIsCallbackModalOpen] = useState(false);
 
-  // Mock Orders (persisted in local storage for this demo to simulate backend)
-  const [orders, setOrders] = useState<Order[]>(() => {
-     const saved = localStorage.getItem('hfs_orders');
-     if (saved) return JSON.parse(saved);
-     return [
-      { id: '#ORD-7752', customerName: 'Alice Johnson', total: 150.00, status: 'Pending', date: '2023-10-24' },
-      { id: '#ORD-7751', customerName: 'Mark Smith', total: 60.00, status: 'Shipped', date: '2023-10-23' },
-      { id: '#ORD-7750', customerName: 'Jane Doe', total: 298.00, status: 'Delivered', date: '2023-10-22' },
-      { id: '#ORD-7749', customerName: 'Robert Brown', total: 105.00, status: 'Delivered', date: '2023-10-21' },
-    ];
-  });
-
-  // Persistence Effects
-  useEffect(() => { localStorage.setItem('hfs_products', JSON.stringify(products)); }, [products]);
-  useEffect(() => { localStorage.setItem('hfs_categories', JSON.stringify(categories)); }, [categories]);
-  useEffect(() => { localStorage.setItem('hfs_payments', JSON.stringify(paymentMethods)); }, [paymentMethods]);
-  useEffect(() => { localStorage.setItem('hfs_delivery_options', JSON.stringify(deliveryOptions)); }, [deliveryOptions]);
-  useEffect(() => { localStorage.setItem('hfs_orders', JSON.stringify(orders)); }, [orders]);
-  useEffect(() => { localStorage.setItem('hfs_admin_profile', JSON.stringify(adminProfile)); }, [adminProfile]);
   useEffect(() => { localStorage.setItem('hfs_favorites', JSON.stringify(favorites)); }, [favorites]);
 
-  // Currency Formatter
   const formatPrice = (price: number) => {
     const rate = rates[currency];
     const val = (price * rate).toFixed(2);
@@ -144,12 +201,11 @@ export const StoreProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     setFavorites(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
   };
 
-  // Admin Auth
   const login = (u: string, p: string) => {
     if (u === 'admin' && p === 'admin123') {
       setIsAuthenticated(true);
       setIsAdminMode(true);
-      setCurrentView('admin_dashboard'); // Redirect to dashboard on success
+      setCurrentView('admin_dashboard');
       return true;
     }
     return false;
@@ -161,9 +217,7 @@ export const StoreProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     setCurrentView('login');
   };
 
-  // Customer Auth
   const customerLogin = (phoneOrEmail: string, pass: string) => {
-    // Simulating login
     if (pass === '123456') {
        const mockUser: CustomerDetails = {
            firstName: 'Customer', lastName: 'User',
@@ -219,7 +273,6 @@ export const StoreProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       };
       return [...prev, newItem];
     });
-    // Automatically go to Cart view
     setCurrentView('cart');
     setSelectedProduct(null);
   };
@@ -250,18 +303,35 @@ export const StoreProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     const subtotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
     const shipping = subtotal > 200 ? 0 : 25.00;
     const total = subtotal + shipping;
-
+    
     const newOrder: Order = {
       id: `#ORD-${Math.floor(100000 + Math.random() * 900000)}`,
       customerName: `${details.firstName} ${details.lastName}`,
       total: total,
       status: 'Pending',
-      date: new Date().toLocaleDateString('en-GB'), // DD/MM/YYYY format approx
+      date: new Date().toLocaleDateString('en-GB'),
       details: details
     };
 
+    // Update State
     setOrders(prev => [newOrder, ...prev]);
-    // Auto login if not already
+
+    // Save to Supabase
+    if (supabase) {
+      try {
+        await supabase.from('orders').insert({
+          id: newOrder.id,
+          customer_name: newOrder.customerName,
+          total: newOrder.total,
+          status: newOrder.status,
+          date: new Date().toISOString(),
+          details: details
+        });
+      } catch (e) {
+        console.error("Error saving order to Supabase", e);
+      }
+    }
+
     if (!isCustomerAuthenticated) {
         setCustomerUser(details);
         setIsCustomerAuthenticated(true);
@@ -277,68 +347,178 @@ export const StoreProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     setIsAdminMode((prev) => !prev);
   };
 
-  const updateProduct = (updatedProduct: Product) => {
-    setProducts((prev) =>
-      prev.map((p) => (p.id === updatedProduct.id ? updatedProduct : p))
-    );
+  // --- ADMIN ACTIONS (Sync with Supabase) ---
+
+  const uploadImage = async (file: File): Promise<string | null> => {
+    if (!supabase) return null;
+    try {
+        const fileExt = file.name.split('.').pop();
+        const fileName = `${Math.random()}.${fileExt}`;
+        const filePath = `${fileName}`;
+        
+        const { error: uploadError } = await supabase.storage.from('product-images').upload(filePath, file);
+        if (uploadError) {
+            console.error('Upload error:', uploadError);
+            return null;
+        }
+
+        const { data } = supabase.storage.from('product-images').getPublicUrl(filePath);
+        return data.publicUrl;
+    } catch (e) {
+        console.error("Error uploading image:", e);
+        return null;
+    }
+  };
+
+  const updateProduct = async (updatedProduct: Product) => {
+    setProducts((prev) => prev.map((p) => (p.id === updatedProduct.id ? updatedProduct : p)));
+    if (supabase) {
+      const dbPayload = {
+        name: updatedProduct.name,
+        active_ingredient: updatedProduct.activeIngredient,
+        price: updatedProduct.price,
+        image: updatedProduct.image,
+        category_ids: updatedProduct.categoryIds,
+        is_popular: updatedProduct.isPopular,
+        enabled: updatedProduct.enabled,
+        other_names: updatedProduct.otherNames,
+        description: updatedProduct.description,
+        packages: updatedProduct.packages,
+        delivery_options: updatedProduct.deliveryOptions
+      };
+      await supabase.from('products').update(dbPayload).eq('id', updatedProduct.id);
+    }
   };
 
   const updateProductPrice = (productId: string, newPrice: number) => {
      setProducts((prev) =>
       prev.map((p) => (p.id === productId ? { ...p, price: newPrice } : p))
     );
+    if(supabase) {
+       supabase.from('products').update({ price: newPrice }).eq('id', productId);
+    }
   };
 
-  const deleteProduct = (productId: string) => {
+  const deleteProduct = async (productId: string) => {
     setProducts((prev) => prev.filter(p => p.id !== productId));
+    if (supabase) {
+      await supabase.from('products').delete().eq('id', productId);
+    }
   };
 
-  const addProduct = (product: Product) => {
+  const addProduct = async (product: Product) => {
     setProducts((prev) => [product, ...prev]);
+    if (supabase) {
+      const dbPayload = {
+        id: product.id,
+        name: product.name,
+        active_ingredient: product.activeIngredient,
+        price: product.price,
+        image: product.image,
+        category_ids: product.categoryIds,
+        is_popular: product.isPopular,
+        enabled: product.enabled,
+        other_names: product.otherNames,
+        description: product.description,
+        packages: product.packages,
+        delivery_options: product.deliveryOptions
+      };
+      await supabase.from('products').insert(dbPayload);
+    }
   };
 
-  const addCategory = (category: Category) => {
+  const addCategory = async (category: Category) => {
     setCategories((prev) => [...prev, category]);
+    if (supabase) {
+      await supabase.from('categories').insert(category);
+    }
   };
 
-  const toggleCategory = (id: string) => {
-    setCategories(prev => prev.map(c => 
-      c.id === id ? { ...c, enabled: !c.enabled } : c
-    ));
+  const toggleCategory = async (id: string) => {
+    const category = categories.find(c => c.id === id);
+    if (!category) return;
+    const newValue = !category.enabled;
+    setCategories(prev => prev.map(c => c.id === id ? { ...c, enabled: newValue } : c));
+    if (supabase) {
+      await supabase.from('categories').update({ enabled: newValue }).eq('id', id);
+    }
   };
 
-  // Payment Methods Logic
-  const removePaymentMethod = (id: string) => {
+  const removePaymentMethod = async (id: string) => {
     setPaymentMethods(prev => prev.filter(p => p.id !== id));
+    if(supabase) await supabase.from('payment_methods').delete().eq('id', id);
   };
   
-  const addPaymentMethod = (method: PaymentMethod) => {
+  const addPaymentMethod = async (method: PaymentMethod) => {
     setPaymentMethods(prev => [...prev, method]);
+    if(supabase) await supabase.from('payment_methods').insert({
+        id: method.id,
+        name: method.name,
+        icon_url: method.iconUrl,
+        enabled: method.enabled
+    });
   };
 
-  const togglePaymentMethod = (id: string) => {
+  const togglePaymentMethod = async (id: string) => {
+    const method = paymentMethods.find(p => p.id === id);
+    if(!method) return;
+    const newValue = !method.enabled;
+    
     setPaymentMethods(prev => prev.map(p => 
-      p.id === id ? { ...p, enabled: !p.enabled } : p
+      p.id === id ? { ...p, enabled: newValue } : p
     ));
+    if(supabase) await supabase.from('payment_methods').update({ enabled: newValue }).eq('id', id);
   };
 
-  // Delivery Options Logic
-  const addDeliveryOption = (option: DeliveryOption) => {
+  const addDeliveryOption = async (option: DeliveryOption) => {
     setDeliveryOptions(prev => [...prev, option]);
+    if(supabase) await supabase.from('delivery_options').insert({
+        id: option.id,
+        name: option.name,
+        price: option.price,
+        min_days: option.minDays,
+        max_days: option.maxDays,
+        icon: option.icon,
+        enabled: option.enabled
+    });
   };
 
-  const removeDeliveryOption = (id: string) => {
+  const removeDeliveryOption = async (id: string) => {
     setDeliveryOptions(prev => prev.filter(o => o.id !== id));
+    if(supabase) await supabase.from('delivery_options').delete().eq('id', id);
   };
 
-  const toggleDeliveryOption = (id: string) => {
+  const toggleDeliveryOption = async (id: string) => {
+    const option = deliveryOptions.find(o => o.id === id);
+    if(!option) return;
+    const newValue = !option.enabled;
+
     setDeliveryOptions(prev => prev.map(o => 
-      o.id === id ? { ...o, enabled: !o.enabled } : o
+      o.id === id ? { ...o, enabled: newValue } : o
     ));
+    if(supabase) await supabase.from('delivery_options').update({ enabled: newValue }).eq('id', id);
   };
 
-  const updateAdminProfile = (profile: AdminProfile) => {
+  const updateAdminProfile = async (profile: AdminProfile) => {
     setAdminProfile(profile);
+    if (supabase) {
+        const payload = {
+            id: 1, // Singleton
+            email: profile.email,
+            telegram_bot_token: profile.telegramBotToken,
+            telegram_chat_id: profile.telegramChatId,
+            receive_email_notifications: profile.receiveEmailNotifications,
+            receive_telegram_notifications: profile.receiveTelegramNotifications,
+            us_phone_number: profile.usPhoneNumber,
+            uk_phone_number: profile.ukPhoneNumber,
+            whatsapp_number: profile.whatsappNumber,
+            telegram_username: profile.telegramUsername,
+            show_floating_chat: profile.showFloatingChat,
+            logo_url: profile.logoUrl
+        };
+        // Upsert
+        await supabase.from('store_settings').upsert(payload);
+    }
   };
 
   const viewProduct = (product: Product) => {
@@ -408,6 +588,7 @@ export const StoreProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         removeDeliveryOption,
         toggleDeliveryOption,
         updateAdminProfile,
+        uploadImage,
         viewProduct,
         goHome,
         goToCart,

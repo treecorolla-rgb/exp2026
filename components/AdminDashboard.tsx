@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
 import { 
   LayoutDashboard, Package, ShoppingBag, Users, Settings, LogOut, 
-  Plus, Search, Edit2, Trash2, Save, X, Check, CreditCard, User, MessageCircle, Menu, Truck, ToggleLeft, ToggleRight, List, Phone
+  Plus, Search, Edit2, Trash2, Save, X, Check, CreditCard, User, MessageCircle, Menu, Truck, ToggleLeft, ToggleRight, List, Phone, Image, UploadCloud, Activity, AlertCircle, CheckCircle
 } from 'lucide-react';
 import { useStore } from '../context/StoreContext';
 import { Product, ProductPackage, DeliveryOption } from '../types';
+import { supabase } from '../lib/supabaseClient';
 
 const ExpressIcon = () => (
   <svg width="60" height="30" viewBox="0 0 100 50" fill="none" xmlns="http://www.w3.org/2000/svg" className="">
@@ -37,8 +38,8 @@ const NormalIcon = () => (
 );
 
 export const AdminDashboard: React.FC = () => {
-  const { logout, products, orders, deleteProduct, updateProduct, addProduct, categories, toggleCategory, addCategory, adminProfile, updateAdminProfile } = useStore();
-  const [activeTab, setActiveTab] = useState<'overview' | 'products' | 'categories' | 'orders' | 'settings' | 'profile'>('overview');
+  const { logout, products, orders, deleteProduct, updateProduct, addProduct, categories, toggleCategory, addCategory, adminProfile, updateAdminProfile, uploadImage } = useStore();
+  const [activeTab, setActiveTab] = useState<'overview' | 'products' | 'categories' | 'orders' | 'settings' | 'profile' | 'system'>('overview');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   
   // Editor State
@@ -65,6 +66,7 @@ export const AdminDashboard: React.FC = () => {
              setIsNewProduct(false);
            }}
            categories={categories}
+           uploadImage={uploadImage}
          />
        );
     }
@@ -99,6 +101,7 @@ export const AdminDashboard: React.FC = () => {
       case 'orders': return <OrderManager orders={orders} />;
       case 'settings': return <SettingsManager />;
       case 'profile': return <ProfileManager profile={adminProfile} onSave={updateAdminProfile} />;
+      case 'system': return <SystemHealthCheck />;
       default: return <div>Select a tab</div>;
     }
   };
@@ -132,6 +135,9 @@ export const AdminDashboard: React.FC = () => {
             <SidebarItem icon={<ShoppingBag size={20}/>} label="Orders" active={activeTab === 'orders'} onClick={() => { setActiveTab('orders'); setIsSidebarOpen(false); }} />
             <SidebarItem icon={<Settings size={20}/>} label="Settings" active={activeTab === 'settings'} onClick={() => { setActiveTab('settings'); setIsSidebarOpen(false); }} />
             <SidebarItem icon={<User size={20}/>} label="Profile" active={activeTab === 'profile'} onClick={() => { setActiveTab('profile'); setIsSidebarOpen(false); }} />
+            <div className="pt-4 mt-4 border-t border-slate-700">
+              <SidebarItem icon={<Activity size={20} className="text-green-400"/>} label="System Health" active={activeTab === 'system'} onClick={() => { setActiveTab('system'); setIsSidebarOpen(false); }} />
+            </div>
           </nav>
           <div className="p-4 border-t border-slate-700">
             <button onClick={logout} className="flex items-center gap-3 w-full text-left px-4 py-2 text-slate-300 hover:text-white hover:bg-slate-700 rounded transition">
@@ -162,6 +168,116 @@ const SidebarItem = ({ icon, label, active, onClick }: any) => (
     {icon} {label}
   </button>
 );
+
+const SystemHealthCheck = () => {
+  const [status, setStatus] = useState<{db: 'pending'|'success'|'error', storage: 'pending'|'success'|'error', message: string}>({
+    db: 'pending',
+    storage: 'pending',
+    message: 'Ready to run diagnostics...'
+  });
+
+  const runDiagnostics = async () => {
+    setStatus({ db: 'pending', storage: 'pending', message: 'Running...' });
+    
+    // 1. Check DB
+    try {
+      if(!supabase) throw new Error("Supabase client not initialized (Check env vars)");
+      
+      const { data, error } = await supabase.from('store_settings').select('*').limit(1);
+      if (error) throw error;
+      
+      setStatus(prev => ({ ...prev, db: 'success' }));
+    } catch (e: any) {
+      setStatus(prev => ({ ...prev, db: 'error', message: `DB Error: ${e.message}` }));
+      return;
+    }
+
+    // 2. Check Storage
+    try {
+      if(!supabase) throw new Error("Supabase client not initialized");
+      
+      const blob = new Blob(['Health Check'], { type: 'text/plain' });
+      const fileName = `health_check_${Date.now()}.txt`;
+      
+      const { error } = await supabase.storage.from('product-images').upload(fileName, blob);
+      if (error) throw error;
+
+      // Clean up (optional, failure here doesn't mean storage is broken)
+      await supabase.storage.from('product-images').remove([fileName]);
+
+      setStatus(prev => ({ ...prev, storage: 'success', message: 'All systems operational!' }));
+    } catch (e: any) {
+      setStatus(prev => ({ ...prev, storage: 'error', message: `Storage Error: ${e.message} (Did you create the 'product-images' bucket and policies?)` }));
+    }
+  };
+
+  return (
+    <div className="p-8">
+      <h2 className="text-2xl font-bold text-slate-800 mb-6">System Health Diagnostics</h2>
+      <div className="bg-white p-8 rounded-lg shadow-sm border border-slate-200 max-w-2xl">
+        
+        <div className="mb-8 p-4 bg-slate-50 rounded border border-slate-100">
+           <p className="text-sm text-slate-600 mb-2 font-bold uppercase tracking-wide">Configuration Status</p>
+           <div className="flex items-center gap-2 mb-1">
+              <div className={`w-3 h-3 rounded-full ${import.meta.env.VITE_SUPABASE_URL ? 'bg-green-500' : 'bg-red-500'}`}></div>
+              <span className="text-sm">Supabase URL: {import.meta.env.VITE_SUPABASE_URL ? 'Configured' : 'Missing'}</span>
+           </div>
+           <div className="flex items-center gap-2">
+              <div className={`w-3 h-3 rounded-full ${import.meta.env.VITE_SUPABASE_ANON_KEY ? 'bg-green-500' : 'bg-red-500'}`}></div>
+              <span className="text-sm">Supabase Anon Key: {import.meta.env.VITE_SUPABASE_ANON_KEY ? 'Configured' : 'Missing'}</span>
+           </div>
+        </div>
+
+        <div className="space-y-6 mb-8">
+           {/* DB Check */}
+           <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+              <div className="flex items-center gap-4">
+                 <div className="bg-blue-100 p-2 rounded text-blue-600"><List size={20}/></div>
+                 <div>
+                    <h4 className="font-bold text-slate-800">Database Connection</h4>
+                    <p className="text-xs text-slate-500">Reads 'store_settings' table</p>
+                 </div>
+              </div>
+              <div>
+                 {status.db === 'pending' && <span className="text-slate-400 text-sm font-medium">Waiting...</span>}
+                 {status.db === 'success' && <span className="text-green-600 text-sm font-bold flex items-center gap-1"><CheckCircle size={16}/> Connected</span>}
+                 {status.db === 'error' && <span className="text-red-500 text-sm font-bold flex items-center gap-1"><AlertCircle size={16}/> Failed</span>}
+              </div>
+           </div>
+
+           {/* Storage Check */}
+           <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+              <div className="flex items-center gap-4">
+                 <div className="bg-purple-100 p-2 rounded text-purple-600"><Image size={20}/></div>
+                 <div>
+                    <h4 className="font-bold text-slate-800">Storage Permissions</h4>
+                    <p className="text-xs text-slate-500">Uploads file to 'product-images'</p>
+                 </div>
+              </div>
+              <div>
+                 {status.storage === 'pending' && <span className="text-slate-400 text-sm font-medium">Waiting...</span>}
+                 {status.storage === 'success' && <span className="text-green-600 text-sm font-bold flex items-center gap-1"><CheckCircle size={16}/> Writable</span>}
+                 {status.storage === 'error' && <span className="text-red-500 text-sm font-bold flex items-center gap-1"><AlertCircle size={16}/> Failed</span>}
+              </div>
+           </div>
+        </div>
+        
+        <div className="mb-6">
+           <p className={`text-sm font-medium p-3 rounded ${status.message.includes('Error') ? 'bg-red-50 text-red-600' : 'bg-slate-50 text-slate-600'}`}>
+              Log: {status.message}
+           </p>
+        </div>
+
+        <button 
+           onClick={runDiagnostics}
+           className="w-full bg-slate-800 text-white py-3 rounded font-bold hover:bg-slate-700 transition shadow-lg flex items-center justify-center gap-2"
+        >
+           <Activity size={18} /> Run Diagnostics
+        </button>
+      </div>
+    </div>
+  );
+};
 
 const CategoryManager = ({ categories, onToggle, onAdd }: any) => {
   const [filter, setFilter] = useState('');
@@ -299,6 +415,26 @@ const ProfileManager = ({ profile, onSave }: any) => {
        <h2 className="text-2xl font-bold text-slate-800 mb-6">Admin Profile</h2>
        <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-6 md:p-8 max-w-2xl">
           
+          <div className="mb-6 border-b border-slate-200 pb-6">
+             <h3 className="font-bold text-lg text-slate-700 mb-4 flex items-center gap-2">
+               <Image size={20} className="text-primary"/> Store Branding
+             </h3>
+             <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Logo URL (Optional)</label>
+                  <input 
+                    type="text" 
+                    name="logoUrl"
+                    value={formData.logoUrl || ''} 
+                    onChange={handleChange}
+                    className="w-full border border-slate-300 rounded p-2 focus:ring-primary focus:border-primary"
+                    placeholder="https://example.com/logo.png"
+                  />
+                  <p className="text-xs text-slate-400 mt-1">If set, this image will replace the text logo in the header.</p>
+                </div>
+             </div>
+          </div>
+
           <div className="mb-6 border-b border-slate-200 pb-6">
              <h3 className="font-bold text-lg text-slate-700 mb-4 flex items-center gap-2">
                <Phone size={20} className="text-primary"/> Contact Configuration
@@ -776,7 +912,7 @@ const OrderManager = ({ orders }: any) => (
               <tr key={o.id} className="hover:bg-slate-50">
                 <td className="px-6 py-4 font-mono text-primary">{o.id}</td>
                 <td className="px-6 py-4">{o.customerName}</td>
-                <td className="px-6 py-4 text-slate-500">{o.date}</td>
+                <td className="px-6 py-4 text-slate-500">{o.date ? new Date(o.date).toLocaleDateString() : 'N/A'}</td>
                 <td className="px-6 py-4 font-bold">${o.total.toFixed(2)}</td>
                 <td className="px-6 py-4">
                   <span className={`px-2 py-1 rounded-full text-xs font-bold ${
@@ -797,8 +933,9 @@ const OrderManager = ({ orders }: any) => (
 );
 
 // --- COMPLEX EDITOR COMPONENT ---
-const ProductEditor = ({ product, isNew, onSave, onCancel, categories }: any) => {
+const ProductEditor = ({ product, isNew, onSave, onCancel, categories, uploadImage }: any) => {
   const [formData, setFormData] = useState<Product>(product);
+  const [isUploading, setIsUploading] = useState(false);
   
   // Package Editor State
   const [packages, setPackages] = useState<ProductPackage[]>(product.packages || []);
@@ -847,6 +984,22 @@ const ProductEditor = ({ product, isNew, onSave, onCancel, categories }: any) =>
 
   const handleSave = () => {
     onSave({ ...formData, packages });
+  };
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files || e.target.files.length === 0) return;
+    const file = e.target.files[0];
+    setIsUploading(true);
+    
+    // Call the upload function passed from context
+    const publicUrl = await uploadImage(file);
+    
+    if (publicUrl) {
+        handleChange('image', publicUrl);
+    } else {
+        alert("Failed to upload image. Check console.");
+    }
+    setIsUploading(false);
   };
 
   return (
@@ -969,8 +1122,32 @@ const ProductEditor = ({ product, isNew, onSave, onCancel, categories }: any) =>
            <div className="bg-white p-6 rounded-lg shadow-sm border border-slate-200">
                <h3 className="font-bold text-slate-700 mb-4 border-b pb-2">Product Image</h3>
                <div className="flex flex-col items-center">
-                  <img src={formData.image} alt="Preview" className="w-40 h-40 object-contain border border-slate-200 rounded mb-4" />
-                  <input className="w-full border p-2 text-xs rounded" value={formData.image} onChange={e => handleChange('image', e.target.value)} placeholder="Image URL" />
+                  <div className="w-full h-48 border border-slate-200 rounded mb-4 bg-slate-50 flex items-center justify-center relative overflow-hidden group">
+                     {formData.image ? (
+                        <img src={formData.image} alt="Preview" className="w-full h-full object-contain" />
+                     ) : (
+                        <Image className="text-slate-300" size={48} />
+                     )}
+                     {isUploading && (
+                        <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+                           <span className="text-white font-bold animate-pulse">Uploading...</span>
+                        </div>
+                     )}
+                  </div>
+                  
+                  {/* Upload Button */}
+                  <div className="w-full mb-3">
+                     <label className="w-full flex items-center justify-center gap-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-2 rounded cursor-pointer transition">
+                        <UploadCloud size={18} />
+                        <span>Upload Image</span>
+                        <input type="file" className="hidden" accept="image/*" onChange={handleImageUpload} disabled={isUploading} />
+                     </label>
+                  </div>
+
+                  <div className="w-full">
+                    <label className="text-[10px] uppercase font-bold text-slate-400 mb-1 block">Or enter URL</label>
+                    <input className="w-full border p-2 text-xs rounded" value={formData.image} onChange={e => handleChange('image', e.target.value)} placeholder="https://..." />
+                  </div>
                </div>
            </div>
         </div>

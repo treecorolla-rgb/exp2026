@@ -44,12 +44,13 @@ export const Cart: React.FC = () => {
   const total = subtotal + shipping - discountAmount;
 
   const handleApplyCoupon = () => {
+      // Simple logic for demo: code 'SAVE10' gives 10% off
       if (couponCode.toLowerCase() === 'save10') {
           setDiscountAmount(subtotal * 0.10);
           alert('Coupon Applied: 10% Off');
       } else {
           setDiscountAmount(0);
-          alert('Invalid Coupon Code');
+          alert('Invalid Coupon Code. Try "SAVE10"');
       }
   };
 
@@ -184,7 +185,6 @@ ${itemsList}
         <div className="text-center mb-8">
             <h2 className="text-lg text-slate-700 font-medium mb-6">Secure Checkout Page. All data is safe and secure.</h2>
             <div className="flex flex-wrap justify-center gap-4 md:gap-8">
-                {/* Replaced broken images with robust generic badges */}
                 <div className="h-12 bg-white rounded flex items-center px-4 border border-slate-200 gap-2 shadow-sm">
                     <div className="w-6 h-6 rounded-full bg-green-500 flex items-center justify-center text-white">
                         <Check size={14} strokeWidth={4} />
@@ -592,8 +592,12 @@ ${itemsList}
           </div>
           
           <div className="mt-6 flex justify-between items-center">
-             <button onClick={goHome} className="text-slate-500 hover:text-primary font-bold text-sm flex items-center gap-2 transition">
-                <ArrowRight size={16} className="rotate-180" strokeWidth={2.5} /> Continue Shopping
+            {/* UPDATED BIG GREEN BUTTON FOR USER REQUEST */}
+             <button 
+                onClick={goHome}
+                className="bg-[#81C784] hover:bg-[#66BB6A] text-white px-6 py-3 rounded shadow font-bold text-sm uppercase tracking-wide transition whitespace-nowrap flex items-center gap-2"
+             >
+                <ArrowRight size={18} className="rotate-180" strokeWidth={2.5} /> Continue Shopping
              </button>
           </div>
         </div>

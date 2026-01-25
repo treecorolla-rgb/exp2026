@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { Search } from 'lucide-react';
 import { useStore } from '../context/StoreContext';
 import { ProductCard } from './ProductCard';
 
@@ -25,6 +24,7 @@ export const ProductGrid: React.FC = () => {
     if (query.length > 0) {
         const nameMatch = product.name.toLowerCase().includes(query);
         const ingredientMatch = product.activeIngredient.toLowerCase().includes(query);
+        const descriptionMatch = product.description?.toLowerCase().includes(query);
         
         // Search matches if product belongs to a category matching the search term
         const categoryMatch = product.categoryIds?.some(catId => {
@@ -32,7 +32,7 @@ export const ProductGrid: React.FC = () => {
             return cat && cat.name.toLowerCase().includes(query);
         });
 
-        return nameMatch || ingredientMatch || categoryMatch;
+        return nameMatch || ingredientMatch || categoryMatch || descriptionMatch;
     } else {
         // Not searching, standard category filtering
         if (activeCategoryId === 'all') return true;
@@ -57,23 +57,12 @@ export const ProductGrid: React.FC = () => {
 
   return (
     <main className="flex-1 w-full max-w-full">
-      {/* Header / Search - Updated Layout */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
-        <h2 className="text-2xl font-normal text-slate-800 shrink-0">{getTitle()}</h2>
-        
-        <div className="relative w-full md:w-1/2">
-           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400" size={18} />
-           <input 
-             type="text" 
-             placeholder="Search products & categories..." 
-             value={searchQuery}
-             onChange={(e) => setSearchQuery(e.target.value)}
-             className="w-full pl-10 pr-24 py-2.5 border border-slate-300 rounded-[4px] focus:outline-none focus:border-primary transition text-sm"
-           />
-           <button className="absolute right-0 top-0 bottom-0 bg-[#3b5998] hover:bg-blue-700 text-white px-6 font-medium rounded-r-[4px] text-sm transition">
-             Search
-           </button>
-        </div>
+      {/* Header Title */}
+      <div className="flex items-center justify-between mb-6 border-b border-slate-100 pb-4">
+        <h2 className="text-2xl font-bold text-slate-800 tracking-tight">{getTitle()}</h2>
+        <span className="text-sm text-slate-500 font-medium">
+            {filteredProducts.length} items found
+        </span>
       </div>
 
       {/* Grid - 2 Columns on Mobile, 3 on Tablet, 4 on Desktop */}
@@ -85,7 +74,7 @@ export const ProductGrid: React.FC = () => {
         </div>
       ) : (
         <div className="text-center py-20 bg-slate-50 rounded-lg border border-dashed border-slate-300">
-           <p className="text-slate-500">No products found.</p>
+           <p className="text-slate-500 font-medium">No products found matching your criteria.</p>
            {searchQuery && (
              <button 
                 onClick={() => setSearchQuery('')}

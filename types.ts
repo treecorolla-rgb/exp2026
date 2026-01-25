@@ -1,3 +1,4 @@
+
 export interface Category {
   id: string;
   name: string;
@@ -88,6 +89,8 @@ export interface AdminProfile {
   whatsappNumber: string;
   telegramUsername: string; // For the public link t.me/username
   showFloatingChat: boolean;
+  // Visuals
+  logoUrl?: string;
 }
 
 export interface StoreContextType {
@@ -139,6 +142,9 @@ export interface StoreContextType {
   addDeliveryOption: (option: DeliveryOption) => void;
   removeDeliveryOption: (id: string) => void;
   toggleDeliveryOption: (id: string) => void;
+
+  // Image Upload
+  uploadImage: (file: File) => Promise<string | null>;
 
   viewProduct: (product: Product) => void;
   goHome: () => void;
