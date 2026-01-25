@@ -1,6 +1,7 @@
 import React from 'react';
-import { Truck, Heart, Facebook, Instagram, Linkedin, Twitter, Youtube, Mail, RotateCw } from 'lucide-react';
+import { Truck, Facebook, Instagram, Linkedin, Twitter, Youtube, Mail, RotateCw } from 'lucide-react';
 import { useStore } from '../context/StoreContext';
+import { Logo } from './Logo';
 
 export const Footer: React.FC = () => {
   const { isAuthenticated, logout, goToLogin, goToNotFound, goHome, setActiveCategoryId, paymentMethods, adminProfile } = useStore();
@@ -66,22 +67,11 @@ export const Footer: React.FC = () => {
         
         {/* Column 1: Brand Info */}
         <div className="space-y-6">
-          <div className="flex items-center cursor-pointer gap-3" onClick={handleHome}>
-             {/* Custom Logo Icon */}
-             <svg className="w-10 h-10 text-orange-500 flex-shrink-0" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M10 40C10 18 25 10 45 10H90V90H45C25 90 10 82 10 60V40Z" fill="currentColor" />
-              <rect x="28" y="55" width="10" height="25" fill="white" rx="1" />
-              <rect x="48" y="40" width="10" height="40" fill="white" rx="1" />
-              <rect x="68" y="25" width="10" height="55" fill="white" rx="1" />
-            </svg>
-            <div className="flex flex-col justify-center">
-              <h1 className="text-xl font-bold text-slate-800 leading-none tracking-tight">
-                MyStore
-              </h1>
-              <span className="text-[9px] font-bold text-orange-500 tracking-[0.3em] uppercase mt-1">
-                Architecture
-              </span>
-            </div>
+          <div onClick={handleHome}>
+             <Logo 
+                textClass="text-xl font-bold text-slate-800 leading-none tracking-tight"
+                subTextClass="text-[9px] font-bold text-orange-500 tracking-[0.3em] uppercase mt-1"
+             />
           </div>
 
           <div className="text-slate-500 leading-relaxed space-y-1 text-[13px]">

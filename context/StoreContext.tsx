@@ -219,6 +219,9 @@ export const StoreProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       };
       return [...prev, newItem];
     });
+    // Automatically go to Cart view
+    setCurrentView('cart');
+    setSelectedProduct(null);
   };
 
   const updateCartQuantity = (itemId: string, delta: number) => {

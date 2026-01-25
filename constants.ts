@@ -47,7 +47,7 @@ const VIAGRA_PACKAGES: ProductPackage[] = [
   // 50mg
   { id: 'v50_30', dosage: '50 MG', quantity: 30, pricePerPill: 2.00, totalPrice: 60.00 },
   { id: 'v50_60', dosage: '50 MG', quantity: 60, pricePerPill: 1.75, totalPrice: 105.00, savings: 15.00 },
-  { id: 'v50_90', dosage: '50 MG', quantity: 90, pricePerPill: 1.50, totalPrice: 135.00, savings: 45.00, bonus: 'Free Normal Mail shipping' },
+  { id: 'v50_90', dosage: '50 MG', quantity: 90, pricePerPill: 1.50, totalPrice: 135.00, savings: 45.00 },
   // 100mg (Matching Screenshot Exact Values)
   { id: 'v100_30', dosage: '100 MG', quantity: 30, pricePerPill: 2.00, totalPrice: 60.00 },
   { id: 'v100_60', dosage: '100 MG', quantity: 60, pricePerPill: 1.50, totalPrice: 150.00, savings: 30.00 },

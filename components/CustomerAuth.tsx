@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useStore } from '../context/StoreContext';
-import { User, Lock, Mail, Phone, MapPin, ArrowRight, X } from 'lucide-react';
+import { User, Lock, X } from 'lucide-react';
 
 export const CustomerAuth: React.FC = () => {
   const { customerLogin, customerSignup, customerUser, isCustomerAuthenticated, customerLogout, goHome } = useStore();

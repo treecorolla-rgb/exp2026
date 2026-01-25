@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { 
   LayoutDashboard, Package, ShoppingBag, Users, Settings, LogOut, 
-  Plus, Search, Edit2, Trash2, Save, X, ChevronDown, Check, CreditCard, User, MessageCircle, Menu, Truck, ToggleLeft, ToggleRight, List, Phone
+  Plus, Search, Edit2, Trash2, Save, X, Check, CreditCard, User, MessageCircle, Menu, Truck, ToggleLeft, ToggleRight, List, Phone
 } from 'lucide-react';
 import { useStore } from '../context/StoreContext';
 import { Product, ProductPackage, DeliveryOption } from '../types';
@@ -51,7 +51,7 @@ export const AdminDashboard: React.FC = () => {
          <ProductEditor 
            product={editingProduct} 
            isNew={isNewProduct}
-           onSave={(p) => {
+           onSave={(p: any) => {
              if (isNewProduct) {
                addProduct(p);
              } else {
@@ -75,7 +75,7 @@ export const AdminDashboard: React.FC = () => {
         <ProductManager 
           products={products} 
           categories={categories}
-          onEdit={(p) => { setEditingProduct(p); setIsNewProduct(false); }}
+          onEdit={(p: any) => { setEditingProduct(p); setIsNewProduct(false); }}
           onDelete={deleteProduct}
           onToggleStatus={(p: Product) => updateProduct({ ...p, enabled: p.enabled === false ? true : false })}
           onAdd={() => {
@@ -935,7 +935,7 @@ const ProductEditor = ({ product, isNew, onSave, onCancel, categories }: any) =>
               
               <div className="space-y-3">
                  {packages.length === 0 && <p className="text-slate-400 italic text-sm">No packages configured.</p>}
-                 {packages.map((pkg, idx) => (
+                 {packages.map((pkg) => (
                     <div key={pkg.id} className="flex flex-wrap md:flex-nowrap gap-2 items-end p-3 bg-slate-50 border border-slate-200 rounded">
                        <div className="w-20">
                           <label className="text-[10px] uppercase font-bold text-slate-400">Dosage</label>

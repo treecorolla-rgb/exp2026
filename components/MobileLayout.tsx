@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { ShoppingCart, Home, Grid, User, Heart, Menu, X, Phone } from 'lucide-react';
 import { useStore } from '../context/StoreContext';
+import { Logo } from './Logo';
 
 export const MobileHeader: React.FC = () => {
   const { adminProfile, cart, goHome, setActiveCategoryId, goToCart, goToCustomerAuth, toggleCallbackModal, currency, setCurrency, favorites } = useStore();
@@ -55,17 +56,12 @@ export const MobileHeader: React.FC = () => {
        {/* Main Mobile Header */}
        <div className="py-3 px-4 flex justify-between items-center">
           {/* Logo (Left) */}
-          <div className="flex items-center gap-2 cursor-pointer" onClick={handleHomeClick}>
-             <svg className="w-8 h-8 text-orange-500" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M10 40C10 18 25 10 45 10H90V90H45C25 90 10 82 10 60V40Z" fill="currentColor" />
-                <rect x="28" y="55" width="10" height="25" fill="white" rx="1" />
-                <rect x="48" y="40" width="10" height="40" fill="white" rx="1" />
-                <rect x="68" y="25" width="10" height="55" fill="white" rx="1" />
-            </svg>
-            <div className="flex flex-col justify-center leading-none">
-                <span className="text-lg font-bold text-slate-800">MyStore</span>
-                <span className="text-[8px] font-bold text-orange-500 tracking-widest uppercase">Arch</span>
-            </div>
+          <div onClick={handleHomeClick}>
+             <Logo 
+               iconClass="w-8 h-8 text-orange-500"
+               textClass="text-lg font-bold text-slate-800"
+               subTextClass="text-[8px] font-bold text-orange-500 tracking-widest uppercase"
+             />
           </div>
 
           {/* Icons (Right) */}

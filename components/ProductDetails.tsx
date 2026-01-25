@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ChevronLeft, ShoppingCart, Plus, AlertCircle } from 'lucide-react';
+import { ChevronLeft, ShoppingCart, AlertCircle } from 'lucide-react';
 import { useStore } from '../context/StoreContext';
 import { ProductPackage } from '../types';
 
@@ -64,12 +64,11 @@ export const ProductDetails: React.FC = () => {
 
 // --- MOBILE VIEW (Tabbed Interface) ---
 const ProductDetailsMobile: React.FC = () => {
-  const { selectedProduct: product, addToCart, goHome, isAdminMode, paymentMethods, deliveryOptions, formatPrice } = useStore();
+  const { selectedProduct: product, addToCart, goHome, formatPrice } = useStore();
   const [selectedDosage, setSelectedDosage] = useState<string>('');
   
   // Group packages by dosage
   const dosages: string[] = Array.from(new Set(product?.packages?.map(p => p.dosage) || []));
-  const activeDeliveryOptions = deliveryOptions.filter(opt => opt.enabled);
 
   // Set default dosage
   useEffect(() => {
@@ -133,7 +132,17 @@ const ProductDetailsMobile: React.FC = () => {
                     <div>
                         <div className="font-bold text-slate-800 text-[15px] mb-1">{pkg.quantity} pills x {pkg.dosage}</div>
                         <div className="text-xs text-slate-500 font-medium mb-1">{formatPrice(pkg.pricePerPill)} / pill</div>
-                        {pkg.bonus && <div className="text-[10px] text-orange-500 font-extrabold tracking-wide uppercase">{pkg.bonus}</div>}
+                        {/* Free Shipping Tag Logic */}
+                        {(pkg.bonus || pkg.totalPrice > 200) && (
+                            <div className="flex flex-col items-start gap-1 mt-1">
+                                {pkg.bonus && <div className="text-[10px] text-orange-500 font-extrabold tracking-wide uppercase">{pkg.bonus}</div>}
+                                {pkg.totalPrice > 200 && (
+                                    <div className="bg-green-100 text-green-700 px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider inline-block">
+                                        Free Express Shipping
+                                    </div>
+                                )}
+                            </div>
+                        )}
                     </div>
                     <div className="text-right flex flex-col items-end gap-2">
                         <div className="font-extrabold text-lg text-slate-900">{formatPrice(pkg.totalPrice)}</div>
@@ -154,7 +163,7 @@ const ProductDetailsMobile: React.FC = () => {
 
 // --- DESKTOP VIEW (Grouped Table Layout) ---
 const ProductDetailsDesktop: React.FC = () => {
-  const { selectedProduct: product, addToCart, goHome, isAdminMode, paymentMethods, deliveryOptions, formatPrice } = useStore();
+  const { selectedProduct: product, addToCart, isAdminMode, paymentMethods, deliveryOptions, formatPrice } = useStore();
   const activeDeliveryOptions = deliveryOptions.filter(opt => opt.enabled);
 
   if (!product) return null;
@@ -283,7 +292,7 @@ const ProductDetailsDesktop: React.FC = () => {
                            {/* Package Rows for this Dosage */}
                            {packagesByDosage[dosage]
                              .sort((a,b) => a.quantity - b.quantity)
-                             .map((pkg, index) => (
+                             .map((pkg) => (
                               <tr key={pkg.id} className="border-b border-slate-100 hover:bg-blue-50/30 transition-colors last:border-b-0 group">
                                  <td className="py-4 pl-6 pr-2 align-middle">
                                     <div className="flex flex-col">
@@ -303,7 +312,17 @@ const ProductDetailsDesktop: React.FC = () => {
                                     <div className="flex flex-col">
                                        <span className="text-[10px] text-slate-400 uppercase font-bold tracking-wide mb-1 opacity-70">Total</span>
                                        <span className="font-extrabold text-slate-900 text-[16px] tracking-tight">{formatPrice(pkg.totalPrice)}</span>
-                                       {pkg.bonus && <span className="text-[10px] text-[#f0ad4e] font-bold mt-1 uppercase tracking-wide">{pkg.bonus}</span>}
+                                       {/* Bonus Text & Free Shipping Tag */}
+                                       {(pkg.bonus || pkg.totalPrice > 200) && (
+                                            <div className="flex flex-col items-start gap-1 mt-1">
+                                                {pkg.bonus && <span className="text-[10px] text-[#f0ad4e] font-bold uppercase tracking-wide">{pkg.bonus}</span>}
+                                                {pkg.totalPrice > 200 && (
+                                                    <span className="bg-green-100 text-green-700 px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider">
+                                                        Free Express Shipping
+                                                    </span>
+                                                )}
+                                            </div>
+                                       )}
                                     </div>
                                  </td>
                                  <td className="py-4 px-2 align-middle text-center">

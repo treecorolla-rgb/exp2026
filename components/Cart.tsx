@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Trash2, ShoppingBag, ArrowRight, Minus, Plus, ShieldCheck, CreditCard, Lock, ChevronLeft, CheckCircle, ChevronDown } from 'lucide-react';
+import { Trash2, ShoppingBag, ArrowRight, Minus, Plus, ShieldCheck, CreditCard, Lock, ChevronLeft, CheckCircle, ChevronDown, Check } from 'lucide-react';
 import { useStore } from '../context/StoreContext';
 import { CustomerDetails } from '../types';
 
@@ -21,6 +21,10 @@ export const Cart: React.FC = () => {
   const [step, setStep] = useState<'cart' | 'checkout' | 'success'>('cart');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [createAccount, setCreateAccount] = useState(true);
+  
+  // Coupon State
+  const [couponCode, setCouponCode] = useState('');
+  const [discountAmount, setDiscountAmount] = useState(0);
 
   // Form State - Pre-fill if logged in
   const [formData, setFormData] = useState<CustomerDetails>(customerUser || {
@@ -29,8 +33,25 @@ export const Cart: React.FC = () => {
   });
 
   const subtotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
-  const shipping = subtotal > 200 ? 0 : 25.00;
-  const total = subtotal + shipping;
+  // Logic: Free shipping if subtotal > 200 USD
+  const freeShippingThreshold = 200;
+  const isFreeShipping = subtotal > freeShippingThreshold;
+  const shipping = isFreeShipping ? 0 : 25.00;
+  
+  // Amount needed for free shipping
+  const amountForFreeShipping = Math.max(0, freeShippingThreshold - subtotal);
+  
+  const total = subtotal + shipping - discountAmount;
+
+  const handleApplyCoupon = () => {
+      if (couponCode.toLowerCase() === 'save10') {
+          setDiscountAmount(subtotal * 0.10);
+          alert('Coupon Applied: 10% Off');
+      } else {
+          setDiscountAmount(0);
+          alert('Invalid Coupon Code');
+      }
+  };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
@@ -56,6 +77,8 @@ export const Cart: React.FC = () => {
 *Order Details:*
 ${itemsList}
 
+*Subtotal:* ${formatPrice(subtotal)}
+*Discount:* -${formatPrice(discountAmount)}
 *Shipping:* ${formatPrice(shipping)}
 *TOTAL:* ${formatPrice(total)}
 ------------------------
@@ -117,7 +140,7 @@ ${itemsList}
         </div>
         <h2 className="text-3xl font-extrabold text-slate-800 mb-2 tracking-tight">Your cart is empty</h2>
         <p className="text-slate-500 mb-10 text-lg font-medium">Looks like you haven't added any products yet.</p>
-        <button onClick={goHome} className="bg-primary hover:bg-blue-600 text-white px-8 py-3 rounded font-bold transition flex items-center gap-2 shadow-md uppercase tracking-wide text-sm">
+        <button onClick={goHome} className="bg-green-500 hover:bg-green-600 text-white px-8 py-3 rounded font-bold transition flex items-center gap-2 shadow-md uppercase tracking-wide text-sm">
           <ArrowRight size={18} /> Continue Shopping
         </button>
       </div>
@@ -152,8 +175,7 @@ ${itemsList}
                 <ShieldCheck size={40} className="text-white" strokeWidth={1.5} />
               </div>
               <div className="flex flex-col">
-                 <h1 className="text-3xl font-bold tracking-tight leading-none">Secure Checkout</h1>
-                 <h1 className="text-3xl font-bold tracking-tight leading-none">Page</h1>
+                 <h1 className="text-3xl font-bold tracking-tight leading-none">Secure Checkout Page</h1>
               </div>
            </div>
         </div>
@@ -162,22 +184,40 @@ ${itemsList}
         <div className="text-center mb-8">
             <h2 className="text-lg text-slate-700 font-medium mb-6">Secure Checkout Page. All data is safe and secure.</h2>
             <div className="flex flex-wrap justify-center gap-4 md:gap-8">
-                {/* Replicating the Trust Badges Row from Screenshot */}
-                <div className="h-12 bg-slate-100 rounded flex items-center px-4 border border-slate-200">
-                    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/3/3e/GeoTrust_logo.png/800px-GeoTrust_logo.png" className="h-6 object-contain" alt="GeoTrust" />
+                {/* Replaced broken images with robust generic badges */}
+                <div className="h-12 bg-white rounded flex items-center px-4 border border-slate-200 gap-2 shadow-sm">
+                    <div className="w-6 h-6 rounded-full bg-green-500 flex items-center justify-center text-white">
+                        <Check size={14} strokeWidth={4} />
+                    </div>
+                    <div className="flex flex-col items-start leading-none">
+                        <span className="font-bold text-slate-700 text-sm">GeoTrust</span>
+                        <span className="text-[9px] text-slate-500">Secured</span>
+                    </div>
                 </div>
-                <div className="h-12 bg-slate-100 rounded flex items-center px-4 border border-slate-200">
-                    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/1/16/Verified_by_Visa_logo.svg/2560px-Verified_by_Visa_logo.svg.png" className="h-8 object-contain" alt="Verified by Visa" />
+
+                <div className="h-12 bg-white rounded flex items-center px-4 border border-slate-200 gap-2 shadow-sm">
+                    <div className="flex flex-col items-start leading-none">
+                        <span className="font-bold text-blue-800 text-sm italic">Visa</span>
+                        <span className="text-[9px] text-slate-500">Verified</span>
+                    </div>
                 </div>
-                <div className="h-12 bg-slate-100 rounded flex items-center px-4 gap-2 border border-slate-200">
+
+                <div className="h-12 bg-white rounded flex items-center px-4 gap-2 border border-slate-200 shadow-sm">
                     <div className="flex flex-col items-start leading-none">
                         <span className="font-bold text-slate-700 text-sm">SSL</span>
-                        <span className="text-[10px] text-slate-500">Secure Connection</span>
+                        <span className="text-[9px] text-slate-500">Encrypted</span>
                     </div>
                     <Lock size={16} className="text-green-500 ml-1" />
                 </div>
-                <div className="h-12 bg-slate-100 rounded flex items-center px-4 border border-slate-200">
-                     <img src="https://cdn.freebiesupply.com/logos/large/2x/mcafee-secure-logo-png-transparent.png" className="h-8 object-contain" alt="McAfee" />
+
+                <div className="h-12 bg-white rounded flex items-center px-4 border border-slate-200 gap-2 shadow-sm">
+                     <div className="w-6 h-6 flex items-center justify-center">
+                        <ShieldCheck size={20} className="text-red-600" />
+                     </div>
+                     <div className="flex flex-col items-start leading-none">
+                        <span className="font-bold text-slate-700 text-sm">McAfee</span>
+                        <span className="text-[9px] text-slate-500">Secure</span>
+                    </div>
                 </div>
             </div>
             
@@ -409,9 +449,17 @@ ${itemsList}
                        <span className="text-slate-600 font-medium">Subtotal</span>
                        <span className="font-bold text-slate-800">{formatPrice(subtotal)}</span>
                     </div>
+                    {discountAmount > 0 && (
+                        <div className="flex justify-between text-sm">
+                            <span className="text-green-600 font-medium">Discount</span>
+                            <span className="font-bold text-green-600">-{formatPrice(discountAmount)}</span>
+                        </div>
+                    )}
                     <div className="flex justify-between text-sm">
                        <span className="text-slate-600 font-medium">Shipping</span>
-                       <span className="font-bold text-slate-800">{formatPrice(shipping)}</span>
+                       <span className="font-bold text-slate-800">
+                         {shipping === 0 ? <span className="text-green-600">Free</span> : formatPrice(shipping)}
+                       </span>
                     </div>
                     <div className="flex justify-between items-baseline mt-4 pt-4 border-t border-slate-200">
                        <span className="text-slate-700 font-bold">Total</span>
@@ -429,6 +477,39 @@ ${itemsList}
   return (
     <div className="flex-1 bg-white font-sans w-full max-w-full overflow-hidden">
       <h1 className="text-3xl font-extrabold text-slate-900 mb-8 tracking-tight">Shopping Cart</h1>
+      
+      {/* Free Shipping Alert */}
+      <div className="mb-6 bg-blue-50 border border-blue-200 rounded-lg p-4 flex flex-col sm:flex-row items-center justify-between gap-4">
+         <div className="flex items-center gap-3">
+            <div className={`w-12 h-12 rounded-full flex items-center justify-center shrink-0 ${isFreeShipping ? 'bg-green-100 text-green-600' : 'bg-blue-100 text-blue-600'}`}>
+                {isFreeShipping ? <CheckCircle size={24} /> : <ShoppingBag size={24} />}
+            </div>
+            <div>
+                {isFreeShipping ? (
+                    <div className="font-bold text-green-700 text-lg">You are eligible for Free Shipping!</div>
+                ) : (
+                    <div>
+                        <div className="font-bold text-slate-800 text-lg">
+                           Add <span className="text-primary">{formatPrice(amountForFreeShipping)}</span> to get Free Shipping
+                        </div>
+                        <div className="w-full bg-slate-200 rounded-full h-2 mt-2 max-w-[200px]">
+                           <div 
+                             className="bg-primary h-2 rounded-full transition-all duration-500" 
+                             style={{ width: `${(subtotal / freeShippingThreshold) * 100}%` }}
+                           ></div>
+                        </div>
+                    </div>
+                )}
+            </div>
+         </div>
+         <button 
+           onClick={goHome}
+           className="bg-[#81C784] hover:bg-[#66BB6A] text-white px-6 py-3 rounded shadow font-bold text-sm uppercase tracking-wide w-full sm:w-auto transition whitespace-nowrap"
+         >
+           Continue Shopping
+         </button>
+      </div>
+
       <div className="flex flex-col lg:flex-row gap-8">
         <div className="flex-1 overflow-hidden">
           <div className="bg-white border border-slate-200 rounded-lg shadow-sm overflow-hidden">
@@ -509,6 +590,7 @@ ${itemsList}
               </table>
             </div>
           </div>
+          
           <div className="mt-6 flex justify-between items-center">
              <button onClick={goHome} className="text-slate-500 hover:text-primary font-bold text-sm flex items-center gap-2 transition">
                 <ArrowRight size={16} className="rotate-180" strokeWidth={2.5} /> Continue Shopping
@@ -519,11 +601,39 @@ ${itemsList}
         <div className="w-full lg:w-96">
           <div className="bg-slate-50 border border-slate-200 p-6 rounded-lg sticky top-24 shadow-sm">
              <h3 className="font-bold text-slate-800 text-lg mb-6 pb-4 border-b border-slate-200 tracking-tight">Order Summary</h3>
-             <div className="space-y-4 mb-6">
+             
+             {/* Coupon Code Input */}
+             <div className="mb-6">
+                <label className="text-[11px] uppercase font-bold text-slate-400 mb-2 block">Coupon Code</label>
+                <div className="flex gap-2">
+                    <input 
+                        type="text" 
+                        placeholder="Enter Code"
+                        className="flex-1 border border-slate-300 rounded p-2 text-sm uppercase"
+                        value={couponCode}
+                        onChange={(e) => setCouponCode(e.target.value)}
+                    />
+                    <button 
+                        onClick={handleApplyCoupon}
+                        className="bg-slate-800 text-white px-3 rounded text-xs font-bold uppercase"
+                    >
+                        Apply
+                    </button>
+                </div>
+                {discountAmount > 0 && <p className="text-xs text-green-600 mt-1 font-bold">Coupon applied successfully!</p>}
+             </div>
+
+             <div className="space-y-4 mb-6 border-t border-slate-200 pt-4">
                 <div className="flex justify-between text-slate-600 text-sm font-medium">
                    <span>Subtotal</span>
                    <span className="font-bold text-slate-800">{formatPrice(subtotal)}</span>
                 </div>
+                {discountAmount > 0 && (
+                    <div className="flex justify-between text-sm">
+                        <span className="text-green-600 font-medium">Discount</span>
+                        <span className="font-bold text-green-600">-{formatPrice(discountAmount)}</span>
+                    </div>
+                )}
                 <div className="flex justify-between text-slate-600 text-sm font-medium">
                    <span>Shipping</span>
                    <span className="font-bold text-slate-800">
@@ -542,10 +652,8 @@ ${itemsList}
                Checkout
              </button>
              <div className="mt-6 flex flex-wrap gap-2 justify-center opacity-70">
-                 {/* Using URLs from context if available, otherwise fallback */}
                  {['visa', 'mastercard', 'amex', 'bitcoin'].map(cc => (
                     <div key={cc} className="h-7 w-11 bg-slate-200 rounded overflow-hidden border border-slate-300">
-                       {/* Simplified placeholder */}
                     </div>
                  ))}
              </div>

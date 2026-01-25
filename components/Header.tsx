@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Heart, ShoppingCart, Menu, X } from 'lucide-react';
 import { useStore } from '../context/StoreContext';
+import { Logo } from './Logo';
 
 export const Header: React.FC = () => {
   const { cart, goHome, setActiveCategoryId, goToNotFound, goToCart, favorites, formatPrice } = useStore();
@@ -34,26 +35,8 @@ export const Header: React.FC = () => {
         {/* Top Row: Logo, Icons, Mobile Toggle */}
         <div className="w-full flex justify-between items-center md:w-auto">
           {/* Logo Section */}
-          <div className="flex items-center cursor-pointer gap-3 group" onClick={handleHomeClick}>
-            <div className="relative transform group-hover:scale-105 transition-transform duration-300">
-              {/* Custom Logo Icon matching the provided image */}
-              <svg className="w-10 h-10 md:w-11 md:h-11 text-orange-500" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-                {/* Rounded shape on left, straight on right */}
-                <path d="M10 40C10 18 25 10 45 10H90V90H45C25 90 10 82 10 60V40Z" fill="currentColor" />
-                {/* White Bars */}
-                <rect x="28" y="55" width="10" height="25" fill="white" rx="1" />
-                <rect x="48" y="40" width="10" height="40" fill="white" rx="1" />
-                <rect x="68" y="25" width="10" height="55" fill="white" rx="1" />
-              </svg>
-            </div>
-            <div className="flex flex-col justify-center">
-              <h1 className="text-xl md:text-2xl font-extrabold text-slate-900 leading-none tracking-tighter">
-                My Test Store
-              </h1>
-              <span className="text-[10px] font-bold text-orange-500 tracking-[0.3em] uppercase mt-0.5">
-                Architecture
-              </span>
-            </div>
+          <div onClick={handleHomeClick}>
+            <Logo />
           </div>
 
           {/* Mobile Actions: Cart & Menu Toggle */}
