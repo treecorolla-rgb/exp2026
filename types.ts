@@ -123,6 +123,7 @@ export interface StoreContextType {
   updateCartQuantity: (itemId: string, delta: number) => void;
   clearCart: () => void;
   placeOrder: (details: CustomerDetails) => Promise<void>;
+  addManualOrder: (order: Order) => Promise<void>; // New Manual Add Function
   setSearchQuery: (query: string) => void;
   toggleAdminMode: () => void;
   updateProduct: (product: Product) => void; // Full update

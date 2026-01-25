@@ -339,6 +339,24 @@ export const StoreProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     clearCart();
   };
 
+  const addManualOrder = async (order: Order) => {
+    setOrders(prev => [order, ...prev]);
+    if (supabase) {
+      try {
+        await supabase.from('orders').insert({
+          id: order.id,
+          customer_name: order.customerName,
+          total: order.total,
+          status: order.status,
+          date: new Date().toISOString(),
+          details: order.details || {}
+        });
+      } catch (e) {
+        console.error("Error saving manual order:", e);
+      }
+    }
+  };
+
   const toggleAdminMode = () => {
     if (!isAuthenticated) {
        setCurrentView('login');
@@ -573,6 +591,7 @@ export const StoreProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         updateCartQuantity,
         clearCart,
         placeOrder,
+        addManualOrder, // Exported
         setSearchQuery,
         toggleAdminMode,
         updateProduct,
