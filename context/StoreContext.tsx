@@ -567,24 +567,73 @@ export const StoreProvider: React.FC<{ children: ReactNode }> = ({ children }) =
   };
 
   const addProduct = async (product: Product) => {
-    setProducts((prev) => [product, ...prev]);
-    if (supabase) {
-      const dbPayload = {
-        id: product.id,
-        name: product.name,
-        active_ingredient: product.activeIngredient,
-        price: product.price,
-        image: product.image,
-        category_ids: product.categoryIds,
-        is_popular: product.isPopular,
-        enabled: product.enabled,
-        other_names: product.otherNames,
-        description: product.description,
-        packages: product.packages,
-        delivery_options: product.deliveryOptions,
-        featured_order: product.featuredOrder || 9999
-      };
-      await supabase.from('products').insert(dbPayload);
+    if (!supabase) {
+        // Local/Demo Mode
+        // Simple duplicate check against local state
+        const exists = products.some(p => p.name.toLowerCase() === product.name.toLowerCase());
+        if (!exists) {
+            setProducts((prev) => [product, ...prev]);
+        } else {
+            console.log("Duplicate product skipped (Demo mode):", product.name);
+        }
+        return;
+    }
+
+    // --- PRODUCTION / SUPABASE MODE ---
+    // Double-check Database to prevent duplicates if UI is stale
+    try {
+        const normalizedName = product.name.trim();
+        const { data: existing } = await supabase
+            .from('products')
+            .select('id, name')
+            .ilike('name', normalizedName)
+            .maybeSingle();
+
+        const dbPayload = {
+            name: product.name,
+            active_ingredient: product.activeIngredient,
+            price: product.price,
+            image: product.image,
+            category_ids: product.categoryIds,
+            is_popular: product.isPopular,
+            enabled: product.enabled,
+            other_names: product.otherNames,
+            description: product.description,
+            packages: product.packages,
+            delivery_options: product.deliveryOptions,
+            featured_order: product.featuredOrder || 9999
+        };
+
+        if (existing) {
+            // Product exists! Update it instead of creating a duplicate.
+            console.log(`Product "${product.name}" already exists in DB (ID: ${existing.id}). Updating...`);
+            
+            await supabase.from('products').update(dbPayload).eq('id', existing.id);
+            
+            // Update local state
+            const merged = { ...product, id: existing.id };
+            setProducts(prev => {
+                const isInState = prev.some(p => p.id === existing.id);
+                if (isInState) {
+                    return prev.map(p => p.id === existing.id ? merged : p);
+                } else {
+                    return [merged, ...prev];
+                }
+            });
+        } else {
+            // Product is new. Insert it.
+            // Ensure ID from CSV (random gen) is used
+            const insertPayload = { ...dbPayload, id: product.id };
+            const { error } = await supabase.from('products').insert(insertPayload);
+            
+            if (error) {
+                console.error("Error inserting product:", error);
+            } else {
+                setProducts((prev) => [product, ...prev]);
+            }
+        }
+    } catch (e) {
+        console.error("Error in addProduct strategy:", e);
     }
   };
 
@@ -808,6 +857,7 @@ export const StoreProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         isMobile,
         isCallbackModalOpen,
         adminProfile,
+        isLoading, // Exposed here
         addToCart,
         removeFromCart,
         updateCartQuantity,
