@@ -857,7 +857,7 @@ export const StoreProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         isMobile,
         isCallbackModalOpen,
         adminProfile,
-        isLoading, // Exposed here
+        isLoading, 
         addToCart,
         removeFromCart,
         updateCartQuantity,
