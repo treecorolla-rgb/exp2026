@@ -152,7 +152,7 @@ export const StoreProvider: React.FC<{ children: ReactNode }> = ({ children }) =
               ukPhoneNumber: s.uk_phone_number,
               whatsappNumber: s.whatsapp_number,
               telegramUsername: s.telegram_username,
-              show_floating_chat: s.show_floating_chat,
+              showFloatingChat: s.show_floating_chat,
               logoUrl: s.logo_url
            });
         }
