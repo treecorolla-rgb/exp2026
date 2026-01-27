@@ -760,6 +760,7 @@ ${itemsList}
           </div>
         </div>
       </div>
+    </div>
     );
   }
 };
