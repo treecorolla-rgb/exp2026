@@ -192,6 +192,8 @@ export interface StoreContextType {
   bulkDeleteProducts: (productIds: string[]) => void; // New
   addProduct: (product: Product) => void;
   addCategory: (category: Category) => void;
+  updateCategory: (id: string, name: string) => void; // New
+  deleteCategory: (id: string) => void; // New
   toggleCategory: (id: string) => void;
   updateCategoryOrder: (categories: Category[]) => void; // New
   setActiveCategoryId: (id: string) => void;
