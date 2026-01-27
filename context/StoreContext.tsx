@@ -152,7 +152,7 @@ export const StoreProvider: React.FC<{ children: ReactNode }> = ({ children }) =
               ukPhoneNumber: s.uk_phone_number,
               whatsappNumber: s.whatsapp_number,
               telegramUsername: s.telegram_username,
-              show_floating_chat: s.show_floating_chat,
+              showFloatingChat: s.show_floating_chat !== undefined ? s.show_floating_chat : true,
               logoUrl: s.logo_url
            });
         }
@@ -594,6 +594,23 @@ export const StoreProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     }
   };
 
+  const updateCategory = async (id: string, name: string) => {
+    setCategories(prev => prev.map(c => c.id === id ? { ...c, name, slug: name.toLowerCase().replace(/ /g, '-') } : c));
+    if (supabase) {
+      await supabase.from('categories').update({ 
+          name, 
+          slug: name.toLowerCase().replace(/ /g, '-') 
+      }).eq('id', id);
+    }
+  };
+
+  const deleteCategory = async (id: string) => {
+    setCategories(prev => prev.filter(c => c.id !== id));
+    if (supabase) {
+      await supabase.from('categories').delete().eq('id', id);
+    }
+  };
+
   const toggleCategory = async (id: string) => {
     const category = categories.find(c => c.id === id);
     if (!category) return;
@@ -762,6 +779,8 @@ export const StoreProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         bulkDeleteProducts,
         addProduct,
         addCategory,
+        updateCategory,
+        deleteCategory,
         toggleCategory,
         updateCategoryOrder,
         addPaymentMethod,
