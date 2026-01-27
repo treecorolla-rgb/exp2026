@@ -326,6 +326,11 @@ const ProductManager = ({ products, categories, onEdit, onDelete, onBulkDelete, 
         let importedCount = 0;
         let currentProduct: Product | null = null;
         
+        // Track categories seen in this session to prevent duplicate creation
+        const categoryMap = new Map<string, Category>();
+        // Populate with existing categories
+        categories.forEach((c: Category) => categoryMap.set(c.name.toLowerCase(), c));
+
         for (let i = 1; i < rows.length; i++) {
             const line = rows[i].trim();
             if (!line) continue;
@@ -370,18 +375,25 @@ const ProductManager = ({ products, categories, onEdit, onDelete, onBulkDelete, 
 
                 if (categoryRaw) {
                     const catName = categoryRaw.trim();
-                    const existingCat = categories.find((c: any) => c.name.toLowerCase() === catName.toLowerCase() || c.slug === catName.toLowerCase());
-                    if (existingCat) {
-                        currentProduct.categoryIds.push(existingCat.id);
+                    const catKey = catName.toLowerCase();
+                    
+                    if (categoryMap.has(catKey)) {
+                         const existing = categoryMap.get(catKey);
+                         if(existing) currentProduct.categoryIds.push(existing.id);
                     } else {
                         const newCatId = `cat_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`;
-                        await addCategory({
+                        const newCategory: Category = {
                             id: newCatId,
                             name: catName,
                             slug: catName.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
                             enabled: true,
-                            order: 999
-                        });
+                            order: 999 + categoryMap.size
+                        };
+                        
+                        // Optimistically update local map immediately to prevent re-creation in next loop
+                        categoryMap.set(catKey, newCategory);
+                        await addCategory(newCategory);
+                        
                         currentProduct.categoryIds.push(newCatId);
                     }
                 } else {
