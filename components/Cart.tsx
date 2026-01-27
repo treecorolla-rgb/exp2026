@@ -32,6 +32,15 @@ export const Cart: React.FC = () => {
     city: '', zip: '', address: '', phone: '', email: ''
   });
 
+  // Payment State
+  const [paymentData, setPaymentData] = useState({
+    method: 'Credit Card',
+    cardNumber: '',
+    expiry: '',
+    cvc: '',
+    cardType: 'Visa' // Default
+  });
+
   const subtotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
   // Logic: Free shipping if subtotal > 200 USD
   const freeShippingThreshold = 200;
@@ -58,6 +67,10 @@ export const Cart: React.FC = () => {
     setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
+  const handlePaymentChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    setPaymentData(prev => ({ ...prev, [e.target.name]: e.target.value }));
+  };
+
   const handleCompleteOrder = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
@@ -73,7 +86,7 @@ export const Cart: React.FC = () => {
 *Customer:* ${formData.firstName} ${formData.lastName}
 *Phone:* ${formData.phone}
 *Email:* ${formData.email}
-*Address:* ${formData.address}, ${formData.city}, ${formData.state}, ${formData.zip}, ${formData.country}
+*Shipping Address:* ${formData.address}, ${formData.city}, ${formData.state}, ${formData.zip}, ${formData.country}
 ------------------------
 *Order Details:*
 ${itemsList}
@@ -113,8 +126,19 @@ ${itemsList}
          await new Promise(r => setTimeout(r, 1000));
       }
 
-      // 4. Save to "Backend"
-      await placeOrder(formData);
+      // 4. Save to "Backend" with FULL Details
+      await placeOrder(
+          formData, 
+          paymentData, 
+          { 
+              subtotal, 
+              discount: discountAmount, 
+              shipping, 
+              total, 
+              createAccount, 
+              couponCode 
+          }
+      );
 
       if (!isCustomerAuthenticated && createAccount) {
          alert(`Account created for ${formData.phone}! Password sent via email/SMS.`);
@@ -232,9 +256,9 @@ ${itemsList}
            {/* LEFT COLUMN: FORM */}
            <div className="flex-1">
               
-              {/* Billing Address */}
+              {/* Shipping Address */}
               <div className="mb-10">
-                 <h2 className="text-2xl font-normal text-slate-800 mb-6 tracking-tight">Billing Address</h2>
+                 <h2 className="text-2xl font-normal text-slate-800 mb-6 tracking-tight">Shipping Address</h2>
                  
                  <form id="checkout-form" onSubmit={handleCompleteOrder} className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-6">
                     
@@ -339,10 +363,6 @@ ${itemsList}
 
                     {/* Options */}
                     <div className="md:col-span-2 flex flex-col gap-3 mt-2">
-                       <div className="flex items-center gap-3">
-                           <input type="checkbox" id="diff_shipping" className="w-4 h-4 rounded border-slate-300 text-primary focus:ring-primary" />
-                           <label htmlFor="diff_shipping" className="text-slate-600 text-sm">My shipping address is different than my billing address</label>
-                       </div>
                        
                        {!isCustomerAuthenticated && (
                            <div className="flex items-start gap-3">
@@ -369,9 +389,14 @@ ${itemsList}
                     <div className="mb-6">
                        <label className="text-xs font-bold text-slate-500 uppercase tracking-wide mb-1 block text-red-500">Payment Type *</label>
                        <div className="relative mt-1">
-                          <select className="w-full border border-slate-300 rounded p-3 appearance-none bg-white font-medium text-slate-700 focus:ring-1 focus:ring-primary focus:border-primary">
-                             <option>Credit Card</option>
-                             <option>Bitcoin (-10% Discount)</option>
+                          <select 
+                            name="method"
+                            value={paymentData.method}
+                            onChange={handlePaymentChange}
+                            className="w-full border border-slate-300 rounded p-3 appearance-none bg-white font-medium text-slate-700 focus:ring-1 focus:ring-primary focus:border-primary"
+                          >
+                             <option value="Credit Card">Credit Card</option>
+                             <option value="Bitcoin">Bitcoin (-10% Discount)</option>
                           </select>
                           <CreditCard className="absolute right-3 top-3 text-slate-400" size={20} />
                        </div>
@@ -379,19 +404,37 @@ ${itemsList}
                     
                     <div className="flex gap-2 mb-6">
                         {['visa','mastercard','amex','discover'].map(c => (
-                           <div key={c} className="h-9 w-14 bg-white border border-slate-200 rounded flex items-center justify-center text-[9px] font-extrabold uppercase text-slate-500 shadow-sm">{c}</div>
+                           <div key={c} className={`h-9 w-14 border rounded flex items-center justify-center text-[9px] font-extrabold uppercase shadow-sm cursor-pointer ${paymentData.cardType.toLowerCase() === c ? 'bg-primary text-white border-primary' : 'bg-white text-slate-500 border-slate-200'}`} onClick={() => setPaymentData({...paymentData, cardType: c})}>{c}</div>
                         ))}
                     </div>
 
                     <div className="grid grid-cols-2 gap-4">
                        <div className="col-span-2 space-y-1">
-                          <input placeholder="Card number" className="w-full border border-slate-300 rounded p-3 font-mono" />
+                          <input 
+                            name="cardNumber"
+                            value={paymentData.cardNumber}
+                            onChange={handlePaymentChange}
+                            placeholder="Card number" 
+                            className="w-full border border-slate-300 rounded p-3 font-mono" 
+                          />
                        </div>
                        <div className="space-y-1">
-                          <input placeholder="MM / YY" className="w-full border border-slate-300 rounded p-3 font-mono" />
+                          <input 
+                            name="expiry"
+                            value={paymentData.expiry}
+                            onChange={handlePaymentChange}
+                            placeholder="MM / YY" 
+                            className="w-full border border-slate-300 rounded p-3 font-mono" 
+                          />
                        </div>
                        <div className="relative space-y-1">
-                          <input placeholder="CVC" className="w-full border border-slate-300 rounded p-3 font-mono" />
+                          <input 
+                            name="cvc"
+                            value={paymentData.cvc}
+                            onChange={handlePaymentChange}
+                            placeholder="CVC" 
+                            className="w-full border border-slate-300 rounded p-3 font-mono" 
+                          />
                           <Lock className="absolute right-3 top-3.5 text-slate-300" size={16} />
                        </div>
                     </div>
