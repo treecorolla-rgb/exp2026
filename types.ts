@@ -192,6 +192,7 @@ export interface StoreContextType {
   bulkDeleteProducts: (productIds: string[]) => void; // New
   addProduct: (product: Product) => void;
   addCategory: (category: Category) => void;
+  seedCategories: () => Promise<void>; // New: Restore defaults
   updateCategory: (id: string, name: string) => void; // New
   deleteCategory: (id: string) => void; // New
   toggleCategory: (id: string) => void;
