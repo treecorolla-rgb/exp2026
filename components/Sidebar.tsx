@@ -13,8 +13,15 @@ export const Sidebar: React.FC = () => {
     }
   };
 
+  // Deduplicate categories by Name to ensure sidebar stays clean even if import created duplicates
+  const uniqueCategories = categories.filter((cat, index, self) => 
+    index === self.findIndex((t) => (
+      t.name.toLowerCase() === cat.name.toLowerCase()
+    ))
+  );
+
   // Only show enabled categories to the user
-  const visibleCategories = categories.filter(cat => cat.enabled !== false);
+  const visibleCategories = uniqueCategories.filter(cat => cat.enabled !== false);
 
   return (
     <aside className="w-full md:w-64 flex-shrink-0 mb-6 md:mb-0">
