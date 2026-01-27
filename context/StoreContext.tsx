@@ -1,3 +1,4 @@
+
 import React, { createContext, useState, useContext, ReactNode, useEffect } from 'react';
 import { Product, Category, CartItem, StoreContextType, ProductPackage, Order, PaymentMethod, CustomerDetails, AdminProfile, DeliveryOption, OrderStatus, NotificationLog } from '../types';
 import { INITIAL_PRODUCTS, INITIAL_CATEGORIES, INITIAL_PAYMENT_METHODS, STANDARD_DELIVERY } from '../constants';
@@ -588,9 +589,55 @@ export const StoreProvider: React.FC<{ children: ReactNode }> = ({ children }) =
   };
 
   const addCategory = async (category: Category) => {
+    // Add to state immediately
     setCategories((prev) => [...prev, category]);
     if (supabase) {
-      await supabase.from('categories').insert(category);
+      const { error } = await supabase.from('categories').insert(category);
+      if (error) {
+          console.error("Error adding category:", error.message);
+          // If error is likely due to missing 'order' column, try inserting without it
+          if (error.message.includes('order')) {
+              const { order, ...rest } = category;
+              await supabase.from('categories').insert(rest);
+          }
+      }
+    }
+  };
+
+  const seedCategories = async () => {
+    // Use INITIAL_CATEGORIES to populate DB
+    const existingSlugs = new Set(categories.map(c => c.slug));
+    const toAdd = INITIAL_CATEGORIES.filter(c => !existingSlugs.has(c.slug)).map((c, idx) => ({
+        ...c,
+        order: idx // Ensure order is set for sorting
+    }));
+    
+    if (toAdd.length === 0) {
+        alert("Categories already exist or are hidden. Check the list.");
+        return;
+    }
+
+    setCategories(prev => [...prev, ...toAdd]);
+    
+    if (supabase) {
+        const { error } = await supabase.from('categories').insert(toAdd);
+        if (error) {
+            console.error("Error seeding categories:", error);
+            // Fallback: try inserting one by one without 'order' if bulk fails due to schema
+            if (error.message?.includes('column "order"')) {
+                 for (const cat of toAdd) {
+                     const { order, ...rest } = cat;
+                     await supabase.from('categories').insert(rest);
+                 }
+                 alert("Seeded categories (without sorting order due to DB schema).");
+            } else {
+                 alert("Failed to save to database: " + error.message);
+            }
+        } else {
+            alert(`Successfully restored ${toAdd.length} categories.`);
+        }
+    } else {
+        alert("Restored to local session (No DB connection).");
     }
   };
 
@@ -624,8 +671,6 @@ export const StoreProvider: React.FC<{ children: ReactNode }> = ({ children }) =
   const updateCategoryOrder = async (updatedCategories: Category[]) => {
       setCategories(updatedCategories);
       if (supabase) {
-          // Bulk upsert if possible, or individual updates
-          // Supabase upsert requires unique keys.
           const updates = updatedCategories.map(c => ({
               id: c.id,
               name: c.name,
@@ -779,6 +824,7 @@ export const StoreProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         bulkDeleteProducts,
         addProduct,
         addCategory,
+        seedCategories,
         updateCategory,
         deleteCategory,
         toggleCategory,
