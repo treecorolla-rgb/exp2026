@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from 'react';
 import { 
   LayoutDashboard, Package, ShoppingBag, Users, Settings, LogOut, 
@@ -42,7 +43,7 @@ const NormalIcon = () => (
 );
 
 export const AdminDashboard: React.FC = () => {
-  const { logout, products, orders, deleteProduct, updateProduct, addProduct, categories, toggleCategory, addCategory, updateCategory, deleteCategory, updateCategoryOrder, adminProfile, updateAdminProfile, uploadImage, placeOrder, addManualOrder, notificationLogs, updateProductFeaturedOrder, bulkDeleteProducts, paymentMethods, deliveryOptions, addPaymentMethod, removePaymentMethod, togglePaymentMethod, addDeliveryOption, removeDeliveryOption, toggleDeliveryOption, updateOrderStatus } = useStore();
+  const { logout, products, orders, deleteProduct, updateProduct, addProduct, categories, toggleCategory, addCategory, seedCategories, updateCategory, deleteCategory, updateCategoryOrder, adminProfile, updateAdminProfile, uploadImage, placeOrder, addManualOrder, notificationLogs, updateProductFeaturedOrder, bulkDeleteProducts, paymentMethods, deliveryOptions, addPaymentMethod, removePaymentMethod, togglePaymentMethod, addDeliveryOption, removeDeliveryOption, toggleDeliveryOption, updateOrderStatus } = useStore();
   
   const [activeTab, setActiveTab] = useState<'overview' | 'products' | 'categories' | 'orders' | 'settings' | 'profile' | 'notifications' | 'system'>('overview');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -112,6 +113,7 @@ export const AdminDashboard: React.FC = () => {
             categories={categories} 
             onToggle={toggleCategory} 
             onAdd={addCategory} 
+            onSeed={seedCategories}
             onReorder={updateCategoryOrder}
             onUpdate={updateCategory}
             onDelete={deleteCategory}
@@ -328,7 +330,6 @@ const ProductManager = ({ products, categories, onEdit, onDelete, onBulkDelete, 
         
         // Track categories seen in this session to prevent duplicate creation
         const categoryMap = new Map<string, Category>();
-        // Populate with existing categories
         categories.forEach((c: Category) => categoryMap.set(c.name.toLowerCase(), c));
 
         for (let i = 1; i < rows.length; i++) {
@@ -389,11 +390,8 @@ const ProductManager = ({ products, categories, onEdit, onDelete, onBulkDelete, 
                             enabled: true,
                             order: 999 + categoryMap.size
                         };
-                        
-                        // Optimistically update local map immediately to prevent re-creation in next loop
                         categoryMap.set(catKey, newCategory);
                         await addCategory(newCategory);
-                        
                         currentProduct.categoryIds.push(newCatId);
                     }
                 } else {
@@ -710,19 +708,20 @@ const ProductEditor = ({ product, isNew, onSave, onCancel, categories, uploadIma
 };
 
 // --- 4. CATEGORY MANAGER ---
-const CategoryManager = ({ categories, onToggle, onAdd, onReorder, onUpdate, onDelete }: any) => {
+const CategoryManager = ({ categories, onToggle, onAdd, onReorder, onUpdate, onDelete, onSeed }: any) => {
     const [newCat, setNewCat] = useState('');
     const [editingId, setEditingId] = useState<string | null>(null);
     const [editName, setEditName] = useState('');
     
     const handleAdd = () => {
         if(!newCat) return;
+        const slug = newCat.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
         onAdd({
             id: `cat_${Date.now()}`,
             name: newCat,
-            slug: newCat.toLowerCase().replace(/ /g, '-'),
+            slug: slug || `cat-${Date.now()}`,
             enabled: true,
-            order: categories.length
+            order: categories.length + 1
         });
         setNewCat('');
     };
@@ -762,6 +761,12 @@ const CategoryManager = ({ categories, onToggle, onAdd, onReorder, onUpdate, onD
                     onKeyDown={e => e.key === 'Enter' && handleAdd()}
                 />
                 <button onClick={handleAdd} className="bg-primary text-white px-6 rounded font-bold">Add</button>
+                {/* Show Restore button if list is suspiciously empty */}
+                {categories.length < 5 && (
+                    <button onClick={onSeed} className="bg-orange-500 hover:bg-orange-600 text-white px-4 rounded font-bold whitespace-nowrap flex items-center gap-2 shadow-sm transition">
+                       <RefreshCw size={16} /> Restore Defaults
+                    </button>
+                )}
             </div>
             <div className="bg-white rounded-lg shadow-sm border border-slate-200">
                 {categories.map((cat: Category, idx: number) => (
@@ -798,6 +803,7 @@ const CategoryManager = ({ categories, onToggle, onAdd, onReorder, onUpdate, onD
                         </div>
                     </div>
                 ))}
+                {categories.length === 0 && <div className="p-8 text-center text-slate-500">No categories found. Add one or restore defaults.</div>}
             </div>
         </div>
     );
