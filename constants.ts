@@ -1,3 +1,4 @@
+
 import { Category, Product, DeliveryOption, ProductPackage, PaymentMethod } from './types';
 
 export const INITIAL_CATEGORIES: Category[] = [
@@ -41,6 +42,15 @@ export const STANDARD_DELIVERY: DeliveryOption[] = [
   { id: 'del_express', name: 'Express', price: 28.95, minDays: 5, maxDays: 9, icon: 'express', enabled: true },
   { id: 'del_normal', name: 'Normal Mail', price: 13.95, minDays: 14, maxDays: 28, icon: 'normal', enabled: true },
 ];
+
+export const CARRIERS: Record<string, string> = {
+  'DHL': 'https://www.dhl.com/en/express/tracking.html?AWB={TRACKING_NUMBER}',
+  'FedEx': 'https://www.fedex.com/fedextrack/?trknbr={TRACKING_NUMBER}',
+  'UPS': 'https://www.ups.com/track?tracknum={TRACKING_NUMBER}',
+  'USPS': 'https://tools.usps.com/go/TrackConfirmAction?tLabels={TRACKING_NUMBER}',
+  'Royal Mail': 'https://www.royalmail.com/track-your-item#/tracking-results/{TRACKING_NUMBER}',
+  'Other': '#'
+};
 
 // Matching the specific numbers from the user's screenshot
 const VIAGRA_PACKAGES: ProductPackage[] = [

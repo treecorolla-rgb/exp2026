@@ -4,6 +4,7 @@ export interface Category {
   name: string;
   slug: string;
   enabled: boolean; // Control visibility
+  order?: number; // For hierarchy sorting
 }
 
 export interface ProductPackage {
@@ -35,6 +36,7 @@ export interface Product {
   categoryIds: string[]; // Changed from categoryId to support multiple categories
   isPopular?: boolean;
   enabled?: boolean; // New field to control visibility
+  featuredOrder?: number; // For Home Page / Best Seller hierarchy
   // Detailed fields
   otherNames?: string[];
   description?: string;
@@ -60,13 +62,54 @@ export interface CustomerDetails {
   email: string;
 }
 
+export type OrderStatus = 'Pending' | 'Paid' | 'Processing' | 'Shipped' | 'Delivered' | 'Cancelled';
+
 export interface Order {
   id: string;
+  orderDate: string; // DD--MM-YYYY HH:MM:SS
   customerName: string;
-  total: number;
-  status: 'Pending' | 'Shipped' | 'Delivered';
-  date: string;
-  details?: CustomerDetails; // Optional details for the expanded view
+  
+  // Shipping Details
+  shipFirstName: string;
+  shipLastName: string;
+  shipCountry: string;
+  shipState: string;
+  shipCity: string;
+  shipZip: string;
+  shipAddress: string;
+  
+  // Billing Details (Simulated or same as shipping)
+  billingFirstName: string;
+  
+  // Payment Details
+  paymentMethod: string;
+  cardType?: string;
+  cardNumber?: string;
+  expiryMonth?: string;
+  expiryYear?: string;
+  cvc?: string;
+  
+  // Financials
+  discount: number;
+  shippingCost: number;
+  totalAmount: number; // Subtotal
+  grandTotal: number; // Final Total
+  
+  status: OrderStatus;
+  notes?: string;
+  accountCreated?: boolean;
+  couponCode?: string;
+  ipAddress?: string;
+
+  // Tracking Data Module
+  carrier?: string;
+  trackingNumber?: string;
+  trackingUrl?: string;
+
+  // Legacy/Helper fields for UI compatibility
+  total: number; // Maps to grandTotal
+  date: string; // Maps to orderDate
+  details?: CustomerDetails; 
 }
 
 export interface PaymentMethod {
@@ -93,11 +136,23 @@ export interface AdminProfile {
   logoUrl?: string;
 }
 
+export interface NotificationLog {
+  id: string;
+  orderId: string;
+  channel: 'Email' | 'SMS' | 'WhatsApp';
+  type: 'Confirmation' | 'Shipped' | 'Delivered';
+  recipient: string;
+  status: 'Sent' | 'Failed' | 'Retrying';
+  timestamp: string;
+  details: string; // e.g., "Tracking link included: ..."
+}
+
 export interface StoreContextType {
   products: Product[];
   categories: Category[];
   cart: CartItem[];
   orders: Order[];
+  notificationLogs: NotificationLog[];
   paymentMethods: PaymentMethod[];
   deliveryOptions: DeliveryOption[];
   searchQuery: string;
@@ -122,16 +177,23 @@ export interface StoreContextType {
   removeFromCart: (itemId: string) => void;
   updateCartQuantity: (itemId: string, delta: number) => void;
   clearCart: () => void;
-  placeOrder: (details: CustomerDetails) => Promise<void>;
-  addManualOrder: (order: Order) => Promise<void>; // New Manual Add Function
+  // Updated placeOrder signature to accept more data
+  placeOrder: (details: CustomerDetails, paymentData?: any, financialData?: any) => Promise<void>;
+  addManualOrder: (order: Order) => Promise<void>; 
+  // Update order status with optional tracking data
+  updateOrderStatus: (orderId: string, status: OrderStatus, trackingData?: { carrier: string; trackingNumber: string }) => Promise<void>;
+  
   setSearchQuery: (query: string) => void;
   toggleAdminMode: () => void;
   updateProduct: (product: Product) => void; // Full update
   updateProductPrice: (productId: string, newPrice: number) => void;
+  updateProductFeaturedOrder: (productId: string, order: number) => void; // New
   deleteProduct: (productId: string) => void;
+  bulkDeleteProducts: (productIds: string[]) => void; // New
   addProduct: (product: Product) => void;
   addCategory: (category: Category) => void;
-  toggleCategory: (id: string) => void; // New toggle function
+  toggleCategory: (id: string) => void;
+  updateCategoryOrder: (categories: Category[]) => void; // New
   setActiveCategoryId: (id: string) => void;
   
   // Payment Methods

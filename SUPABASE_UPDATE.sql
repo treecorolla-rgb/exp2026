@@ -1,4 +1,5 @@
 
+-- Existing Setup
 -- 1. Store Settings (For your Logo, Phone Numbers, Chat IDs)
 create table if not exists public.store_settings (
   id int primary key default 1, -- Singleton row
@@ -23,7 +24,7 @@ create table if not exists public.payment_methods (
   enabled boolean default true
 );
 
--- 3. Delivery Options (For product details page)
+-- 3. Delivery Options (For product details page)a
 create table if not exists public.delivery_options (
   id text primary key,
   name text not null,
@@ -61,3 +62,20 @@ create policy "Public Access Images" on storage.objects for all using ( bucket_i
 insert into public.store_settings (id, email, us_phone_number, uk_phone_number, show_floating_chat)
 values (1, 'admin@example.com', '+1 (888) 243-74-06', '+44 (800) 041-87-44', true)
 on conflict (id) do nothing;
+
+-- NEW UPDATES FOR HIERARCHY AND SORTING
+-- Add 'order' column to categories if not exists
+do $$ 
+begin
+  if not exists (select 1 from information_schema.columns where table_name = 'categories' and column_name = 'order') then
+    alter table public.categories add column "order" int default 9999;
+  end if;
+end $$;
+
+-- Add 'featured_order' column to products if not exists
+do $$ 
+begin
+  if not exists (select 1 from information_schema.columns where table_name = 'products' and column_name = 'featured_order') then
+    alter table public.products add column featured_order int default 9999;
+  end if;
+end $$;
