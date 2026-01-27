@@ -164,6 +164,7 @@ export interface StoreContextType {
   
   // Device Detection
   isMobile: boolean;
+  isLoading: boolean; 
 
   // Admin Profile
   adminProfile: AdminProfile;
@@ -190,7 +191,7 @@ export interface StoreContextType {
   updateProductFeaturedOrder: (productId: string, order: number) => void; // New
   deleteProduct: (productId: string) => void;
   bulkDeleteProducts: (productIds: string[]) => void; // New
-  addProduct: (product: Product) => void;
+  addProduct: (product: Product) => Promise<void>;
   addCategory: (category: Category) => void;
   seedCategories: () => Promise<void>; // New: Restore defaults
   updateCategory: (id: string, name: string) => void; // New
