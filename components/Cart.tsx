@@ -683,17 +683,10 @@ ${itemsList}
                                  EXPRESS
                               </div>
                            ) : (
-                              <svg width="50" height="28" viewBox="0 0 60 35" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                 <rect x="0" y="8" width="12" height="2" rx="1" fill="#16a34a"/>
-                                 <rect x="3" y="14" width="9" height="2" rx="1" fill="#16a34a"/>
-                                 <rect x="1" y="20" width="11" height="2" rx="1" fill="#16a34a"/>
-                                 <path d="M18 5H42V25H18V5Z" fill="#16a34a"/>
-                                 <path d="M44 12H52L56 25H42V12Z" fill="#16a34a"/>
-                                 <circle cx="26" cy="28" r="5" fill="#16a34a"/>
-                                 <circle cx="26" cy="28" r="2" fill="white"/>
-                                 <circle cx="50" cy="28" r="5" fill="#16a34a"/>
-                                 <circle cx="50" cy="28" r="2" fill="white"/>
-                              </svg>
+                              <div className="bg-green-600 text-white text-[10px] font-bold px-2 py-1.5 rounded flex items-center gap-1">
+                                 <Truck size={14} />
+                                 NORMAL
+                              </div>
                            )}
                         </div>
                         {/* Flag + Price */}

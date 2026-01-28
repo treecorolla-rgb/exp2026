@@ -18,19 +18,16 @@ const ExpressIcon = () => (
 );
 
 const NormalIcon = () => (
-  <svg width="80" height="40" viewBox="0 0 100 50" fill="none" xmlns="http://www.w3.org/2000/svg" className="transform -ml-2">
-    <g>
-      <rect x="0" y="12" width="20" height="3" fill="#16a34a" rx="1.5"/>
-      <rect x="5" y="22" width="15" height="3" fill="#16a34a" rx="1.5"/>
-      <rect x="2" y="32" width="18" height="3" fill="#16a34a" rx="1.5"/>
-      <path d="M30 8H75V35H30V8Z" fill="#16a34a"/>
-      <path d="M77 18H90L95 35H75V18Z" fill="#16a34a"/>
-      <circle cx="45" cy="40" r="6" fill="#16a34a"/>
-      <circle cx="85" cy="40" r="6" fill="#16a34a"/>
-      <circle cx="45" cy="40" r="2" fill="white"/>
-      <circle cx="85" cy="40" r="2" fill="white"/>
-    </g>
-  </svg>
+  <div className="bg-green-600 text-white text-[10px] font-bold px-2 py-1.5 rounded flex items-center gap-1">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M5 18H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l3 3h7a2 2 0 0 1 2 2v1"></path>
+      <circle cx="17" cy="17" r="3"></circle>
+      <path d="M12 17h-7"></path>
+      <circle cx="5" cy="17" r="3"></circle>
+      <path d="M14 8V6a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v11a1 1 0 0 1-1 1h-1"></path>
+    </svg>
+    NORMAL
+  </div>
 );
 
 export const ProductDetails: React.FC = () => {
