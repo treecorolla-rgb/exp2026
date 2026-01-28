@@ -17,7 +17,19 @@ import { FloatingChat } from './components/FloatingChat';
 import { MobileHeader, MobileBottomNav } from './components/MobileLayout';
 
 function AppContent() {
-  const { currentView, isMobile } = useStore();
+  const { currentView, isMobile, isLoading } = useStore();
+
+  // Show loading screen while fetching data from Supabase
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-white flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-slate-500">Loading...</p>
+        </div>
+      </div>
+    );
+  }
 
   // If in Admin Dashboard view, render the full screen dashboard
   if (currentView === 'admin_dashboard') {
