@@ -84,7 +84,7 @@ export const Footer: React.FC = () => {
           </div>
 
           <div className="text-slate-500 leading-relaxed space-y-1 text-[13px]">
-             <p>© 2001-{new Date().getFullYear()} My Test Store Ltd.</p>
+             <p>© 2001-{new Date().getFullYear()}AirMail Chemist .</p>
              <p>All rights reserved. Licensed online architectural store.</p>
              <p>International license number 79751731 issued 01 aug 2021</p>
           </div>

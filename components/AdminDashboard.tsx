@@ -131,6 +131,8 @@ export const AdminDashboard: React.FC = () => {
            onAddDelivery={addDeliveryOption}
            onRemoveDelivery={removeDeliveryOption}
            onToggleDelivery={toggleDeliveryOption}
+           adminProfile={adminProfile}
+           onUpdateProfile={updateAdminProfile}
         />
       );
       case 'profile': return <ProfileManager profile={adminProfile} onSave={updateAdminProfile} />;
@@ -1010,13 +1012,32 @@ const NotificationLogView = ({ logs }: any) => {
 };
 
 // --- 7. SETTINGS MANAGER ---
-const SettingsManager = ({ paymentMethods, deliveryOptions, onAddPayment, onRemovePayment, onTogglePayment, onAddDelivery, onRemoveDelivery, onToggleDelivery }: any) => {
-    // Basic implementation for managing these lists
+const SettingsManager = ({ paymentMethods, deliveryOptions, onAddPayment, onRemovePayment, onTogglePayment, onAddDelivery, onRemoveDelivery, onToggleDelivery, adminProfile, onUpdateProfile }: any) => {
     const [newPay, setNewPay] = useState({ name: '', iconUrl: '' });
     const [newDel, setNewDel] = useState({ name: '', price: 0, minDays: 5, maxDays: 10, icon: 'normal' });
+    const [walletAddresses, setWalletAddresses] = useState({
+        bitcoinWalletAddress: adminProfile?.bitcoinWalletAddress || '',
+        usdtWalletAddress: adminProfile?.usdtWalletAddress || ''
+    });
+
+    useEffect(() => {
+        setWalletAddresses({
+            bitcoinWalletAddress: adminProfile?.bitcoinWalletAddress || '',
+            usdtWalletAddress: adminProfile?.usdtWalletAddress || ''
+        });
+    }, [adminProfile]);
+
+    const handleSaveWallets = () => {
+        onUpdateProfile({
+            ...adminProfile,
+            bitcoinWalletAddress: walletAddresses.bitcoinWalletAddress,
+            usdtWalletAddress: walletAddresses.usdtWalletAddress
+        });
+        alert('Wallet addresses saved!');
+    };
 
     return (
-        <div className="p-8 grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <div className="p-8 space-y-8">
             {/* Payment Methods */}
             <div>
                 <h3 className="text-xl font-bold text-slate-800 mb-4">Payment Methods</h3>
@@ -1091,6 +1112,51 @@ const SettingsManager = ({ paymentMethods, deliveryOptions, onAddPayment, onRemo
                                 setNewDel({ name: '', price: 0, minDays: 5, maxDays: 10, icon: 'normal' });
                             }
                         }} className="w-full bg-slate-800 text-white text-sm py-2 rounded font-bold">Add Delivery Option</button>
+                    </div>
+                </div>
+            </div>
+
+            {/* Crypto Wallet Addresses */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <div className="lg:col-span-2">
+                    <h3 className="text-xl font-bold text-slate-800 mb-4">Cryptocurrency Payment Settings</h3>
+                    <div className="bg-white rounded-lg border border-slate-200 shadow-sm p-6">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div className="space-y-2">
+                                <label className="block text-sm font-bold text-slate-700">
+                                    Bitcoin (BTC) Wallet Address
+                                </label>
+                                <input
+                                    type="text"
+                                    placeholder="Enter your Bitcoin wallet address"
+                                    className="w-full border border-slate-300 rounded p-3 text-sm font-mono"
+                                    value={walletAddresses.bitcoinWalletAddress}
+                                    onChange={e => setWalletAddresses({...walletAddresses, bitcoinWalletAddress: e.target.value})}
+                                />
+                                <p className="text-xs text-slate-500">Customers will send BTC payments to this address</p>
+                            </div>
+                            <div className="space-y-2">
+                                <label className="block text-sm font-bold text-slate-700">
+                                    USDT (Tether) Wallet Address
+                                </label>
+                                <input
+                                    type="text"
+                                    placeholder="Enter your USDT wallet address (TRC-20/ERC-20)"
+                                    className="w-full border border-slate-300 rounded p-3 text-sm font-mono"
+                                    value={walletAddresses.usdtWalletAddress}
+                                    onChange={e => setWalletAddresses({...walletAddresses, usdtWalletAddress: e.target.value})}
+                                />
+                                <p className="text-xs text-slate-500">Customers will send USDT payments to this address</p>
+                            </div>
+                        </div>
+                        <div className="mt-6 pt-4 border-t border-slate-200">
+                            <button
+                                onClick={handleSaveWallets}
+                                className="bg-primary hover:bg-blue-600 text-white px-6 py-2.5 rounded font-bold text-sm transition"
+                            >
+                                Save Wallet Addresses
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>

@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Trash2, ShoppingBag, ArrowRight, Minus, Plus, ShieldCheck, CreditCard, Lock, ChevronLeft, CheckCircle, ChevronDown, Check, AlertCircle, Truck } from 'lucide-react';
+import { Trash2, ShoppingBag, ArrowRight, Minus, Plus, ShieldCheck, CreditCard, Lock, ChevronLeft, CheckCircle, ChevronDown, Check, AlertCircle, Truck, Copy, RefreshCw } from 'lucide-react';
 import { useStore } from '../context/StoreContext';
 import { CustomerDetails } from '../types';
+import { QRCodeSVG } from 'qrcode.react';
 
 // Fallback credentials if not set in Admin Profile
 const DEFAULT_TELEGRAM_BOT_TOKEN = 'YOUR_BOT_TOKEN_HERE'; 
@@ -100,6 +101,11 @@ export const Cart: React.FC = () => {
     cardType: 'Visa' // Default
   });
 
+  // Crypto payment state
+  const [cryptoRates, setCryptoRates] = useState<{ btc: number; usdt: number }>({ btc: 0, usdt: 1 });
+  const [cryptoLoading, setCryptoLoading] = useState(false);
+  const [copiedAddress, setCopiedAddress] = useState(false);
+
   // IP-based country detection
   const [userCountryCode, setUserCountryCode] = useState<string>('in');
   
@@ -153,11 +159,43 @@ export const Cart: React.FC = () => {
   // Ensure default method is valid
   useEffect(() => {
       if (paymentMethods.length > 0 && !paymentMethods.find(pm => pm.name === paymentData.method)) {
-          // If "Credit Card" isn't explicit in list, default to first enabled or "Credit Card" generic
           const first = paymentMethods.find(pm => pm.enabled);
           if (first) setPaymentData(prev => ({ ...prev, method: first.name }));
       }
   }, [paymentMethods]);
+
+  // Fetch crypto rates when Bitcoin or USDT is selected
+  const fetchCryptoRates = async () => {
+    setCryptoLoading(true);
+    try {
+      const response = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,tether&vs_currencies=usd');
+      const data = await response.json();
+      setCryptoRates({
+        btc: data.bitcoin?.usd || 0,
+        usdt: data.tether?.usd || 1
+      });
+    } catch (error) {
+      console.error('Failed to fetch crypto rates:', error);
+      setCryptoRates({ btc: 65000, usdt: 1 });
+    }
+    setCryptoLoading(false);
+  };
+
+  useEffect(() => {
+    const isCrypto = paymentData.method.toLowerCase().includes('bitcoin') || 
+                     paymentData.method.toLowerCase().includes('btc') ||
+                     paymentData.method.toLowerCase().includes('usdt') ||
+                     paymentData.method.toLowerCase().includes('tether');
+    if (isCrypto && step === 'checkout') {
+      fetchCryptoRates();
+    }
+  }, [paymentData.method, step]);
+
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text);
+    setCopiedAddress(true);
+    setTimeout(() => setCopiedAddress(false), 2000);
+  };
 
   const subtotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
   // Logic: Free shipping if subtotal > 200 USD
@@ -177,6 +215,21 @@ export const Cart: React.FC = () => {
   const amountForFreeShipping = Math.max(0, freeShippingThreshold - subtotal);
   
   const total = subtotal + shipping - discountAmount;
+
+  // Calculate crypto amounts with 8 decimal places
+  const isBitcoinPayment = paymentData.method.toLowerCase().includes('bitcoin') || paymentData.method.toLowerCase().includes('btc');
+  const isUSDTPayment = paymentData.method.toLowerCase().includes('usdt') || paymentData.method.toLowerCase().includes('tether');
+  const isCryptoPayment = isBitcoinPayment || isUSDTPayment;
+  
+  const cryptoAmount = isBitcoinPayment && cryptoRates.btc > 0 
+    ? (total / cryptoRates.btc).toFixed(8) 
+    : isUSDTPayment 
+    ? total.toFixed(2) 
+    : '0';
+  
+  const walletAddress = isBitcoinPayment 
+    ? (adminProfile?.bitcoinWalletAddress || '') 
+    : (adminProfile?.usdtWalletAddress || '');
 
   const handleApplyCoupon = () => {
       // Simple logic for demo: code 'SAVE10' gives 10% off
@@ -226,7 +279,19 @@ export const Cart: React.FC = () => {
   const selectedCountry = getCountryByName(formData.country) || COUNTRIES.find(c => c.code === 'in') || COUNTRIES[0];
 
   const handlePaymentChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    setPaymentData(prev => ({ ...prev, [e.target.name]: e.target.value }));
+    const { name, value } = e.target;
+    
+    if (name === 'expiry') {
+      let formatted = value.replace(/\D/g, '');
+      if (formatted.length > 4) formatted = formatted.slice(0, 4);
+      if (formatted.length >= 2) {
+        formatted = formatted.slice(0, 2) + '/' + formatted.slice(2);
+      }
+      setPaymentData(prev => ({ ...prev, expiry: formatted }));
+      return;
+    }
+    
+    setPaymentData(prev => ({ ...prev, [name]: value }));
   };
 
   const handleCompleteOrder = async (e: React.FormEvent) => {
@@ -612,6 +677,101 @@ ${itemsList}
                               />
                               <Lock className="absolute right-3 top-3.5 text-slate-300" size={16} />
                            </div>
+                        </div>
+                    ) : isCryptoPayment ? (
+                        <div className="bg-gradient-to-br from-orange-50 to-amber-50 border border-orange-200 rounded-lg p-5 animate-in slide-in-from-top-2">
+                            <div className="text-center mb-4">
+                                <h4 className="font-bold text-slate-800 text-lg mb-1">
+                                    Pay with {isBitcoinPayment ? 'Bitcoin (BTC)' : 'USDT (Tether)'}
+                                </h4>
+                                <p className="text-sm text-slate-600">Send the exact amount to the wallet address below</p>
+                            </div>
+                            
+                            {cryptoLoading ? (
+                                <div className="flex items-center justify-center py-8">
+                                    <RefreshCw className="animate-spin text-orange-500" size={24} />
+                                    <span className="ml-2 text-slate-600">Fetching live rates...</span>
+                                </div>
+                            ) : !walletAddress ? (
+                                <div className="bg-red-50 border border-red-200 rounded p-4 text-center">
+                                    <AlertCircle className="text-red-500 mx-auto mb-2" size={24} />
+                                    <p className="text-red-700 font-medium">Wallet address not configured</p>
+                                    <p className="text-sm text-red-600">Please contact support to complete payment</p>
+                                </div>
+                            ) : (
+                                <>
+                                    {/* Amount Display */}
+                                    <div className="bg-white rounded-lg p-4 mb-4 border border-orange-200">
+                                        <div className="text-center">
+                                            <span className="text-sm text-slate-500 block mb-1">Amount to Send</span>
+                                            <span className="text-2xl font-bold text-orange-600 font-mono">
+                                                {cryptoAmount} {isBitcoinPayment ? 'BTC' : 'USDT'}
+                                            </span>
+                                            <span className="text-sm text-slate-500 block mt-1">
+                                                = ${total.toFixed(2)} USD
+                                                {isBitcoinPayment && cryptoRates.btc > 0 && (
+                                                    <span className="ml-2 text-xs">(1 BTC = ${cryptoRates.btc.toLocaleString()})</span>
+                                                )}
+                                            </span>
+                                        </div>
+                                    </div>
+
+                                    {/* QR Code */}
+                                    <div className="flex justify-center mb-4">
+                                        <div className="bg-white p-4 rounded-lg border border-slate-200 shadow-sm">
+                                            <QRCodeSVG 
+                                                value={isBitcoinPayment 
+                                                    ? `bitcoin:${walletAddress}?amount=${cryptoAmount}`
+                                                    : walletAddress
+                                                }
+                                                size={160}
+                                                level="M"
+                                                includeMargin={true}
+                                            />
+                                        </div>
+                                    </div>
+
+                                    {/* Wallet Address */}
+                                    <div className="mb-4">
+                                        <label className="text-xs font-bold text-slate-500 uppercase mb-2 block text-center">
+                                            Wallet Address
+                                        </label>
+                                        <div className="flex items-center gap-2 bg-white rounded border border-slate-200 p-3">
+                                            <span className="flex-1 font-mono text-xs text-slate-700 break-all">
+                                                {walletAddress}
+                                            </span>
+                                            <button
+                                                type="button"
+                                                onClick={() => copyToClipboard(walletAddress)}
+                                                className={`shrink-0 p-2 rounded transition ${copiedAddress ? 'bg-green-100 text-green-600' : 'bg-slate-100 hover:bg-slate-200 text-slate-600'}`}
+                                            >
+                                                {copiedAddress ? <Check size={16} /> : <Copy size={16} />}
+                                            </button>
+                                        </div>
+                                        {copiedAddress && (
+                                            <p className="text-xs text-green-600 text-center mt-1 font-medium">Address copied!</p>
+                                        )}
+                                    </div>
+
+                                    {/* Copy Amount Button */}
+                                    <button
+                                        type="button"
+                                        onClick={() => copyToClipboard(cryptoAmount)}
+                                        className="w-full bg-orange-100 hover:bg-orange-200 text-orange-700 py-2 rounded font-medium text-sm transition flex items-center justify-center gap-2"
+                                    >
+                                        <Copy size={14} /> Copy Exact Amount
+                                    </button>
+
+                                    {/* Refresh Rate */}
+                                    <button
+                                        type="button"
+                                        onClick={fetchCryptoRates}
+                                        className="w-full mt-2 text-slate-500 hover:text-slate-700 py-2 text-xs font-medium flex items-center justify-center gap-1"
+                                    >
+                                        <RefreshCw size={12} /> Refresh Rate
+                                    </button>
+                                </>
+                            )}
                         </div>
                     ) : (
                         <div className="bg-blue-50 border border-blue-200 rounded p-4 text-slate-700 text-sm animate-in slide-in-from-top-2">

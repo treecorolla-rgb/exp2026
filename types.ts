@@ -135,6 +135,9 @@ export interface AdminProfile {
   showFloatingChat: boolean;
   // Visuals
   logoUrl?: string;
+  // Crypto Wallet Addresses
+  bitcoinWalletAddress?: string;
+  usdtWalletAddress?: string;
 }
 
 export interface NotificationLog {

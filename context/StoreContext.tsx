@@ -30,7 +30,9 @@ export const StoreProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         receiveEmailNotifications: true,
         receiveTelegramNotifications: false,
         showFloatingChat: true,
-        logoUrl: ''
+        logoUrl: '',
+        bitcoinWalletAddress: '',
+        usdtWalletAddress: ''
   });
 
   // --- SUPABASE FETCHING ---
@@ -156,7 +158,9 @@ export const StoreProvider: React.FC<{ children: ReactNode }> = ({ children }) =
               whatsappNumber: s.whatsapp_number,
               telegramUsername: s.telegram_username,
               showFloatingChat: s.show_floating_chat !== undefined ? s.show_floating_chat : true,
-              logoUrl: s.logo_url
+              logoUrl: s.logo_url,
+              bitcoinWalletAddress: s.bitcoin_wallet_address || '',
+              usdtWalletAddress: s.usdt_wallet_address || ''
            });
         }
 
@@ -815,7 +819,9 @@ export const StoreProvider: React.FC<{ children: ReactNode }> = ({ children }) =
             whatsapp_number: profile.whatsappNumber,
             telegram_username: profile.telegramUsername,
             show_floating_chat: profile.showFloatingChat,
-            logo_url: profile.logoUrl
+            logo_url: profile.logoUrl,
+            bitcoin_wallet_address: profile.bitcoinWalletAddress,
+            usdt_wallet_address: profile.usdtWalletAddress
         };
         // Upsert
         await supabase.from('store_settings').upsert(payload);
