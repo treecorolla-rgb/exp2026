@@ -230,6 +230,7 @@ export const Cart: React.FC = () => {
   const walletAddress = isBitcoinPayment 
     ? (adminProfile?.bitcoinWalletAddress || '') 
     : (adminProfile?.usdtWalletAddress || '');
+  
 
   const handleApplyCoupon = () => {
       // Simple logic for demo: code 'SAVE10' gives 10% off
