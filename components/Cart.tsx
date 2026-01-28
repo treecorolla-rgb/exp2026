@@ -42,6 +42,24 @@ export const Cart: React.FC = () => {
     cardType: 'Visa' // Default
   });
 
+  // IP-based country detection
+  const [userCountryCode, setUserCountryCode] = useState<string>('in');
+  
+  useEffect(() => {
+    const detectCountry = async () => {
+      try {
+        const res = await fetch('https://ipapi.co/json/');
+        const data = await res.json();
+        if (data.country_code) {
+          setUserCountryCode(data.country_code.toLowerCase());
+        }
+      } catch (error) {
+        console.log('Could not detect country, using default');
+      }
+    };
+    detectCountry();
+  }, []);
+
   // Ensure default method is valid
   useEffect(() => {
       if (paymentMethods.length > 0 && !paymentMethods.find(pm => pm.name === paymentData.method)) {
@@ -622,6 +640,11 @@ ${itemsList}
             </div>
          ) : (
             <div className="divide-y divide-slate-200 border border-slate-200 rounded-lg overflow-hidden">
+               {/* Free shipping hint */}
+               <div className="bg-green-50 px-4 py-2 flex items-center gap-2 text-sm">
+                  <Truck size={16} className="text-green-600" />
+                  <span className="text-green-700">Free shipping on orders over <span className="font-bold">$200.00</span></span>
+               </div>
                {enabledDeliveryOptions.map(option => {
                   // Calculate estimated delivery date
                   const today = new Date();
@@ -653,22 +676,32 @@ ${itemsList}
                            className="w-4 h-4 text-primary"
                         />
                         {/* Logo */}
-                        <div className="w-14 h-10 flex items-center justify-center shrink-0">
+                        <div className="w-20 flex items-center justify-center shrink-0">
                            {isExpress ? (
-                              <div className="bg-red-500 text-white text-[10px] font-bold px-2 py-1 rounded flex items-center gap-1">
+                              <div className="bg-red-500 text-white text-[10px] font-bold px-2 py-1.5 rounded flex items-center gap-1">
                                  <Truck size={14} />
                                  EXPRESS
                               </div>
                            ) : (
-                              <Truck size={28} className="text-slate-600" />
+                              <svg width="50" height="28" viewBox="0 0 60 35" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                 <rect x="0" y="8" width="12" height="2" rx="1" fill="#16a34a"/>
+                                 <rect x="3" y="14" width="9" height="2" rx="1" fill="#16a34a"/>
+                                 <rect x="1" y="20" width="11" height="2" rx="1" fill="#16a34a"/>
+                                 <path d="M18 5H42V25H18V5Z" fill="#16a34a"/>
+                                 <path d="M44 12H52L56 25H42V12Z" fill="#16a34a"/>
+                                 <circle cx="26" cy="28" r="5" fill="#16a34a"/>
+                                 <circle cx="26" cy="28" r="2" fill="white"/>
+                                 <circle cx="50" cy="28" r="5" fill="#16a34a"/>
+                                 <circle cx="50" cy="28" r="2" fill="white"/>
+                              </svg>
                            )}
                         </div>
                         {/* Flag + Price */}
                         <div className="flex items-center gap-2 min-w-[100px]">
                            <img 
-                              src={`https://flagcdn.com/w40/${countryFlags[formData.country] || 'in'}.png`} 
+                              src={`https://flagcdn.com/w40/${userCountryCode || 'in'}.png`} 
                               alt="Flag" 
-                              className="w-5 h-3.5 object-cover rounded-[1px] shadow-sm"
+                              className="w-5 h-3.5 object-cover rounded-[1px] shadow-sm border border-slate-200"
                            />
                            <span className="font-bold text-slate-800">{formatPrice(option.price)}</span>
                         </div>

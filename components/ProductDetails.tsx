@@ -19,14 +19,14 @@ const ExpressIcon = () => (
 
 const NormalIcon = () => (
   <svg width="80" height="40" viewBox="0 0 100 50" fill="none" xmlns="http://www.w3.org/2000/svg" className="transform -ml-2">
-    <g opacity="0.9">
-      <rect x="0" y="12" width="20" height="3" fill="#334155" rx="1.5"/>
-      <rect x="5" y="22" width="15" height="3" fill="#334155" rx="1.5"/>
-      <rect x="2" y="32" width="18" height="3" fill="#334155" rx="1.5"/>
-      <path d="M30 8H75V35H30V8Z" fill="#334155"/>
-      <path d="M77 18H90L95 35H75V18Z" fill="#334155"/>
-      <circle cx="45" cy="40" r="6" fill="#334155"/>
-      <circle cx="85" cy="40" r="6" fill="#334155"/>
+    <g>
+      <rect x="0" y="12" width="20" height="3" fill="#16a34a" rx="1.5"/>
+      <rect x="5" y="22" width="15" height="3" fill="#16a34a" rx="1.5"/>
+      <rect x="2" y="32" width="18" height="3" fill="#16a34a" rx="1.5"/>
+      <path d="M30 8H75V35H30V8Z" fill="#16a34a"/>
+      <path d="M77 18H90L95 35H75V18Z" fill="#16a34a"/>
+      <circle cx="45" cy="40" r="6" fill="#16a34a"/>
+      <circle cx="85" cy="40" r="6" fill="#16a34a"/>
       <circle cx="45" cy="40" r="2" fill="white"/>
       <circle cx="85" cy="40" r="2" fill="white"/>
     </g>
@@ -165,6 +165,24 @@ const ProductDetailsMobile: React.FC = () => {
 const ProductDetailsDesktop: React.FC = () => {
   const { selectedProduct: product, addToCart, isAdminMode, paymentMethods, deliveryOptions, formatPrice } = useStore();
   const activeDeliveryOptions = deliveryOptions.filter(opt => opt.enabled);
+  
+  // IP-based country detection
+  const [userCountryCode, setUserCountryCode] = useState<string>('in');
+  
+  useEffect(() => {
+    const detectCountry = async () => {
+      try {
+        const res = await fetch('https://ipapi.co/json/');
+        const data = await res.json();
+        if (data.country_code) {
+          setUserCountryCode(data.country_code.toLowerCase());
+        }
+      } catch (error) {
+        console.log('Could not detect country, using default');
+      }
+    };
+    detectCountry();
+  }, []);
 
   if (!product) return null;
 
@@ -248,10 +266,23 @@ const ProductDetailsDesktop: React.FC = () => {
         <div className="mb-10">
            <h3 className="text-xl font-bold text-slate-800 mb-4 tracking-tight">Delivery Options</h3>
            <div className="border border-slate-200 rounded-lg overflow-hidden bg-white shadow-sm">
+             {/* Free shipping hint */}
+             <div className="bg-green-50 px-4 py-2 flex items-center gap-2 text-sm border-b border-slate-100">
+                <svg width="20" height="14" viewBox="0 0 60 35" fill="none" xmlns="http://www.w3.org/2000/svg">
+                   <path d="M10 5H35V22H10V5Z" fill="#16a34a"/>
+                   <path d="M37 10H48L52 22H35V10Z" fill="#16a34a"/>
+                   <circle cx="18" cy="25" r="4" fill="#16a34a"/>
+                   <circle cx="44" cy="25" r="4" fill="#16a34a"/>
+                </svg>
+                <span className="text-green-700">Free shipping on orders over <span className="font-bold">$200.00</span></span>
+             </div>
              {activeDeliveryOptions.map((opt, idx) => (
                <div key={opt.id} className={`flex flex-col sm:flex-row sm:items-center p-4 gap-4 ${idx !== activeDeliveryOptions.length -1 ? 'border-b border-slate-100' : ''}`}>
                   <div className="w-24 flex items-center justify-center">{opt.icon === 'express' ? <ExpressIcon /> : <NormalIcon />}</div>
-                  <div className="flex items-center gap-2 w-28"><img src="https://flagcdn.com/w20/in.png" alt="Origin" className="w-5 h-3.5 border border-slate-200 shadow-sm" /><span className="font-extrabold text-slate-800 text-base">{formatPrice(opt.price)}</span></div>
+                  <div className="flex items-center gap-2 w-28">
+                     <img src={`https://flagcdn.com/w20/${userCountryCode}.png`} alt="Origin" className="w-5 h-3.5 border border-slate-200 shadow-sm" />
+                     <span className="font-extrabold text-slate-800 text-base">{formatPrice(opt.price)}</span>
+                  </div>
                   <div className="flex-1 text-[14px] text-slate-600 font-medium">Delivery period: <span className="font-bold text-slate-800">{opt.minDays}-{opt.maxDays} Days</span></div>
                   <div className="text-[12px] text-slate-500 text-right font-medium">Approximate delivery time <br/><span className="text-slate-800 font-bold">{getDeliveryDate(opt.minDays)}</span></div>
                </div>
