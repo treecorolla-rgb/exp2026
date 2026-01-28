@@ -676,16 +676,16 @@ ${itemsList}
                            className="w-4 h-4 text-primary"
                         />
                         {/* Logo */}
-                        <div className="w-20 flex items-center justify-center shrink-0">
+                        <div className="w-24 flex items-center justify-start shrink-0">
                            {isExpress ? (
-                              <div className="bg-red-500 text-white text-[10px] font-bold px-2 py-1.5 rounded flex items-center gap-1">
-                                 <Truck size={14} />
-                                 EXPRESS
+                              <div className="flex items-center gap-1">
+                                 <Truck size={24} className="text-red-500" />
+                                 <span className="bg-red-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded">EXPRESS</span>
                               </div>
                            ) : (
-                              <div className="bg-green-600 text-white text-[10px] font-bold px-2 py-1.5 rounded flex items-center gap-1">
-                                 <Truck size={14} />
-                                 NORMAL
+                              <div className="flex items-center gap-1">
+                                 <Truck size={24} className="text-green-600" />
+                                 <span className="bg-green-600 text-white text-[9px] font-bold px-1.5 py-0.5 rounded">NORMAL</span>
                               </div>
                            )}
                         </div>

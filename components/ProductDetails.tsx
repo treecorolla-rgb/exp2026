@@ -4,29 +4,26 @@ import { useStore } from '../context/StoreContext';
 import { ProductPackage } from '../types';
 
 const ExpressIcon = () => (
-  <svg width="80" height="40" viewBox="0 0 100 50" fill="none" xmlns="http://www.w3.org/2000/svg" className="transform -ml-2">
-    <path d="M15 8H70V35H15V8Z" fill="#DC2626"/> 
-    <path d="M72 18H88L95 35H70V18Z" fill="#DC2626"/>
-    <circle cx="35" cy="40" r="7" fill="#DC2626"/>
-    <circle cx="35" cy="40" r="3" fill="white"/>
-    <circle cx="82" cy="40" r="7" fill="#DC2626"/>
-    <circle cx="82" cy="40" r="3" fill="white"/>
-    <rect x="0" y="15" width="10" height="3" fill="#DC2626" rx="1.5"/>
-    <rect x="2" y="25" width="8" height="3" fill="#DC2626" rx="1.5"/>
-    <text x="18" y="28" fill="white" fontSize="13" fontWeight="900" fontStyle="italic" fontFamily="sans-serif" letterSpacing="0.5">EXPRESS</text>
-  </svg>
+  <div className="flex items-center gap-1">
+    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#DC2626" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M1 3h15v13H1z"></path>
+      <path d="M16 8h4l3 5v5h-7V8z"></path>
+      <circle cx="5.5" cy="18.5" r="2.5"></circle>
+      <circle cx="18.5" cy="18.5" r="2.5"></circle>
+    </svg>
+    <span className="bg-red-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded">EXPRESS</span>
+  </div>
 );
 
 const NormalIcon = () => (
-  <div className="bg-green-600 text-white text-[10px] font-bold px-2 py-1.5 rounded flex items-center gap-1">
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M5 18H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l3 3h7a2 2 0 0 1 2 2v1"></path>
-      <circle cx="17" cy="17" r="3"></circle>
-      <path d="M12 17h-7"></path>
-      <circle cx="5" cy="17" r="3"></circle>
-      <path d="M14 8V6a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v11a1 1 0 0 1-1 1h-1"></path>
+  <div className="flex items-center gap-1">
+    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#16a34a" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M1 3h15v13H1z"></path>
+      <path d="M16 8h4l3 5v5h-7V8z"></path>
+      <circle cx="5.5" cy="18.5" r="2.5"></circle>
+      <circle cx="18.5" cy="18.5" r="2.5"></circle>
     </svg>
-    NORMAL
+    <span className="bg-green-600 text-white text-[9px] font-bold px-1.5 py-0.5 rounded">NORMAL</span>
   </div>
 );
 
