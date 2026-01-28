@@ -43,7 +43,7 @@ const NormalIcon = () => (
 );
 
 export const AdminDashboard: React.FC = () => {
-  const { logout, products, orders, deleteProduct, updateProduct, addProduct, categories, toggleCategory, addCategory, seedCategories, updateCategory, deleteCategory, updateCategoryOrder, adminProfile, updateAdminProfile, uploadImage, placeOrder, addManualOrder, notificationLogs, updateProductFeaturedOrder, bulkDeleteProducts, paymentMethods, deliveryOptions, addPaymentMethod, removePaymentMethod, togglePaymentMethod, addDeliveryOption, removeDeliveryOption, toggleDeliveryOption, updateOrderStatus } = useStore();
+  const { logout, products, orders, deleteProduct, updateProduct, addProduct, categories, toggleCategory, addCategory, seedCategories, updateCategory, deleteCategory, updateCategoryOrder, adminProfile, updateAdminProfile, uploadImage, placeOrder, addManualOrder, notificationLogs, updateProductFeaturedOrder, bulkDeleteProducts, paymentMethods, deliveryOptions, addPaymentMethod, removePaymentMethod, togglePaymentMethod, updatePaymentMethodOrder, addDeliveryOption, removeDeliveryOption, toggleDeliveryOption, updateOrderStatus } = useStore();
   
   const [activeTab, setActiveTab] = useState<'overview' | 'products' | 'categories' | 'orders' | 'settings' | 'profile' | 'notifications' | 'system'>('overview');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -128,6 +128,7 @@ export const AdminDashboard: React.FC = () => {
            onAddPayment={addPaymentMethod}
            onRemovePayment={removePaymentMethod}
            onTogglePayment={togglePaymentMethod}
+           onUpdatePaymentOrder={updatePaymentMethodOrder}
            onAddDelivery={addDeliveryOption}
            onRemoveDelivery={removeDeliveryOption}
            onToggleDelivery={toggleDeliveryOption}
@@ -1012,7 +1013,7 @@ const NotificationLogView = ({ logs }: any) => {
 };
 
 // --- 7. SETTINGS MANAGER ---
-const SettingsManager = ({ paymentMethods, deliveryOptions, onAddPayment, onRemovePayment, onTogglePayment, onAddDelivery, onRemoveDelivery, onToggleDelivery, adminProfile, onUpdateProfile }: any) => {
+const SettingsManager = ({ paymentMethods, deliveryOptions, onAddPayment, onRemovePayment, onTogglePayment, onUpdatePaymentOrder, onAddDelivery, onRemoveDelivery, onToggleDelivery, adminProfile, onUpdateProfile }: any) => {
     const [newPay, setNewPay] = useState({ name: '', iconUrl: '' });
     const [newDel, setNewDel] = useState({ name: '', price: 0, minDays: 5, maxDays: 10, icon: 'normal' });
     const [walletAddresses, setWalletAddresses] = useState({
@@ -1043,9 +1044,25 @@ const SettingsManager = ({ paymentMethods, deliveryOptions, onAddPayment, onRemo
                 <h3 className="text-xl font-bold text-slate-800 mb-4">Payment Methods</h3>
                 <div className="bg-white rounded-lg border border-slate-200 shadow-sm p-4 mb-4">
                     <div className="space-y-2 mb-4">
-                        {paymentMethods.map((pm: PaymentMethod) => (
+                        {[...paymentMethods].sort((a: PaymentMethod, b: PaymentMethod) => (a.sortOrder || 0) - (b.sortOrder || 0)).map((pm: PaymentMethod, index: number) => (
                             <div key={pm.id} className="flex items-center justify-between bg-slate-50 p-2 rounded border border-slate-100">
                                 <div className="flex items-center gap-3">
+                                    <div className="flex flex-col gap-0.5">
+                                        <button 
+                                            onClick={() => onUpdatePaymentOrder(pm.id, 'up')} 
+                                            disabled={index === 0}
+                                            className={`p-0.5 rounded ${index === 0 ? 'text-slate-300' : 'text-slate-500 hover:bg-slate-200'}`}
+                                        >
+                                            <ArrowUp size={12}/>
+                                        </button>
+                                        <button 
+                                            onClick={() => onUpdatePaymentOrder(pm.id, 'down')} 
+                                            disabled={index === paymentMethods.length - 1}
+                                            className={`p-0.5 rounded ${index === paymentMethods.length - 1 ? 'text-slate-300' : 'text-slate-500 hover:bg-slate-200'}`}
+                                        >
+                                            <ArrowDown size={12}/>
+                                        </button>
+                                    </div>
                                     <img src={pm.iconUrl} className="h-6 w-10 object-contain" />
                                     <span className="font-bold text-sm">{pm.name}</span>
                                 </div>

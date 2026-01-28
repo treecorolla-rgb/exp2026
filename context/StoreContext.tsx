@@ -87,12 +87,15 @@ export const StoreProvider: React.FC<{ children: ReactNode }> = ({ children }) =
 
         // 3. Payment Methods
         if (pmRes.status === 'fulfilled' && pmRes.value.data && pmRes.value.data.length > 0) {
-          setPaymentMethods(pmRes.value.data.map((pm: any) => ({
+          const mappedPm = pmRes.value.data.map((pm: any) => ({
              id: pm.id,
              name: pm.name,
              iconUrl: pm.icon_url,
-             enabled: pm.enabled
-          })));
+             enabled: pm.enabled,
+             sortOrder: pm.sort_order || 0
+          }));
+          mappedPm.sort((a: any, b: any) => (a.sortOrder || 0) - (b.sortOrder || 0));
+          setPaymentMethods(mappedPm);
         }
 
         // 4. Delivery Options
@@ -774,6 +777,35 @@ export const StoreProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     if(supabase) await supabase.from('payment_methods').update({ enabled: newValue }).eq('id', id);
   };
 
+  const updatePaymentMethodOrder = async (id: string, direction: 'up' | 'down') => {
+    const sortedMethods = [...paymentMethods].sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0));
+    const currentIndex = sortedMethods.findIndex(p => p.id === id);
+    if (currentIndex === -1) return;
+    
+    const targetIndex = direction === 'up' ? currentIndex - 1 : currentIndex + 1;
+    if (targetIndex < 0 || targetIndex >= sortedMethods.length) return;
+    
+    // Swap the items
+    const temp = sortedMethods[currentIndex];
+    sortedMethods[currentIndex] = sortedMethods[targetIndex];
+    sortedMethods[targetIndex] = temp;
+    
+    // Update sort orders
+    const updatedMethods = sortedMethods.map((pm, idx) => ({
+      ...pm,
+      sortOrder: idx
+    }));
+    
+    setPaymentMethods(updatedMethods);
+    
+    // Save to Supabase
+    if (supabase) {
+      for (const pm of updatedMethods) {
+        await supabase.from('payment_methods').update({ sort_order: pm.sortOrder }).eq('id', pm.id);
+      }
+    }
+  };
+
   const addDeliveryOption = async (option: DeliveryOption) => {
     setDeliveryOptions(prev => [...prev, option]);
     if(supabase) await supabase.from('delivery_options').insert({
@@ -904,6 +936,7 @@ export const StoreProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         addPaymentMethod,
         removePaymentMethod,
         togglePaymentMethod,
+        updatePaymentMethodOrder,
         addDeliveryOption,
         removeDeliveryOption,
         toggleDeliveryOption,
