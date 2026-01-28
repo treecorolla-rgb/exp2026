@@ -804,7 +804,6 @@ export const StoreProvider: React.FC<{ children: ReactNode }> = ({ children }) =
   };
 
   const updateAdminProfile = async (profile: AdminProfile) => {
-    console.log('Saving admin profile:', profile);
     setAdminProfile(profile);
     if (supabase) {
         const payload = {
@@ -824,15 +823,7 @@ export const StoreProvider: React.FC<{ children: ReactNode }> = ({ children }) =
             bitcoin_wallet_address: profile.bitcoinWalletAddress,
             usdt_wallet_address: profile.usdtWalletAddress
         };
-        console.log('Saving to Supabase:', payload);
-        const { error } = await supabase.from('store_settings').upsert(payload);
-        if (error) {
-            console.error('Supabase save error:', error);
-        } else {
-            console.log('Saved successfully to Supabase');
-        }
-    } else {
-        console.log('Supabase not configured');
+        await supabase.from('store_settings').upsert(payload);
     }
   };
 
