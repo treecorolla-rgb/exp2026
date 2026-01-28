@@ -100,12 +100,7 @@ export const Cart: React.FC = () => {
   // Get enabled delivery options
   const enabledDeliveryOptions = deliveryOptions.filter(d => d.enabled);
   
-  // Set default shipping option if not selected
-  useEffect(() => {
-    if (enabledDeliveryOptions.length > 0 && !selectedShippingId) {
-      setSelectedShippingId(enabledDeliveryOptions[0].id);
-    }
-  }, [enabledDeliveryOptions, selectedShippingId]);
+  // NOTE: No auto-selection of shipping - customer must manually choose
   
   // Calculate shipping cost based on selection
   const selectedDelivery = enabledDeliveryOptions.find(d => d.id === selectedShippingId);
@@ -684,51 +679,57 @@ ${itemsList}
                   return (
                      <label 
                         key={option.id}
-                        className={`flex items-center gap-4 p-4 cursor-pointer transition ${
+                        className={`flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 p-4 cursor-pointer transition ${
                            selectedShippingId === option.id 
                               ? 'bg-blue-50' 
                               : 'bg-white hover:bg-slate-50'
                         }`}
                      >
-                        <input 
-                           type="radio"
-                           name="shipping"
-                           value={option.id}
-                           checked={selectedShippingId === option.id}
-                           onChange={(e) => handleShippingSelect(e.target.value)}
-                           className="w-4 h-4 text-primary"
-                        />
-                        {/* Logo */}
-                        <div className="w-24 flex items-center justify-start shrink-0">
-                           {isExpress ? (
-                              <div className="flex items-center gap-1">
-                                 <Truck size={24} className="text-red-500" />
-                                 <span className="bg-red-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded">EXPRESS</span>
-                              </div>
-                           ) : (
-                              <div className="flex items-center gap-1">
-                                 <Truck size={24} className="text-green-600" />
-                                 <span className="bg-green-600 text-white text-[9px] font-bold px-1.5 py-0.5 rounded">NORMAL</span>
-                              </div>
-                           )}
-                        </div>
-                        {/* Flag + Price */}
-                        <div className="flex items-center gap-2 min-w-[100px]">
-                           <img 
-                              src={`https://flagcdn.com/w40/${userCountryCode || 'in'}.png`} 
-                              alt="Flag" 
-                              className="w-5 h-3.5 object-cover rounded-[1px] shadow-sm border border-slate-200"
+                        {/* Mobile: Row 1 - Radio + Type + Price */}
+                        <div className="flex items-center gap-3 w-full sm:w-auto">
+                           <input 
+                              type="radio"
+                              name="shipping"
+                              value={option.id}
+                              checked={selectedShippingId === option.id}
+                              onChange={(e) => handleShippingSelect(e.target.value)}
+                              className="w-5 h-5 text-primary shrink-0"
                            />
-                           <span className="font-bold text-slate-800">{formatPrice(option.price)}</span>
+                           {/* Logo/Type */}
+                           <div className="flex items-center gap-2 shrink-0">
+                              {isExpress ? (
+                                 <div className="flex items-center gap-1.5">
+                                    <Truck size={22} className="text-red-500" />
+                                    <span className="bg-red-500 text-white text-[10px] font-bold px-2 py-0.5 rounded">EXPRESS</span>
+                                 </div>
+                              ) : (
+                                 <div className="flex items-center gap-1.5">
+                                    <Truck size={22} className="text-green-600" />
+                                    <span className="bg-green-600 text-white text-[10px] font-bold px-2 py-0.5 rounded">NORMAL</span>
+                                 </div>
+                              )}
+                           </div>
+                           {/* Flag + Price */}
+                           <div className="flex items-center gap-2 ml-auto sm:ml-2">
+                              <img 
+                                 src={`https://flagcdn.com/w40/${userCountryCode || 'in'}.png`} 
+                                 alt="Flag" 
+                                 className="w-6 h-4 object-cover rounded-[2px] shadow-sm border border-slate-200"
+                              />
+                              <span className="font-bold text-slate-800 text-base">{formatPrice(option.price)}</span>
+                           </div>
                         </div>
-                        {/* Delivery Period */}
-                        <div className="flex-1 text-slate-600">
-                           Delivery period: <span className="font-bold text-slate-800">{option.minDays}-{option.maxDays} Days</span>
-                        </div>
-                        {/* Approximate Delivery Date */}
-                        <div className="text-right">
-                           <div className="text-xs text-slate-400">Approximate delivery time</div>
-                           <div className="font-bold text-slate-800">{formattedDate}</div>
+                        {/* Mobile: Row 2 - Delivery Details */}
+                        <div className="flex items-center justify-between gap-4 pl-8 sm:pl-0 sm:flex-1">
+                           {/* Delivery Period */}
+                           <div className="text-slate-600 text-sm sm:text-base">
+                              <span className="text-slate-500">Delivery:</span> <span className="font-bold text-slate-800">{option.minDays}-{option.maxDays} Days</span>
+                           </div>
+                           {/* Approximate Delivery Date */}
+                           <div className="text-right">
+                              <div className="text-[10px] sm:text-xs text-slate-400">Approx. delivery</div>
+                              <div className="font-bold text-slate-800 text-sm sm:text-base">{formattedDate}</div>
+                           </div>
                         </div>
                      </label>
                   );
