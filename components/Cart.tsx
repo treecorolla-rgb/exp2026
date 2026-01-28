@@ -54,8 +54,17 @@ export const Cart: React.FC = () => {
     // Only scroll on mobile devices (screen width < 1024px)
     if (window.innerWidth < 1024 && orderSummaryRef.current) {
       setTimeout(() => {
-        orderSummaryRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      }, 100);
+        const element = orderSummaryRef.current;
+        if (element) {
+          const elementRect = element.getBoundingClientRect();
+          const absoluteElementTop = elementRect.top + window.pageYOffset;
+          const offset = 20; // Padding from top
+          window.scrollTo({
+            top: absoluteElementTop - offset,
+            behavior: 'smooth'
+          });
+        }
+      }, 150);
     }
   };
   
