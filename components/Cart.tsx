@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Trash2, ShoppingBag, ArrowRight, Minus, Plus, ShieldCheck, CreditCard, Lock, ChevronLeft, CheckCircle, ChevronDown, Check, AlertCircle, Truck, Copy, RefreshCw } from 'lucide-react';
 import { useStore } from '../context/StoreContext';
+import { useToast } from './Toast';
 import { CustomerDetails } from '../types';
 import { QRCodeSVG } from 'qrcode.react';
 
@@ -77,6 +78,7 @@ const getCountryByName = (name: string) => COUNTRIES.find(c => c.name === name);
 
 export const Cart: React.FC = () => {
   const { cart, removeFromCart, updateCartQuantity, goHome, placeOrder, adminProfile, customerUser, isCustomerAuthenticated, formatPrice, paymentMethods, deliveryOptions } = useStore();
+  const { showToast } = useToast();
   const [selectedShippingId, setSelectedShippingId] = useState<string>('');
   const [step, setStep] = useState<'cart' | 'checkout' | 'success'>('cart');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -236,10 +238,10 @@ export const Cart: React.FC = () => {
       // Simple logic for demo: code 'SAVE10' gives 10% off
       if (couponCode.toLowerCase() === 'save10') {
           setDiscountAmount(subtotal * 0.10);
-          alert('Coupon Applied: 10% Off');
+          showToast('Coupon Applied: 10% Off', 'success');
       } else {
           setDiscountAmount(0);
-          alert('Invalid Coupon Code. Try "SAVE10"');
+          showToast('Invalid Coupon Code. Try "SAVE10"', 'error');
       }
   };
 
@@ -366,7 +368,7 @@ ${itemsList}
       );
 
       if (!isCustomerAuthenticated && createAccount) {
-         alert(`Account created for ${formData.phone}! Password sent via email/SMS.`);
+         showToast(`Account created for ${formData.phone}! Password sent via email/SMS.`, 'success');
       }
 
       // 5. Show Success Screen
@@ -375,7 +377,7 @@ ${itemsList}
 
     } catch (error) {
       console.error("Order failed", error);
-      alert("There was an error processing your order. Please try again.");
+      showToast("There was an error processing your order. Please try again.", 'error');
     } finally {
       setIsSubmitting(false);
     }

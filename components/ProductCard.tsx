@@ -2,6 +2,7 @@ import React from 'react';
 import { Heart, Share2 } from 'lucide-react';
 import { Product } from '../types';
 import { useStore } from '../context/StoreContext';
+import { useToast } from './Toast';
 
 interface ProductCardProps {
   product: Product;
@@ -9,6 +10,7 @@ interface ProductCardProps {
 
 export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   const { viewProduct, toggleFavorite, favorites, formatPrice } = useStore();
+  const { showToast } = useToast();
   const isFavorite = favorites.includes(product.id);
 
   const handleShare = (e: React.MouseEvent) => {
@@ -21,7 +23,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
       }).catch((error) => console.log('Error sharing', error));
     } else {
       // Fallback
-      alert(`Share link for ${product.name} copied to clipboard!`);
+      showToast(`Share link for ${product.name} copied to clipboard!`, 'success');
     }
   };
 

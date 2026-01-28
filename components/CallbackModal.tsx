@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { X, CheckCircle } from 'lucide-react';
 import { useStore } from '../context/StoreContext';
+import { useToast } from './Toast';
 
 export const CallbackModal: React.FC = () => {
   const { isCallbackModalOpen, toggleCallbackModal, adminProfile } = useStore();
+  const { showToast } = useToast();
   const [phoneNumber, setPhoneNumber] = useState('');
   const [countryCode, setCountryCode] = useState('+1');
   const [countryFlag, setCountryFlag] = useState('us');
@@ -74,7 +76,7 @@ export const CallbackModal: React.FC = () => {
       setIsSuccess(true);
     } catch (error) {
       console.error("Error sending telegram message", error);
-      alert("Something went wrong. Please try again.");
+      showToast("Something went wrong. Please try again.", 'error');
     } finally {
       setIsSubmitting(false);
     }

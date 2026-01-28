@@ -7,6 +7,7 @@ import {
   Image, UploadCloud, Activity, AlertCircle, CheckCircle, FileSpreadsheet, Download, Eye, Calendar, Bell, Mail, MessageSquare, Loader2, ArrowUp, ArrowDown, HelpCircle, ExternalLink, RefreshCw
 } from 'lucide-react';
 import { useStore } from '../context/StoreContext';
+import { useToast } from './Toast';
 import { Product, ProductPackage, DeliveryOption, Order, OrderStatus, NotificationLog, Category, PaymentMethod, AdminProfile } from '../types';
 import { CARRIERS, STANDARD_DELIVERY } from '../constants';
 import { supabase } from '../lib/supabaseClient';
@@ -44,6 +45,7 @@ const NormalIcon = () => (
 
 export const AdminDashboard: React.FC = () => {
   const { logout, products, orders, deleteProduct, updateProduct, addProduct, categories, toggleCategory, addCategory, seedCategories, updateCategory, deleteCategory, updateCategoryOrder, adminProfile, updateAdminProfile, uploadImage, placeOrder, addManualOrder, notificationLogs, updateProductFeaturedOrder, bulkDeleteProducts, paymentMethods, deliveryOptions, addPaymentMethod, removePaymentMethod, togglePaymentMethod, updatePaymentMethodOrder, addDeliveryOption, removeDeliveryOption, toggleDeliveryOption, updateOrderStatus } = useStore();
+  const { showToast } = useToast();
   
   const [activeTab, setActiveTab] = useState<'overview' | 'products' | 'categories' | 'orders' | 'settings' | 'profile' | 'notifications' | 'system'>('overview');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -106,6 +108,7 @@ export const AdminDashboard: React.FC = () => {
             setEditingProduct(newP);
             setIsNewProduct(true);
           }}
+          showToast={showToast}
         />
       );
       case 'categories': return (
@@ -134,9 +137,10 @@ export const AdminDashboard: React.FC = () => {
            onToggleDelivery={toggleDeliveryOption}
            adminProfile={adminProfile}
            onUpdateProfile={updateAdminProfile}
+           onShowToast={showToast}
         />
       );
-      case 'profile': return <ProfileManager profile={adminProfile} onSave={updateAdminProfile} />;
+      case 'profile': return <ProfileManager profile={adminProfile} onSave={updateAdminProfile} onShowToast={showToast} />;
       case 'system': return <SystemHealthCheck />;
       default: return <div className="p-8">Select a tab</div>;
     }
@@ -278,7 +282,7 @@ const parseCSVLine = (text: string) => {
 };
 
 // --- 2. PRODUCT MANAGER ---
-const ProductManager = ({ products, categories, onEdit, onDelete, onBulkDelete, onToggleStatus, onUpdateSort, onAdd, addProduct, addCategory }: any) => {
+const ProductManager = ({ products, categories, onEdit, onDelete, onBulkDelete, onToggleStatus, onUpdateSort, onAdd, addProduct, addCategory, showToast }: any) => {
   const [filter, setFilter] = useState('');
   const [isImporting, setIsImporting] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -323,7 +327,7 @@ const ProductManager = ({ products, categories, onEdit, onDelete, onBulkDelete, 
         const rows = text.split(/\r?\n/);
         
         if (rows.length < 2) {
-            alert("CSV file appears to be empty. Please ensure it has a header row and data.");
+            showToast("CSV file appears to be empty. Please ensure it has a header row and data.", "error");
             setIsImporting(false);
             return;
         }
@@ -454,11 +458,11 @@ const ProductManager = ({ products, categories, onEdit, onDelete, onBulkDelete, 
         // Save last product
         await saveCurrentProduct();
 
-        alert(`Import Complete!\nAdded: ${importedCount}\nSkipped (Duplicate): ${skippedCount}`);
+        showToast(`Import Complete! Added: ${importedCount}, Skipped: ${skippedCount}`, "success");
 
     } catch (err) {
         console.error("Import failed", err);
-        alert("Failed to parse CSV file. Please check format.");
+        showToast("Failed to parse CSV file. Please check format.", "error");
     } finally {
         setIsImporting(false);
         if (fileInputRef.current) fileInputRef.current.value = '';
@@ -1013,7 +1017,7 @@ const NotificationLogView = ({ logs }: any) => {
 };
 
 // --- 7. SETTINGS MANAGER ---
-const SettingsManager = ({ paymentMethods, deliveryOptions, onAddPayment, onRemovePayment, onTogglePayment, onUpdatePaymentOrder, onAddDelivery, onRemoveDelivery, onToggleDelivery, adminProfile, onUpdateProfile }: any) => {
+const SettingsManager = ({ paymentMethods, deliveryOptions, onAddPayment, onRemovePayment, onTogglePayment, onUpdatePaymentOrder, onAddDelivery, onRemoveDelivery, onToggleDelivery, adminProfile, onUpdateProfile, onShowToast }: any) => {
     const [newPay, setNewPay] = useState({ name: '', iconUrl: '' });
     const [newDel, setNewDel] = useState({ name: '', price: 0, minDays: 5, maxDays: 10, icon: 'normal' });
     const [walletAddresses, setWalletAddresses] = useState({
@@ -1034,7 +1038,7 @@ const SettingsManager = ({ paymentMethods, deliveryOptions, onAddPayment, onRemo
             bitcoinWalletAddress: walletAddresses.bitcoinWalletAddress,
             usdtWalletAddress: walletAddresses.usdtWalletAddress
         });
-        alert('Wallet addresses saved!');
+        onShowToast('Wallet addresses saved!', 'success');
     };
 
     return (
@@ -1182,7 +1186,7 @@ const SettingsManager = ({ paymentMethods, deliveryOptions, onAddPayment, onRemo
 };
 
 // --- 8. PROFILE MANAGER ---
-const ProfileManager = ({ profile, onSave }: any) => {
+const ProfileManager = ({ profile, onSave, onShowToast }: any) => {
     const [formData, setFormData] = useState<AdminProfile>(profile);
 
     // Sync state if prop changes
@@ -1265,7 +1269,7 @@ const ProfileManager = ({ profile, onSave }: any) => {
                 </div>
 
                 <div className="pt-4">
-                    <button onClick={() => { onSave(formData); alert('Settings Saved'); }} className="bg-primary hover:bg-blue-600 text-white px-8 py-3 rounded font-bold shadow-sm transition">
+                    <button onClick={() => { onSave(formData); onShowToast('Settings Saved', 'success'); }} className="bg-primary hover:bg-blue-600 text-white px-8 py-3 rounded font-bold shadow-sm transition">
                         Save Configuration
                     </button>
                 </div>

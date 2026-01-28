@@ -681,7 +681,7 @@ export const StoreProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     }));
     
     if (toAdd.length === 0) {
-        alert("Categories already exist or are hidden. Check the list.");
+        console.log("Categories already exist or are hidden. Check the list.");
         return;
     }
 
@@ -697,15 +697,15 @@ export const StoreProvider: React.FC<{ children: ReactNode }> = ({ children }) =
                      const { order, ...rest } = cat;
                      await supabase.from('categories').insert(rest);
                  }
-                 alert("Seeded categories (without sorting order due to DB schema).");
+                 console.log("Seeded categories (without sorting order due to DB schema).");
             } else {
-                 alert("Failed to save to database: " + error.message);
+                 console.error("Failed to save to database: " + error.message);
             }
         } else {
-            alert(`Successfully restored ${toAdd.length} categories.`);
+            console.log(`Successfully restored ${toAdd.length} categories.`);
         }
     } else {
-        alert("Restored to local session (No DB connection).");
+        console.log("Restored to local session (No DB connection).");
     }
   };
 

@@ -1,6 +1,7 @@
 import React from 'react';
 import { useStore } from './context/StoreContext';
 import { StoreProvider } from './context/StoreContext';
+import { ToastProvider } from './components/Toast';
 import { TopBar } from './components/TopBar';
 import { Header } from './components/Header';
 import { Sidebar } from './components/Sidebar';
@@ -115,9 +116,11 @@ function AppContent() {
 
 const App: React.FC = () => {
   return (
-    <StoreProvider>
-      <AppContent />
-    </StoreProvider>
+    <ToastProvider>
+      <StoreProvider>
+        <AppContent />
+      </StoreProvider>
+    </ToastProvider>
   );
 };
 

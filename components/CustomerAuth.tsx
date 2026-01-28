@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
 import { useStore } from '../context/StoreContext';
+import { useToast } from './Toast';
 import { User, Lock, X } from 'lucide-react';
 
 export const CustomerAuth: React.FC = () => {
   const { customerLogin, customerSignup, customerUser, isCustomerAuthenticated, customerLogout, goHome } = useStore();
+  const { showToast } = useToast();
   const [view, setView] = useState<'login' | 'signup' | 'forgot'>('login');
   
   // Login Form
@@ -149,7 +151,7 @@ export const CustomerAuth: React.FC = () => {
                 </div>
                 <form className="mt-8 space-y-6">
                     <input type="text" placeholder="Email or Phone" className="w-full border p-3 rounded" />
-                    <button type="button" className="w-full bg-slate-800 text-white py-3 rounded font-bold" onClick={() => alert("OTP Sent to your device!")}>Send OTP</button>
+                    <button type="button" className="w-full bg-slate-800 text-white py-3 rounded font-bold" onClick={() => showToast("OTP Sent to your device!", 'success')}>Send OTP</button>
                     <button type="button" onClick={() => setView('login')} className="w-full text-slate-500 text-sm">Back to Login</button>
                 </form>
                 </>
