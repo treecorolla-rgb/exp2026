@@ -805,6 +805,7 @@ export const StoreProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         const payload = {
             id: 1, // Singleton
             email: profile.email,
+            support_email: profile.supportEmail,
             telegram_bot_token: profile.telegramBotToken,
             telegram_chat_id: profile.telegramChatId,
             receive_email_notifications: profile.receiveEmailNotifications,

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Trash2, ShoppingBag, ArrowRight, Minus, Plus, ShieldCheck, CreditCard, Lock, ChevronLeft, CheckCircle, ChevronDown, Check, AlertCircle, Truck } from 'lucide-react';
 import { useStore } from '../context/StoreContext';
 import { CustomerDetails } from '../types';
@@ -44,6 +44,20 @@ export const Cart: React.FC = () => {
 
   // IP-based country detection
   const [userCountryCode, setUserCountryCode] = useState<string>('in');
+  
+  // Ref for Order Summary section (for mobile scroll)
+  const orderSummaryRef = useRef<HTMLDivElement>(null);
+  
+  // Handle shipping selection with mobile scroll
+  const handleShippingSelect = (shippingId: string) => {
+    setSelectedShippingId(shippingId);
+    // Only scroll on mobile devices (screen width < 1024px)
+    if (window.innerWidth < 1024 && orderSummaryRef.current) {
+      setTimeout(() => {
+        orderSummaryRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 100);
+    }
+  };
   
   useEffect(() => {
     const detectCountry = async () => {
@@ -672,7 +686,7 @@ ${itemsList}
                            name="shipping"
                            value={option.id}
                            checked={selectedShippingId === option.id}
-                           onChange={(e) => setSelectedShippingId(e.target.value)}
+                           onChange={(e) => handleShippingSelect(e.target.value)}
                            className="w-4 h-4 text-primary"
                         />
                         {/* Logo */}
@@ -805,7 +819,7 @@ ${itemsList}
           </div>
         </div>
 
-        <div className="w-full lg:w-96">
+        <div className="w-full lg:w-96" ref={orderSummaryRef}>
           <div className="bg-slate-50 border border-slate-200 p-6 rounded-lg sticky top-24 shadow-sm">
              <h3 className="font-bold text-slate-800 text-lg mb-6 pb-4 border-b border-slate-200 tracking-tight">Order Summary</h3>
              

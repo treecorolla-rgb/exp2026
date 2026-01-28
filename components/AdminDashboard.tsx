@@ -1119,6 +1119,10 @@ const ProfileManager = ({ profile, onSave }: any) => {
                             <input className="w-full border p-2 rounded" value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} />
                         </div>
                         <div>
+                            <label className="block text-xs font-bold text-slate-500 mb-1">Support Email (for footer)</label>
+                            <input className="w-full border p-2 rounded" placeholder="support@yourstore.com" value={formData.supportEmail || ''} onChange={e => setFormData({...formData, supportEmail: e.target.value})} />
+                        </div>
+                        <div>
                             <label className="block text-xs font-bold text-slate-500 mb-1">US Phone</label>
                             <input className="w-full border p-2 rounded" value={formData.usPhoneNumber} onChange={e => setFormData({...formData, usPhoneNumber: e.target.value})} />
                         </div>
