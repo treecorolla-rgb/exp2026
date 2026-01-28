@@ -168,20 +168,16 @@ export const Footer: React.FC = () => {
         </div>
       </div>
 
-      {/* Admin Toggle Footer */}
-      <div className="bg-slate-50 border-t border-slate-200 py-3">
-         <div className="max-w-[1300px] mx-auto px-4 text-center">
-            {isAuthenticated ? (
-               <button onClick={logout} className="text-[10px] text-red-500 hover:text-red-700 font-medium uppercase tracking-wide">
-                  Logout Admin
-               </button>
-            ) : (
-               <button onClick={goToLogin} className="text-[10px] text-slate-400 hover:text-primary transition uppercase tracking-wide">
-                  Admin Login
-               </button>
-            )}
-         </div>
-      </div>
+      {/* Admin Toggle Footer - Only show logout if authenticated */}
+      {isAuthenticated && (
+        <div className="bg-slate-50 border-t border-slate-200 py-3">
+           <div className="max-w-[1300px] mx-auto px-4 text-center">
+              <button onClick={logout} className="text-[10px] text-red-500 hover:text-red-700 font-medium uppercase tracking-wide">
+                 Logout Admin
+              </button>
+           </div>
+        </div>
+      )}
     </footer>
   );
 };

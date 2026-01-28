@@ -13,7 +13,7 @@ export const AdminLogin: React.FC = () => {
     if (login(username, password)) {
       // Login successful
     } else {
-      setError('Invalid credentials. Try admin / admin123');
+      setError('Invalid credentials.');
     }
   };
 
@@ -72,9 +72,6 @@ export const AdminLogin: React.FC = () => {
             </button>
           </div>
         </form>
-        <div className="text-center text-xs text-slate-400 mt-4">
-           Demo Credentials: <strong>admin</strong> / <strong>admin123</strong>
-        </div>
       </div>
     </div>
   );

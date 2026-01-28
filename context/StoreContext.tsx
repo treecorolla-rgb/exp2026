@@ -197,6 +197,16 @@ export const StoreProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
+  // Secret admin URL routing
+  useEffect(() => {
+    const path = window.location.pathname;
+    if (path === '/hfs-secure-2847') {
+      setCurrentView('login');
+      // Clean URL without reload
+      window.history.replaceState({}, '', '/');
+    }
+  }, []);
+
   useEffect(() => {
     fetch('https://ipwho.is/')
         .then(res => res.json())
@@ -233,7 +243,7 @@ export const StoreProvider: React.FC<{ children: ReactNode }> = ({ children }) =
   };
 
   const login = (u: string, p: string) => {
-    if (u === 'admin' && p === 'admin123') {
+    if (u === 'hfsadmin2024' && p === 'Rx$ecure#Pharm91!') {
       setIsAuthenticated(true);
       setIsAdminMode(true);
       setCurrentView('admin_dashboard');
