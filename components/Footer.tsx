@@ -4,7 +4,7 @@ import { useStore } from '../context/StoreContext';
 import { Logo } from './Logo';
 
 export const Footer: React.FC = () => {
-  const { isAuthenticated, logout, goToLogin, goToNotFound, goHome, setActiveCategoryId, paymentMethods, adminProfile } = useStore();
+  const { isAuthenticated, logout, goToLogin, goToNotFound, goHome, setActiveCategoryId, paymentMethods, adminProfile, categories } = useStore();
 
   const handleLink = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -22,6 +22,15 @@ export const Footer: React.FC = () => {
     setActiveCategoryId('cat_bestsellers');
     goHome();
   };
+
+  const handleCategoryClick = (categoryId: string) => (e: React.MouseEvent) => {
+    e.preventDefault();
+    setActiveCategoryId(categoryId);
+    goHome();
+  };
+
+  // Get first 5 enabled categories for footer links
+  const footerCategories = categories.filter(c => c.enabled && c.id !== 'cat_bestsellers').slice(0, 5);
 
   return (
     <footer className="mt-auto bg-white border-t border-slate-200">
@@ -119,7 +128,7 @@ export const Footer: React.FC = () => {
                  </div>
                  <div className="flex items-center gap-2 text-slate-500">
                     <Mail size={16} />
-                    <a href="mailto:support@teststore.com" className="text-primary hover:underline">support@teststore.com</a>
+                    <a href={`mailto:${adminProfile.supportEmail || 'support@teststore.com'}`} className="text-primary hover:underline">{adminProfile.supportEmail || 'support@teststore.com'}</a>
                  </div>
                  
                  {/* Payment Icons Row */}
@@ -142,17 +151,16 @@ export const Footer: React.FC = () => {
         <div>
            <h3 className="text-primary font-bold text-[15px] mb-6">Information</h3>
            
-           <div className="grid grid-cols-2 gap-x-4 gap-y-2 mb-8">
-              <a href="#" onClick={handleLink} className="text-slate-600 hover:text-primary transition">Projects</a>
-              <a href="#" onClick={handleLink} className="text-slate-600 hover:text-primary transition">Testimonials</a>
-              <a href="#" onClick={handleLink} className="text-slate-600 hover:text-primary transition">Designs</a>
-              <a href="#" onClick={handleHome} className="text-slate-600 hover:text-primary transition">Home</a>
-              <a href="#" onClick={handleLink} className="text-slate-600 hover:text-primary transition">Services</a>
-              <a href="#" onClick={handleBestsellers} className="text-slate-600 hover:text-primary transition">Bestsellers</a>
-              <a href="#" onClick={handleLink} className="text-slate-600 hover:text-primary transition">Planning</a>
-              <a href="#" onClick={handleLink} className="text-slate-600 hover:text-primary transition">FAQ</a>
-              <a href="#" onClick={handleLink} className="text-slate-600 hover:text-primary transition">Contact Us</a>
-              <a href="#" onClick={handleLink} className="text-slate-600 hover:text-primary transition">Policy</a>
+           <div className="grid grid-cols-2 gap-x-4 gap-y-2 mb-6">
+              {footerCategories.map(cat => (
+                <a key={cat.id} href="#" onClick={handleCategoryClick(cat.id)} className="text-slate-600 hover:text-primary transition text-[13px]">{cat.name}</a>
+              ))}
+              <a href="#" onClick={handleLink} className="text-slate-600 hover:text-primary transition text-[13px]">Testimonials</a>
+              <a href="#" onClick={handleHome} className="text-slate-600 hover:text-primary transition text-[13px]">Home</a>
+              <a href="#" onClick={handleBestsellers} className="text-slate-600 hover:text-primary transition text-[13px]">Bestsellers</a>
+              <a href="#" onClick={handleLink} className="text-slate-600 hover:text-primary transition text-[13px]">FAQ</a>
+              <a href="#" onClick={handleLink} className="text-slate-600 hover:text-primary transition text-[13px]">Contact Us</a>
+              <a href="#" onClick={handleLink} className="text-slate-600 hover:text-primary transition text-[13px]">Policy</a>
            </div>
 
            <div className="flex">

@@ -121,6 +121,7 @@ export interface PaymentMethod {
 
 export interface AdminProfile {
   email: string;
+  supportEmail: string;
   telegramBotToken: string;
   telegramChatId: string;
   receiveEmailNotifications: boolean;

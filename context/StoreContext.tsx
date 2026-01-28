@@ -20,6 +20,7 @@ export const StoreProvider: React.FC<{ children: ReactNode }> = ({ children }) =
   // Admin Profile State with Default fallback
   const [adminProfile, setAdminProfile] = useState<AdminProfile>({
         email: 'admin@example.com',
+        supportEmail: 'support@teststore.com',
         telegramBotToken: '',
         telegramChatId: '',
         usPhoneNumber: '+1 (888) 243-74-06',
@@ -145,6 +146,7 @@ export const StoreProvider: React.FC<{ children: ReactNode }> = ({ children }) =
            const s = settingsRes.value.data;
            setAdminProfile({
               email: s.email,
+              supportEmail: s.support_email || 'support@teststore.com',
               telegramBotToken: s.telegram_bot_token || '',
               telegramChatId: s.telegram_chat_id || '',
               receiveEmailNotifications: s.receive_email_notifications,

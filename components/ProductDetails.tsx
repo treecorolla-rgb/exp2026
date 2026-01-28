@@ -27,6 +27,112 @@ const NormalIcon = () => (
   </div>
 );
 
+// Other Names with expand/collapse
+const OtherNamesSection: React.FC<{ names: string[] }> = ({ names }) => {
+  const [expanded, setExpanded] = useState(false);
+  const visibleNames = expanded ? names : names.slice(0, 5);
+  const hasMore = names.length > 5;
+  
+  return (
+    <div className="mb-4">
+      <p className="text-[10px] text-slate-400 uppercase font-bold tracking-widest mb-2">OTHER NAMES FOR THIS MEDICATION:</p>
+      <div className="flex flex-wrap gap-1.5 items-center">
+        {visibleNames.map(name => (
+          <span key={name} className="bg-slate-100 text-slate-600 text-[10px] px-2.5 py-1 font-bold uppercase tracking-wide rounded border border-slate-200">{name}</span>
+        ))}
+        {hasMore && !expanded && (
+          <button 
+            onClick={() => setExpanded(true)}
+            className="bg-primary text-white text-[12px] font-bold w-7 h-7 rounded flex items-center justify-center hover:bg-blue-600 transition"
+          >
+            +{names.length - 5}
+          </button>
+        )}
+        {expanded && hasMore && (
+          <button 
+            onClick={() => setExpanded(false)}
+            className="bg-slate-200 text-slate-600 text-[10px] px-2 py-1 font-bold rounded hover:bg-slate-300 transition"
+          >
+            Show less
+          </button>
+        )}
+      </div>
+    </div>
+  );
+};
+
+// FAQ Section
+const FAQSection: React.FC = () => {
+  const [openIndex, setOpenIndex] = useState<number | null>(null);
+  
+  const faqs = [
+    {
+      question: "How do I find the right medicine?",
+      answer: "Use our search bar or browse by category to find the medication you need. You can also filter by active ingredient or condition."
+    },
+    {
+      question: "What is the referral system, and how does it work?",
+      answer: "Everything is simple! Join our referral program, encourage your friends to shop with us, and you will receive 15% of their order amount."
+    },
+    {
+      question: "Do you require a prescription?",
+      answer: "You do not need to provide a prescription to use our services. But we strongly recommend that you consult your doctor before using any medication. You may have contraindications according to which the drug intake should be delayed or canceled."
+    },
+    {
+      question: "What are your shipping methods?",
+      answer: "You can choose from two delivery options: 4-9 business days: Courier Delivery Service with real-time tracking of your order. 15-21 business days: Standard airmail without the shipping tracking feature."
+    },
+    {
+      question: "What medication do you offer?",
+      answer: "Our pharmacy's product range includes generics and branded medicines to solve your problems. All products in our pharmacy are supplied by verified manufacturers and authorized distributors with whom we have long cooperated. We always supply what you order; you can be sure the medication is genuine."
+    },
+    {
+      question: "How can one place an order?",
+      answer: "Simply select the desired product and put it in your shopping cart to place an order. At any time, you can click on 'Shopping Cart' at the top of the screen to go to the checkout page. Next, you need to fill in your personal information and check it before paying for the order."
+    },
+    {
+      question: "What are your available payment methods?",
+      answer: "We accept most major credit and debit cards, including MasterCard and Visa. You can also use crypto-transfers, SEPA or E-checks to pay for online orders."
+    },
+    {
+      question: "Can I earn on the referral program, and how to do it?",
+      answer: "The essence of earnings is simple: you get 15% off all purchases made by your friends at HappyFamilyStore. To do this, you need to get a referral link and send it to a friend. Following your referral link, a friend registers and makes orders. 15% of their order cost goes to your balance, and you can use the money to pay for your order."
+    },
+    {
+      question: "Why do you give big discounts?",
+      answer: "The discount system should be beneficial for both the seller and the buyer. We can provide large discounts to regular customers, as we are direct suppliers. This way, we boost sales, attract new customers and increase our brand awareness."
+    }
+  ];
+
+  return (
+    <div className="mb-8">
+      <h3 className="text-lg font-bold text-slate-800 mb-4">FAQ</h3>
+      <div className="border border-slate-200 rounded-lg overflow-hidden">
+        {faqs.map((faq, idx) => (
+          <div key={idx} className={idx !== faqs.length - 1 ? 'border-b border-slate-100' : ''}>
+            <button
+              onClick={() => setOpenIndex(openIndex === idx ? null : idx)}
+              className="w-full flex items-center justify-between p-4 text-left hover:bg-slate-50 transition"
+            >
+              <span className="text-[14px]">
+                <span className="text-primary font-bold mr-2">F:</span>
+                <span className={`${openIndex === idx ? 'text-primary font-medium' : 'text-slate-700'}`}>{faq.question}</span>
+              </span>
+              <span className="text-slate-400 text-xl font-light ml-4">{openIndex === idx ? '−' : '+'}</span>
+            </button>
+            {openIndex === idx && (
+              <div className="px-4 pb-4 text-[13px] text-slate-600 leading-relaxed">
+                <span className="text-slate-400 font-bold mr-2">A:</span>
+                {faq.answer}
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
 export const ProductDetails: React.FC = () => {
   const { selectedProduct: product, isMobile, goHome, isAdminMode } = useStore();
 
@@ -229,14 +335,7 @@ const ProductDetailsDesktop: React.FC = () => {
           </div>
 
           {product.otherNames && product.otherNames.length > 0 && (
-            <div className="mb-4">
-               <p className="text-[10px] text-slate-400 uppercase font-bold tracking-widest mb-2">OTHER NAMES FOR THIS MEDICATION:</p>
-               <div className="flex flex-wrap gap-1.5">
-                 {product.otherNames.map(name => (
-                   <span key={name} className="bg-slate-100 text-slate-600 text-[10px] px-2.5 py-1 font-bold uppercase tracking-wide rounded border border-slate-200">{name}</span>
-                 ))}
-               </div>
-            </div>
+            <OtherNamesSection names={product.otherNames} />
           )}
 
           <div className="text-[14px] text-slate-600 leading-relaxed font-normal mb-4 max-w-2xl">
@@ -369,6 +468,9 @@ const ProductDetailsDesktop: React.FC = () => {
               </div>
            </div>
       </div>
+
+      {/* FAQ Section */}
+      <FAQSection />
     </div>
   );
 };
