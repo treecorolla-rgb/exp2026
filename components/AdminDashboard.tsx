@@ -1028,11 +1028,16 @@ const SettingsManager = ({ paymentMethods, deliveryOptions, onAddPayment, onRemo
     }, [adminProfile]);
 
     const handleSaveWallets = () => {
-        onUpdateProfile({
+        console.log('handleSaveWallets called');
+        console.log('Current walletAddresses state:', walletAddresses);
+        console.log('Current adminProfile:', adminProfile);
+        const updatedProfile = {
             ...adminProfile,
             bitcoinWalletAddress: walletAddresses.bitcoinWalletAddress,
             usdtWalletAddress: walletAddresses.usdtWalletAddress
-        });
+        };
+        console.log('Sending to onUpdateProfile:', updatedProfile);
+        onUpdateProfile(updatedProfile);
         alert('Wallet addresses saved!');
     };
 
