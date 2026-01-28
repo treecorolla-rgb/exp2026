@@ -221,41 +221,27 @@ ${itemsList}
         {/* Secure Message and Badges Row */}
         <div className="text-center mb-8">
             <h2 className="text-lg text-slate-700 font-medium mb-6">Secure Checkout Page. All data is safe and secure.</h2>
-            <div className="flex flex-wrap justify-center gap-4 md:gap-8">
-                <div className="h-12 bg-white rounded flex items-center px-4 border border-slate-200 gap-2 shadow-sm">
-                    <div className="w-6 h-6 rounded-full bg-green-500 flex items-center justify-center text-white">
-                        <Check size={14} strokeWidth={4} />
-                    </div>
-                    <div className="flex flex-col items-start leading-none">
-                        <span className="font-bold text-slate-700 text-sm">GeoTrust</span>
-                        <span className="text-[9px] text-slate-500">Secured</span>
-                    </div>
-                </div>
-
-                <div className="h-12 bg-white rounded flex items-center px-4 border border-slate-200 gap-2 shadow-sm">
-                    <div className="flex flex-col items-start leading-none">
-                        <span className="font-bold text-blue-800 text-sm italic">Visa</span>
-                        <span className="text-[9px] text-slate-500">Verified</span>
-                    </div>
-                </div>
-
-                <div className="h-12 bg-white rounded flex items-center px-4 gap-2 border border-slate-200 shadow-sm">
-                    <div className="flex flex-col items-start leading-none">
-                        <span className="font-bold text-slate-700 text-sm">SSL</span>
-                        <span className="text-[9px] text-slate-500">Encrypted</span>
-                    </div>
-                    <Lock size={16} className="text-green-500 ml-1" />
-                </div>
-
-                <div className="h-12 bg-white rounded flex items-center px-4 border border-slate-200 gap-2 shadow-sm">
-                     <div className="w-6 h-6 flex items-center justify-center">
-                        <ShieldCheck size={20} className="text-red-600" />
-                     </div>
-                     <div className="flex flex-col items-start leading-none">
-                        <span className="font-bold text-slate-700 text-sm">McAfee</span>
-                        <span className="text-[9px] text-slate-500">Secure</span>
-                    </div>
-                </div>
+            <div className="flex flex-wrap justify-center items-center gap-4 md:gap-6">
+                <img 
+                  src="https://vdhgagzaeyvrsthxsbxn.supabase.co/storage/v1/object/public/images/geo%20trust.png" 
+                  alt="GeoTrust" 
+                  className="h-12 md:h-14 object-contain"
+                />
+                <img 
+                  src="https://vdhgagzaeyvrsthxsbxn.supabase.co/storage/v1/object/public/images/Norton.png" 
+                  alt="Norton Secured" 
+                  className="h-12 md:h-14 object-contain"
+                />
+                <img 
+                  src="https://vdhgagzaeyvrsthxsbxn.supabase.co/storage/v1/object/public/images/SSLcertificate.png" 
+                  alt="SSL Certificate" 
+                  className="h-12 md:h-14 object-contain"
+                />
+                <img 
+                  src="https://vdhgagzaeyvrsthxsbxn.supabase.co/storage/v1/object/public/images/verified%20by%20visa.png" 
+                  alt="Verified by Visa" 
+                  className="h-12 md:h-14 object-contain"
+                />
             </div>
             
             <div className="mt-6 flex justify-center">
