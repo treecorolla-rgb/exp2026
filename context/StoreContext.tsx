@@ -16,6 +16,7 @@ export const StoreProvider: React.FC<{ children: ReactNode }> = ({ children }) =
   const [orders, setOrders] = useState<Order[]>([]);
   const [notificationLogs, setNotificationLogs] = useState<NotificationLog[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [preselectedShippingId, setPreselectedShippingId] = useState<string>('');
 
   // Admin Profile State with Default fallback
   const [adminProfile, setAdminProfile] = useState<AdminProfile>({
@@ -835,6 +836,25 @@ export const StoreProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     if(supabase) await supabase.from('delivery_options').update({ enabled: newValue }).eq('id', id);
   };
 
+  const updateDeliveryOption = async (id: string, updates: Partial<DeliveryOption>) => {
+    setDeliveryOptions(prev => prev.map(o => 
+      o.id === id ? { ...o, ...updates } : o
+    ));
+    if(supabase) {
+      const { enabled, ...dbUpdates } = updates;
+      const payload: any = {};
+      if (updates.name !== undefined) payload.name = updates.name;
+      if (updates.price !== undefined) payload.price = updates.price;
+      if (updates.minDays !== undefined) payload.min_days = updates.minDays;
+      if (updates.maxDays !== undefined) payload.max_days = updates.maxDays;
+      if (updates.icon !== undefined) payload.icon = updates.icon;
+      if (updates.enabled !== undefined) payload.enabled = updates.enabled;
+      if (Object.keys(payload).length > 0) {
+        await supabase.from('delivery_options').update(payload).eq('id', id);
+      }
+    }
+  };
+
   const updateAdminProfile = async (profile: AdminProfile) => {
     setAdminProfile(profile);
     if (supabase) {
@@ -869,7 +889,10 @@ export const StoreProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     setSelectedProduct(null);
   };
 
-  const goToCart = () => {
+  const goToCart = (shippingId?: string) => {
+    if (shippingId) {
+      setPreselectedShippingId(shippingId);
+    }
     setCurrentView('cart');
     setSelectedProduct(null);
   };
@@ -940,11 +963,14 @@ export const StoreProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         addDeliveryOption,
         removeDeliveryOption,
         toggleDeliveryOption,
+        updateDeliveryOption,
         updateAdminProfile,
         uploadImage,
         viewProduct,
         goHome,
         goToCart,
+        preselectedShippingId,
+        clearPreselectedShipping: () => setPreselectedShippingId(''),
         goToLogin,
         goToCustomerAuth,
         customerLogin,

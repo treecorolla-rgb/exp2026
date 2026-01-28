@@ -44,7 +44,7 @@ const NormalIcon = () => (
 );
 
 export const AdminDashboard: React.FC = () => {
-  const { logout, products, orders, deleteProduct, updateProduct, addProduct, categories, toggleCategory, addCategory, seedCategories, updateCategory, deleteCategory, updateCategoryOrder, adminProfile, updateAdminProfile, uploadImage, placeOrder, addManualOrder, notificationLogs, updateProductFeaturedOrder, bulkDeleteProducts, paymentMethods, deliveryOptions, addPaymentMethod, removePaymentMethod, togglePaymentMethod, updatePaymentMethodOrder, addDeliveryOption, removeDeliveryOption, toggleDeliveryOption, updateOrderStatus } = useStore();
+  const { logout, products, orders, deleteProduct, updateProduct, addProduct, categories, toggleCategory, addCategory, seedCategories, updateCategory, deleteCategory, updateCategoryOrder, adminProfile, updateAdminProfile, uploadImage, placeOrder, addManualOrder, notificationLogs, updateProductFeaturedOrder, bulkDeleteProducts, paymentMethods, deliveryOptions, addPaymentMethod, removePaymentMethod, togglePaymentMethod, updatePaymentMethodOrder, addDeliveryOption, removeDeliveryOption, toggleDeliveryOption, updateDeliveryOption, updateOrderStatus } = useStore();
   const { showToast } = useToast();
   
   const [activeTab, setActiveTab] = useState<'overview' | 'products' | 'categories' | 'orders' | 'settings' | 'profile' | 'notifications' | 'system'>('overview');
@@ -135,6 +135,7 @@ export const AdminDashboard: React.FC = () => {
            onAddDelivery={addDeliveryOption}
            onRemoveDelivery={removeDeliveryOption}
            onToggleDelivery={toggleDeliveryOption}
+           onUpdateDelivery={updateDeliveryOption}
            adminProfile={adminProfile}
            onUpdateProfile={updateAdminProfile}
            onShowToast={showToast}
@@ -853,9 +854,50 @@ const OrderManager = ({ orders, onUpdateStatus }: any) => {
         setStatusModalOpen(false);
     };
 
+    const exportOrdersCSV = () => {
+        const headers = ['Order ID', 'Date', 'Customer Name', 'Email', 'Phone', 'Address', 'City', 'State', 'Zip', 'Country', 'Items', 'Subtotal', 'Shipping', 'Total', 'Payment Method', 'Status', 'Carrier', 'Tracking'];
+        const rows = orders.map((o: Order) => [
+            o.id,
+            o.orderDate,
+            o.customerName,
+            o.details?.email || '',
+            o.details?.phone || '',
+            o.shipAddress || '',
+            o.shipCity || '',
+            o.shipState || '',
+            o.shipZip || '',
+            o.shipCountry || '',
+            (o.items || []).map((i: any) => `${i.name} (${i.packageName}) x${i.quantity}`).join('; '),
+            o.totalAmount?.toFixed(2) || '',
+            o.shippingCost?.toFixed(2) || '',
+            o.grandTotal?.toFixed(2) || '',
+            o.paymentMethod || '',
+            o.status,
+            o.carrier || '',
+            o.trackingNumber || ''
+        ]);
+        const csv = [headers, ...rows].map(r => r.map((c: any) => `"${String(c).replace(/"/g, '""')}"`).join(',')).join('\n');
+        const blob = new Blob([csv], { type: 'text/csv' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `orders_export_${new Date().toISOString().slice(0,10)}.csv`;
+        a.click();
+        URL.revokeObjectURL(url);
+    };
+
     return (
         <div className="p-8">
-            <h2 className="text-2xl font-bold text-slate-800 mb-6">Order Management</h2>
+            <div className="flex justify-between items-center mb-6">
+                <h2 className="text-2xl font-bold text-slate-800">Order Management</h2>
+                <button 
+                    onClick={exportOrdersCSV}
+                    className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded font-bold text-sm transition"
+                >
+                    <Download size={16} />
+                    Export All Orders
+                </button>
+            </div>
             <div className="bg-white rounded-lg border border-slate-200 shadow-sm overflow-x-auto">
                 <table className="w-full text-left whitespace-nowrap">
                     <thead className="bg-slate-50 border-b border-slate-200 text-xs uppercase text-slate-500 font-semibold">
@@ -905,7 +947,14 @@ const OrderManager = ({ orders, onUpdateStatus }: any) => {
                             <button onClick={() => setStatusModalOpen(false)}><X size={24} /></button>
                         </div>
                         <div className="p-6 space-y-6">
+                            {/* Customer & Shipping Info */}
                             <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <h4 className="font-bold text-sm text-slate-500 uppercase mb-2">Customer Info</h4>
+                                    <p className="text-sm font-bold">{selectedOrder.customerName}</p>
+                                    <p className="text-sm text-slate-600">{selectedOrder.details?.email}</p>
+                                    <p className="text-sm text-slate-600">{selectedOrder.details?.phone}</p>
+                                </div>
                                 <div>
                                     <h4 className="font-bold text-sm text-slate-500 uppercase mb-2">Shipping To</h4>
                                     <p className="text-sm">{selectedOrder.shipFirstName} {selectedOrder.shipLastName}</p>
@@ -913,10 +962,41 @@ const OrderManager = ({ orders, onUpdateStatus }: any) => {
                                     <p className="text-sm">{selectedOrder.shipCity}, {selectedOrder.shipState} {selectedOrder.shipZip}</p>
                                     <p className="text-sm">{selectedOrder.shipCountry}</p>
                                 </div>
+                            </div>
+
+                            {/* Order Items */}
+                            <div>
+                                <h4 className="font-bold text-sm text-slate-500 uppercase mb-2">Order Items</h4>
+                                <div className="bg-slate-50 rounded border border-slate-200 divide-y divide-slate-200">
+                                    {(selectedOrder.items || []).map((item: any, idx: number) => (
+                                        <div key={idx} className="flex items-center gap-3 p-3">
+                                            <img src={item.image || 'https://via.placeholder.com/50'} alt={item.name} className="w-12 h-12 object-contain rounded" />
+                                            <div className="flex-1">
+                                                <p className="font-bold text-sm text-slate-800">{item.name}</p>
+                                                <p className="text-xs text-slate-500">{item.packageName}</p>
+                                            </div>
+                                            <div className="text-right">
+                                                <p className="font-bold text-sm">${item.price?.toFixed(2)}</p>
+                                                <p className="text-xs text-slate-500">Qty: {item.quantity}</p>
+                                            </div>
+                                        </div>
+                                    ))}
+                                    {(!selectedOrder.items || selectedOrder.items.length === 0) && (
+                                        <p className="p-3 text-sm text-slate-500">No items found</p>
+                                    )}
+                                </div>
+                            </div>
+
+                            {/* Payment Summary */}
+                            <div className="grid grid-cols-2 gap-4">
                                 <div>
-                                    <h4 className="font-bold text-sm text-slate-500 uppercase mb-2">Payment</h4>
+                                    <h4 className="font-bold text-sm text-slate-500 uppercase mb-2">Payment Method</h4>
                                     <p className="text-sm font-bold">{selectedOrder.paymentMethod}</p>
-                                    <p className="text-sm">Total: <span className="font-bold text-lg">${selectedOrder.grandTotal}</span></p>
+                                </div>
+                                <div className="text-right">
+                                    <p className="text-sm text-slate-500">Subtotal: ${selectedOrder.totalAmount?.toFixed(2) || '0.00'}</p>
+                                    <p className="text-sm text-slate-500">Shipping: ${selectedOrder.shippingCost?.toFixed(2) || '0.00'}</p>
+                                    <p className="text-lg font-bold text-slate-800">Total: ${selectedOrder.grandTotal?.toFixed(2)}</p>
                                 </div>
                             </div>
 
@@ -1017,9 +1097,10 @@ const NotificationLogView = ({ logs }: any) => {
 };
 
 // --- 7. SETTINGS MANAGER ---
-const SettingsManager = ({ paymentMethods, deliveryOptions, onAddPayment, onRemovePayment, onTogglePayment, onUpdatePaymentOrder, onAddDelivery, onRemoveDelivery, onToggleDelivery, adminProfile, onUpdateProfile, onShowToast }: any) => {
+const SettingsManager = ({ paymentMethods, deliveryOptions, onAddPayment, onRemovePayment, onTogglePayment, onUpdatePaymentOrder, onAddDelivery, onRemoveDelivery, onToggleDelivery, onUpdateDelivery, adminProfile, onUpdateProfile, onShowToast }: any) => {
     const [newPay, setNewPay] = useState({ name: '', iconUrl: '' });
     const [newDel, setNewDel] = useState({ name: '', price: 0, minDays: 5, maxDays: 10, icon: 'normal' });
+    const [editingDelivery, setEditingDelivery] = useState<DeliveryOption | null>(null);
     const [walletAddresses, setWalletAddresses] = useState({
         bitcoinWalletAddress: adminProfile?.bitcoinWalletAddress || '',
         usdtWalletAddress: adminProfile?.usdtWalletAddress || ''
@@ -1101,17 +1182,72 @@ const SettingsManager = ({ paymentMethods, deliveryOptions, onAddPayment, onRemo
                 <div className="bg-white rounded-lg border border-slate-200 shadow-sm p-4 mb-4">
                     <div className="space-y-2 mb-4">
                         {deliveryOptions.map((opt: DeliveryOption) => (
-                            <div key={opt.id} className="flex items-center justify-between bg-slate-50 p-2 rounded border border-slate-100">
-                                <div>
-                                    <div className="font-bold text-sm">{opt.name} (${opt.price})</div>
-                                    <div className="text-xs text-slate-500">{opt.minDays}-{opt.maxDays} days</div>
-                                </div>
-                                <div className="flex items-center gap-2">
-                                    <button onClick={() => onToggleDelivery(opt.id)} className={`text-xs px-2 py-1 rounded ${opt.enabled ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
-                                        {opt.enabled ? 'ON' : 'OFF'}
-                                    </button>
-                                    <button onClick={() => onRemoveDelivery(opt.id)} className="text-red-500 p-1"><Trash2 size={14}/></button>
-                                </div>
+                            <div key={opt.id} className="bg-slate-50 p-3 rounded border border-slate-100">
+                                {editingDelivery?.id === opt.id ? (
+                                    <div className="space-y-2">
+                                        <div className="grid grid-cols-2 gap-2">
+                                            <input 
+                                                className="border p-2 text-sm rounded" 
+                                                value={editingDelivery.name} 
+                                                onChange={e => setEditingDelivery({...editingDelivery, name: e.target.value})}
+                                                placeholder="Name"
+                                            />
+                                            <input 
+                                                type="number" 
+                                                className="border p-2 text-sm rounded" 
+                                                value={editingDelivery.price} 
+                                                onChange={e => setEditingDelivery({...editingDelivery, price: parseFloat(e.target.value) || 0})}
+                                                placeholder="Price"
+                                            />
+                                            <input 
+                                                type="number" 
+                                                className="border p-2 text-sm rounded" 
+                                                value={editingDelivery.minDays} 
+                                                onChange={e => setEditingDelivery({...editingDelivery, minDays: parseInt(e.target.value) || 0})}
+                                                placeholder="Min Days"
+                                            />
+                                            <input 
+                                                type="number" 
+                                                className="border p-2 text-sm rounded" 
+                                                value={editingDelivery.maxDays} 
+                                                onChange={e => setEditingDelivery({...editingDelivery, maxDays: parseInt(e.target.value) || 0})}
+                                                placeholder="Max Days"
+                                            />
+                                        </div>
+                                        <div className="flex gap-2">
+                                            <button 
+                                                onClick={() => {
+                                                    onUpdateDelivery(editingDelivery.id, editingDelivery);
+                                                    setEditingDelivery(null);
+                                                    onShowToast('Delivery option updated!', 'success');
+                                                }} 
+                                                className="flex-1 bg-green-600 text-white text-sm py-2 rounded font-bold"
+                                            >
+                                                Save
+                                            </button>
+                                            <button 
+                                                onClick={() => setEditingDelivery(null)} 
+                                                className="flex-1 bg-slate-300 text-slate-700 text-sm py-2 rounded font-bold"
+                                            >
+                                                Cancel
+                                            </button>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <div className="flex items-center justify-between">
+                                        <div>
+                                            <div className="font-bold text-sm">{opt.name} (${opt.price})</div>
+                                            <div className="text-xs text-slate-500">{opt.minDays}-{opt.maxDays} days</div>
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                            <button onClick={() => setEditingDelivery(opt)} className="text-blue-600 p-1"><Edit2 size={14}/></button>
+                                            <button onClick={() => onToggleDelivery(opt.id)} className={`text-xs px-2 py-1 rounded ${opt.enabled ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                                                {opt.enabled ? 'ON' : 'OFF'}
+                                            </button>
+                                            <button onClick={() => onRemoveDelivery(opt.id)} className="text-red-500 p-1"><Trash2 size={14}/></button>
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         ))}
                     </div>

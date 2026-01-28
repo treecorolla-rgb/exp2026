@@ -77,9 +77,16 @@ const getCountryByCode = (code: string) => COUNTRIES.find(c => c.code === code.t
 const getCountryByName = (name: string) => COUNTRIES.find(c => c.name === name);
 
 export const Cart: React.FC = () => {
-  const { cart, removeFromCart, updateCartQuantity, goHome, placeOrder, adminProfile, customerUser, isCustomerAuthenticated, formatPrice, paymentMethods, deliveryOptions } = useStore();
+  const { cart, removeFromCart, updateCartQuantity, goHome, placeOrder, adminProfile, customerUser, isCustomerAuthenticated, formatPrice, paymentMethods, deliveryOptions, preselectedShippingId, clearPreselectedShipping } = useStore();
   const { showToast } = useToast();
-  const [selectedShippingId, setSelectedShippingId] = useState<string>('');
+  const [selectedShippingId, setSelectedShippingId] = useState<string>(preselectedShippingId || '');
+  
+  // Clear preselected shipping on mount
+  useEffect(() => {
+    if (preselectedShippingId) {
+      clearPreselectedShipping();
+    }
+  }, []);
   const [step, setStep] = useState<'cart' | 'checkout' | 'success'>('cart');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [createAccount, setCreateAccount] = useState(true);

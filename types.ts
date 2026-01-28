@@ -106,6 +106,16 @@ export interface Order {
   trackingNumber?: string;
   trackingUrl?: string;
 
+  // Order Items
+  items?: Array<{
+    productId: string;
+    name: string;
+    packageName: string;
+    quantity: number;
+    price: number;
+    image?: string;
+  }>;
+
   // Legacy/Helper fields for UI compatibility
   total: number; // Maps to grandTotal
   date: string; // Maps to orderDate
@@ -215,13 +225,16 @@ export interface StoreContextType {
   addDeliveryOption: (option: DeliveryOption) => void;
   removeDeliveryOption: (id: string) => void;
   toggleDeliveryOption: (id: string) => void;
+  updateDeliveryOption: (id: string, updates: Partial<DeliveryOption>) => void;
 
   // Image Upload
   uploadImage: (file: File) => Promise<string | null>;
 
   viewProduct: (product: Product) => void;
   goHome: () => void;
-  goToCart: () => void;
+  goToCart: (shippingId?: string) => void;
+  preselectedShippingId: string;
+  clearPreselectedShipping: () => void;
   goToNotFound: () => void;
   goToFaq: () => void;
   goToLogin: () => void;

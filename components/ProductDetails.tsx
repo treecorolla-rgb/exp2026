@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ChevronLeft, ShoppingCart, AlertCircle } from 'lucide-react';
+import { ChevronLeft, ShoppingCart, AlertCircle, X } from 'lucide-react';
 import { useStore } from '../context/StoreContext';
 import { ProductPackage } from '../types';
 
@@ -164,8 +164,28 @@ export const ProductDetails: React.FC = () => {
 
 // --- MOBILE VIEW (Tabbed Interface) ---
 const ProductDetailsMobile: React.FC = () => {
-  const { selectedProduct: product, addToCart, goHome, formatPrice } = useStore();
+  const { selectedProduct: product, addToCart, goHome, formatPrice, deliveryOptions, goToCart } = useStore();
   const [selectedDosage, setSelectedDosage] = useState<string>('');
+  const [showShippingModal, setShowShippingModal] = useState(false);
+  const [pendingPackage, setPendingPackage] = useState<any>(null);
+  const [selectedShipping, setSelectedShipping] = useState<string>('');
+  
+  const activeDeliveryOptions = deliveryOptions.filter(opt => opt.enabled);
+
+  const handleAddToCartClick = (pkg: any) => {
+    setPendingPackage(pkg);
+    setSelectedShipping(activeDeliveryOptions[0]?.id || '');
+    setShowShippingModal(true);
+  };
+
+  const confirmAddToCart = () => {
+    if (product && pendingPackage) {
+      addToCart(product, pendingPackage);
+      setShowShippingModal(false);
+      setPendingPackage(null);
+      goToCart(selectedShipping);
+    }
+  };
   
   // Group packages by dosage
   const dosages: string[] = Array.from(new Set(product?.packages?.map(p => p.dosage) || []));
@@ -247,7 +267,7 @@ const ProductDetailsMobile: React.FC = () => {
                     <div className="text-right flex flex-col items-end gap-2">
                         <div className="font-extrabold text-lg text-slate-900">{formatPrice(pkg.totalPrice)}</div>
                         <button 
-                           onClick={() => addToCart(product, pkg)}
+                           onClick={() => handleAddToCartClick(pkg)}
                            className="bg-[#337ab7] text-white text-xs font-bold px-4 py-2 rounded uppercase tracking-wide shadow-sm"
                         >
                            Add to Cart
@@ -257,6 +277,67 @@ const ProductDetailsMobile: React.FC = () => {
               ))}
            </div>
       </div>
+
+      {/* Shipping Selection Modal for Mobile */}
+      {showShippingModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-end justify-center z-50">
+          <div className="bg-white w-full rounded-t-2xl p-6 max-h-[80vh] overflow-y-auto animate-slide-up">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-bold text-slate-800">Select Shipping Method</h3>
+              <button onClick={() => setShowShippingModal(false)} className="text-slate-500">
+                <X size={24} />
+              </button>
+            </div>
+            
+            <div className="space-y-3 mb-6">
+              {activeDeliveryOptions.map(opt => (
+                <label 
+                  key={opt.id}
+                  className={`flex items-center justify-between p-4 rounded-lg border-2 cursor-pointer transition ${
+                    selectedShipping === opt.id 
+                      ? 'border-[#337ab7] bg-blue-50' 
+                      : 'border-slate-200 bg-white'
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    <input 
+                      type="radio" 
+                      name="shipping" 
+                      checked={selectedShipping === opt.id}
+                      onChange={() => setSelectedShipping(opt.id)}
+                      className="w-5 h-5 text-[#337ab7]"
+                    />
+                    <div>
+                      <div className="font-bold text-slate-800">{opt.name}</div>
+                      <div className="text-xs text-slate-500">{opt.minDays}-{opt.maxDays} business days</div>
+                    </div>
+                  </div>
+                  <div className="font-bold text-slate-800">
+                    {opt.price === 0 ? 'FREE' : `$${opt.price.toFixed(2)}`}
+                  </div>
+                </label>
+              ))}
+            </div>
+
+            <button 
+              onClick={confirmAddToCart}
+              className="w-full bg-[#337ab7] text-white py-4 rounded-lg font-bold text-lg uppercase tracking-wide shadow-lg"
+            >
+              Add to Cart & Continue
+            </button>
+          </div>
+        </div>
+      )}
+
+      <style>{`
+        @keyframes slide-up {
+          from { transform: translateY(100%); }
+          to { transform: translateY(0); }
+        }
+        .animate-slide-up {
+          animation: slide-up 0.3s ease-out;
+        }
+      `}</style>
     </div>
   );
 };
