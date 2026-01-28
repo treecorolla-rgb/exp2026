@@ -622,32 +622,57 @@ ${itemsList}
             </div>
          ) : (
             <div className="space-y-2">
-               {enabledDeliveryOptions.map(option => (
-                  <label 
-                     key={option.id}
-                     className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition ${
-                        selectedShippingId === option.id 
-                           ? 'border-primary bg-blue-50' 
-                           : 'border-slate-200 hover:border-slate-300'
-                     }`}
-                  >
-                     <input 
-                        type="radio"
-                        name="shipping"
-                        value={option.id}
-                        checked={selectedShippingId === option.id}
-                        onChange={(e) => setSelectedShippingId(e.target.value)}
-                        className="w-4 h-4 text-primary"
-                     />
-                     <div className="flex-1">
-                        <div className="font-bold text-slate-800">{option.name}</div>
-                        <div className="text-sm text-slate-500">
-                           {option.minDays}-{option.maxDays} business days
+               {enabledDeliveryOptions.map(option => {
+                  // Calculate estimated delivery date
+                  const today = new Date();
+                  const deliveryDate = new Date(today);
+                  deliveryDate.setDate(today.getDate() + option.minDays);
+                  const formattedDate = deliveryDate.toLocaleDateString('en-US', { 
+                     weekday: 'short', 
+                     month: 'short', 
+                     day: 'numeric' 
+                  });
+                  
+                  return (
+                     <label 
+                        key={option.id}
+                        className={`flex items-center gap-4 p-4 rounded-lg border cursor-pointer transition ${
+                           selectedShippingId === option.id 
+                              ? 'border-primary bg-blue-50' 
+                              : 'border-slate-200 hover:border-slate-300'
+                        }`}
+                     >
+                        <input 
+                           type="radio"
+                           name="shipping"
+                           value={option.id}
+                           checked={selectedShippingId === option.id}
+                           onChange={(e) => setSelectedShippingId(e.target.value)}
+                           className="w-4 h-4 text-primary"
+                        />
+                        {/* Logo */}
+                        <div className="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center shrink-0">
+                           <Truck size={20} className="text-blue-500" />
                         </div>
-                     </div>
-                     <div className="font-bold text-slate-800">{formatPrice(option.price)}</div>
-                  </label>
-               ))}
+                        {/* Name & Days */}
+                        <div className="flex-1">
+                           <div className="font-bold text-slate-800">{option.name}</div>
+                           <div className="text-sm text-slate-500">
+                              {option.minDays}-{option.maxDays} business days
+                           </div>
+                        </div>
+                        {/* Price */}
+                        <div className="font-bold text-slate-800 text-right">
+                           {formatPrice(option.price)}
+                        </div>
+                        {/* Estimated Delivery Date */}
+                        <div className="text-right border-l border-slate-200 pl-4 ml-2">
+                           <div className="text-xs text-slate-500 uppercase">Est. Delivery</div>
+                           <div className="font-bold text-green-600">{formattedDate}</div>
+                        </div>
+                     </label>
+                  );
+               })}
             </div>
          )}
       </div>
