@@ -621,25 +621,27 @@ ${itemsList}
                </div>
             </div>
          ) : (
-            <div className="space-y-2">
+            <div className="divide-y divide-slate-200 border border-slate-200 rounded-lg overflow-hidden">
                {enabledDeliveryOptions.map(option => {
                   // Calculate estimated delivery date
                   const today = new Date();
                   const deliveryDate = new Date(today);
                   deliveryDate.setDate(today.getDate() + option.minDays);
                   const formattedDate = deliveryDate.toLocaleDateString('en-US', { 
-                     weekday: 'short', 
-                     month: 'short', 
+                     month: 'long', 
                      day: 'numeric' 
                   });
+                  
+                  // Determine if express or standard based on name
+                  const isExpress = option.name.toLowerCase().includes('express');
                   
                   return (
                      <label 
                         key={option.id}
-                        className={`flex items-center gap-4 p-4 rounded-lg border cursor-pointer transition ${
+                        className={`flex items-center gap-4 p-4 cursor-pointer transition ${
                            selectedShippingId === option.id 
-                              ? 'border-primary bg-blue-50' 
-                              : 'border-slate-200 hover:border-slate-300'
+                              ? 'bg-blue-50' 
+                              : 'bg-white hover:bg-slate-50'
                         }`}
                      >
                         <input 
@@ -651,24 +653,33 @@ ${itemsList}
                            className="w-4 h-4 text-primary"
                         />
                         {/* Logo */}
-                        <div className="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center shrink-0">
-                           <Truck size={20} className="text-blue-500" />
+                        <div className="w-14 h-10 flex items-center justify-center shrink-0">
+                           {isExpress ? (
+                              <div className="bg-red-500 text-white text-[10px] font-bold px-2 py-1 rounded flex items-center gap-1">
+                                 <Truck size={14} />
+                                 EXPRESS
+                              </div>
+                           ) : (
+                              <Truck size={28} className="text-slate-600" />
+                           )}
                         </div>
-                        {/* Name & Days */}
-                        <div className="flex-1">
-                           <div className="font-bold text-slate-800">{option.name}</div>
-                           <div className="text-sm text-slate-500">
-                              {option.minDays}-{option.maxDays} business days
-                           </div>
+                        {/* Flag + Price */}
+                        <div className="flex items-center gap-2 min-w-[100px]">
+                           <img 
+                              src={`https://flagcdn.com/w40/${countryFlags[formData.country] || 'in'}.png`} 
+                              alt="Flag" 
+                              className="w-5 h-3.5 object-cover rounded-[1px] shadow-sm"
+                           />
+                           <span className="font-bold text-slate-800">{formatPrice(option.price)}</span>
                         </div>
-                        {/* Price */}
-                        <div className="font-bold text-slate-800 text-right">
-                           {formatPrice(option.price)}
+                        {/* Delivery Period */}
+                        <div className="flex-1 text-slate-600">
+                           Delivery period: <span className="font-bold text-slate-800">{option.minDays}-{option.maxDays} Days</span>
                         </div>
-                        {/* Estimated Delivery Date */}
-                        <div className="text-right border-l border-slate-200 pl-4 ml-2">
-                           <div className="text-xs text-slate-500 uppercase">Est. Delivery</div>
-                           <div className="font-bold text-green-600">{formattedDate}</div>
+                        {/* Approximate Delivery Date */}
+                        <div className="text-right">
+                           <div className="text-xs text-slate-400">Approximate delivery time</div>
+                           <div className="font-bold text-slate-800">{formattedDate}</div>
                         </div>
                      </label>
                   );
