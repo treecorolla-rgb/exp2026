@@ -7,14 +7,72 @@ import { CustomerDetails } from '../types';
 const DEFAULT_TELEGRAM_BOT_TOKEN = 'YOUR_BOT_TOKEN_HERE'; 
 const DEFAULT_TELEGRAM_CHAT_ID = 'YOUR_CHAT_ID_HERE';
 
-const countryFlags: Record<string, string> = {
-  'India': 'in',
-  'USA': 'us',
-  'UK': 'gb',
-  'Canada': 'ca',
-  'Australia': 'au',
-  'Spain': 'es'
-};
+// Comprehensive country list with codes and phone prefixes - alphabetically sorted
+const COUNTRIES = [
+  { name: 'Afghanistan', code: 'af', phone: '+93' },
+  { name: 'Albania', code: 'al', phone: '+355' },
+  { name: 'Algeria', code: 'dz', phone: '+213' },
+  { name: 'Argentina', code: 'ar', phone: '+54' },
+  { name: 'Australia', code: 'au', phone: '+61' },
+  { name: 'Austria', code: 'at', phone: '+43' },
+  { name: 'Bangladesh', code: 'bd', phone: '+880' },
+  { name: 'Belgium', code: 'be', phone: '+32' },
+  { name: 'Brazil', code: 'br', phone: '+55' },
+  { name: 'Canada', code: 'ca', phone: '+1' },
+  { name: 'Chile', code: 'cl', phone: '+56' },
+  { name: 'China', code: 'cn', phone: '+86' },
+  { name: 'Colombia', code: 'co', phone: '+57' },
+  { name: 'Czech Republic', code: 'cz', phone: '+420' },
+  { name: 'Denmark', code: 'dk', phone: '+45' },
+  { name: 'Egypt', code: 'eg', phone: '+20' },
+  { name: 'Finland', code: 'fi', phone: '+358' },
+  { name: 'France', code: 'fr', phone: '+33' },
+  { name: 'Germany', code: 'de', phone: '+49' },
+  { name: 'Greece', code: 'gr', phone: '+30' },
+  { name: 'Hong Kong', code: 'hk', phone: '+852' },
+  { name: 'Hungary', code: 'hu', phone: '+36' },
+  { name: 'India', code: 'in', phone: '+91' },
+  { name: 'Indonesia', code: 'id', phone: '+62' },
+  { name: 'Ireland', code: 'ie', phone: '+353' },
+  { name: 'Israel', code: 'il', phone: '+972' },
+  { name: 'Italy', code: 'it', phone: '+39' },
+  { name: 'Japan', code: 'jp', phone: '+81' },
+  { name: 'Kenya', code: 'ke', phone: '+254' },
+  { name: 'Malaysia', code: 'my', phone: '+60' },
+  { name: 'Mexico', code: 'mx', phone: '+52' },
+  { name: 'Morocco', code: 'ma', phone: '+212' },
+  { name: 'Netherlands', code: 'nl', phone: '+31' },
+  { name: 'New Zealand', code: 'nz', phone: '+64' },
+  { name: 'Nigeria', code: 'ng', phone: '+234' },
+  { name: 'Norway', code: 'no', phone: '+47' },
+  { name: 'Pakistan', code: 'pk', phone: '+92' },
+  { name: 'Peru', code: 'pe', phone: '+51' },
+  { name: 'Philippines', code: 'ph', phone: '+63' },
+  { name: 'Poland', code: 'pl', phone: '+48' },
+  { name: 'Portugal', code: 'pt', phone: '+351' },
+  { name: 'Romania', code: 'ro', phone: '+40' },
+  { name: 'Russia', code: 'ru', phone: '+7' },
+  { name: 'Saudi Arabia', code: 'sa', phone: '+966' },
+  { name: 'Singapore', code: 'sg', phone: '+65' },
+  { name: 'South Africa', code: 'za', phone: '+27' },
+  { name: 'South Korea', code: 'kr', phone: '+82' },
+  { name: 'Spain', code: 'es', phone: '+34' },
+  { name: 'Sri Lanka', code: 'lk', phone: '+94' },
+  { name: 'Sweden', code: 'se', phone: '+46' },
+  { name: 'Switzerland', code: 'ch', phone: '+41' },
+  { name: 'Taiwan', code: 'tw', phone: '+886' },
+  { name: 'Thailand', code: 'th', phone: '+66' },
+  { name: 'Turkey', code: 'tr', phone: '+90' },
+  { name: 'UAE', code: 'ae', phone: '+971' },
+  { name: 'Ukraine', code: 'ua', phone: '+380' },
+  { name: 'United Kingdom', code: 'gb', phone: '+44' },
+  { name: 'United States', code: 'us', phone: '+1' },
+  { name: 'Vietnam', code: 'vn', phone: '+84' },
+];
+
+// Helper to get country by code
+const getCountryByCode = (code: string) => COUNTRIES.find(c => c.code === code.toLowerCase());
+const getCountryByName = (name: string) => COUNTRIES.find(c => c.name === name);
 
 export const Cart: React.FC = () => {
   const { cart, removeFromCart, updateCartQuantity, goHome, placeOrder, adminProfile, customerUser, isCustomerAuthenticated, formatPrice, paymentMethods, deliveryOptions } = useStore();
@@ -68,20 +126,29 @@ export const Cart: React.FC = () => {
     }
   };
   
+  // Validation errors
+  const [validationErrors, setValidationErrors] = useState<{phone?: string; email?: string}>({});
+
   useEffect(() => {
     const detectCountry = async () => {
       try {
         const res = await fetch('https://ipapi.co/json/');
         const data = await res.json();
         if (data.country_code) {
-          setUserCountryCode(data.country_code.toLowerCase());
+          const code = data.country_code.toLowerCase();
+          setUserCountryCode(code);
+          // Set default country in form based on IP
+          const detectedCountry = getCountryByCode(code);
+          if (detectedCountry && !customerUser) {
+            setFormData(prev => ({ ...prev, country: detectedCountry.name }));
+          }
         }
       } catch (error) {
         console.log('Could not detect country, using default');
       }
     };
     detectCountry();
-  }, []);
+  }, [customerUser]);
 
   // Ensure default method is valid
   useEffect(() => {
@@ -122,9 +189,41 @@ export const Cart: React.FC = () => {
       }
   };
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
+  // Validation functions
+  const validateEmail = (email: string): boolean => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
   };
+
+  const validatePhone = (phone: string): boolean => {
+    // Allow digits, spaces, dashes, parentheses, and + sign
+    const phoneRegex = /^[\d\s\-+()]{7,20}$/;
+    return phoneRegex.test(phone);
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+    
+    // Clear validation errors on change
+    if (name === 'phone') {
+      if (value && !validatePhone(value)) {
+        setValidationErrors(prev => ({ ...prev, phone: 'Please enter a valid phone number' }));
+      } else {
+        setValidationErrors(prev => ({ ...prev, phone: undefined }));
+      }
+    }
+    if (name === 'email') {
+      if (value && !validateEmail(value)) {
+        setValidationErrors(prev => ({ ...prev, email: 'Please enter a valid email address' }));
+      } else {
+        setValidationErrors(prev => ({ ...prev, email: undefined }));
+      }
+    }
+  };
+
+  // Get current country info for forms
+  const selectedCountry = getCountryByName(formData.country) || COUNTRIES.find(c => c.code === 'in') || COUNTRIES[0];
 
   const handlePaymentChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     setPaymentData(prev => ({ ...prev, [e.target.name]: e.target.value }));
@@ -329,12 +428,12 @@ ${itemsList}
                     
                     {/* Row 2: Country & State */}
                     <div className="space-y-1 relative">
-                        {/* Custom Country Select to match Screenshot */}
+                        {/* Custom Country Select - alphabetically sorted */}
                         <div className="relative border border-slate-300 rounded bg-white">
                            <label className="absolute -top-2.5 left-3 bg-white px-1 text-xs text-slate-500">Country <span className="text-red-500">*</span></label>
                            <div className="flex items-center h-[46px] px-3">
                               <img 
-                                src={`https://flagcdn.com/w40/${countryFlags[formData.country] || 'in'}.png`} 
+                                src={`https://flagcdn.com/w40/${selectedCountry.code}.png`} 
                                 alt="Flag" 
                                 className="w-5 h-3.5 object-cover rounded-[1px] mr-2 shadow-sm"
                               />
@@ -344,12 +443,9 @@ ${itemsList}
                                 onChange={handleInputChange}
                                 className="w-full h-full bg-transparent border-none outline-none font-medium text-slate-700 cursor-pointer appearance-none text-sm"
                               >
-                                 <option value="India">India</option>
-                                 <option value="USA">United States</option>
-                                 <option value="UK">United Kingdom</option>
-                                 <option value="Canada">Canada</option>
-                                 <option value="Australia">Australia</option>
-                                 <option value="Spain">Spain</option>
+                                 {COUNTRIES.map(country => (
+                                    <option key={country.code} value={country.name}>{country.name}</option>
+                                 ))}
                               </select>
                               <ChevronDown size={16} className="text-slate-400 absolute right-3 pointer-events-none" />
                            </div>
@@ -385,14 +481,14 @@ ${itemsList}
 
                     {/* Row 5: Phone & Email */}
                     <div className="space-y-1">
-                       <div className="relative border border-slate-300 rounded bg-white flex items-center h-[48px]">
+                       <div className={`relative border rounded bg-white flex items-center h-[48px] ${validationErrors.phone ? 'border-red-400' : 'border-slate-300'}`}>
                            <div className="pl-3 pr-2 border-r border-slate-200 h-full flex items-center">
                               <img 
-                                src={`https://flagcdn.com/w40/${countryFlags[formData.country] || 'in'}.png`} 
+                                src={`https://flagcdn.com/w40/${selectedCountry.code}.png`} 
                                 alt="Flag" 
                                 className="w-5 h-3.5 object-cover rounded-[1px]"
                               />
-                              <ChevronDown size={12} className="text-slate-400 ml-1" />
+                              <span className="text-xs text-slate-500 ml-1.5">{selectedCountry.phone}</span>
                            </div>
                            <input 
                               required name="phone" 
@@ -402,12 +498,28 @@ ${itemsList}
                               onChange={handleInputChange} 
                            />
                        </div>
-                       <p className="text-right text-xs text-slate-500 mt-1">Ex: +1 888 207 32 07</p>
+                       {validationErrors.phone ? (
+                         <p className="text-right text-xs text-red-500 mt-1">{validationErrors.phone}</p>
+                       ) : (
+                         <p className="text-right text-xs text-slate-500 mt-1">Ex: {selectedCountry.phone} 888 207 3207</p>
+                       )}
                     </div>
 
                     <div className="space-y-1">
-                       <input required type="email" name="email" value={formData.email} placeholder="Email *" className="w-full border border-slate-300 rounded p-3 text-slate-700 placeholder:text-slate-400 outline-none focus:border-primary" onChange={handleInputChange} />
-                       <p className="text-right text-xs text-slate-500 mt-1">Ex: example@domain.com</p>
+                       <input 
+                         required 
+                         type="email" 
+                         name="email" 
+                         value={formData.email} 
+                         placeholder="Email *" 
+                         className={`w-full border rounded p-3 text-slate-700 placeholder:text-slate-400 outline-none focus:border-primary ${validationErrors.email ? 'border-red-400' : 'border-slate-300'}`}
+                         onChange={handleInputChange} 
+                       />
+                       {validationErrors.email ? (
+                         <p className="text-right text-xs text-red-500 mt-1">{validationErrors.email}</p>
+                       ) : (
+                         <p className="text-right text-xs text-slate-500 mt-1">Ex: example@domain.com</p>
+                       )}
                     </div>
 
                     {/* Options */}
