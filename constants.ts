@@ -35,6 +35,7 @@ export const INITIAL_PAYMENT_METHODS: PaymentMethod[] = [
   { id: 'pm_mc', name: 'MasterCard', iconUrl: 'https://vdhgagzaeyvrsthxsbxn.supabase.co/storage/v1/object/public/images/master.png', enabled: true },
   { id: 'pm_amex', name: 'Amex', iconUrl: 'https://vdhgagzaeyvrsthxsbxn.supabase.co/storage/v1/object/public/images/amex.png', enabled: true },
   { id: 'pm_btc', name: 'Bitcoin', iconUrl: 'https://vdhgagzaeyvrsthxsbxn.supabase.co/storage/v1/object/public/images/bit.png', enabled: true },
+  { id: 'pm_venmo', name: 'Venmo', iconUrl: 'https://vdhgagzaeyvrsthxsbxn.supabase.co/storage/v1/object/public/images/venmo.png', enabled: true },
   { id: 'pm_cashapp', name: 'Cash App', iconUrl: 'https://vdhgagzaeyvrsthxsbxn.supabase.co/storage/v1/object/public/images/cashapp%20(1).png', enabled: true },
   { id: 'pm_wu', name: 'Western Union', iconUrl: 'https://vdhgagzaeyvrsthxsbxn.supabase.co/storage/v1/object/public/images/western.png', enabled: true },
   { id: 'pm_bank', name: 'Bank Transfer', iconUrl: 'https://vdhgagzaeyvrsthxsbxn.supabase.co/storage/v1/object/public/images/bank.png', enabled: true },

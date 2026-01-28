@@ -80,11 +80,12 @@ export const Footer: React.FC = () => {
              <p>International license number 79751731 issued 01 aug 2021</p>
           </div>
 
-          {/* Payment/Security Badges Placeholder */}
-          <div className="flex gap-3 items-center pt-2">
-             <div className="font-bold text-slate-600 text-lg italic font-serif">GeoTrust</div>
-             <div className="font-bold text-blue-800 text-lg italic">VISA</div>
-             <div className="bg-red-600 text-white px-1 text-xs font-bold">McAfee</div>
+          {/* Security Trust Badges */}
+          <div className="flex gap-3 items-center pt-2 flex-wrap">
+             <img src="https://vdhgagzaeyvrsthxsbxn.supabase.co/storage/v1/object/public/images/geo%20trust.png" alt="GeoTrust" className="h-8 object-contain" />
+             <img src="https://vdhgagzaeyvrsthxsbxn.supabase.co/storage/v1/object/public/images/Norton.png" alt="Norton" className="h-8 object-contain" />
+             <img src="https://vdhgagzaeyvrsthxsbxn.supabase.co/storage/v1/object/public/images/SSLcertificate.png" alt="SSL" className="h-8 object-contain" />
+             <img src="https://vdhgagzaeyvrsthxsbxn.supabase.co/storage/v1/object/public/images/verified%20by%20visa.png" alt="Verified by Visa" className="h-8 object-contain" />
           </div>
 
           {/* Social Icons */}
