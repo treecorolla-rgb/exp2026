@@ -42,7 +42,7 @@ export const Header: React.FC = () => {
 
             {/* Mobile Actions */}
             <div className="flex items-center gap-4 md:hidden">
-              <div className="relative cursor-pointer" onClick={goToCart}>
+              <div className="relative cursor-pointer" onClick={() => goToCart()}>
                 <ShoppingCart size={24} className="text-slate-700" />
                 <span className="absolute -top-3 -right-3 bg-secondary text-white text-[11px] font-bold w-6 h-6 rounded-full flex items-center justify-center shadow-sm border border-white">
                   {cart.reduce((acc, item) => acc + item.quantity, 0)}
@@ -82,7 +82,7 @@ export const Header: React.FC = () => {
               </span>
             </div>
 
-            <div className="flex items-center space-x-3 cursor-pointer group" onClick={goToCart}>
+            <div className="flex items-center space-x-3 cursor-pointer group" onClick={() => goToCart()}>
               <div className="relative">
                 <ShoppingCart size={26} className="text-slate-400 group-hover:text-primary transition" strokeWidth={1.5} />
                 <span className="absolute -top-2 -right-2 bg-secondary text-white text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center border-2 border-white shadow-sm">

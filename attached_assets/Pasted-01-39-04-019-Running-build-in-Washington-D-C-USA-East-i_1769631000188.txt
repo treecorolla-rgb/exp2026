@@ -1,0 +1,31 @@
+01:39:04.019 Running build in Washington, D.C., USA (East) – iad1
+01:39:04.022 Build machine configuration: 2 cores, 8 GB
+01:39:04.408 Cloning github.com/treecorolla-rgb/exp2026 (Branch: main, Commit: 2c50be0)
+01:39:05.311 Cloning completed: 903.000ms
+01:39:05.455 Restored build cache from previous deployment (7Bo5wPxeNkpGnkT9qUgunMAwmYZs)
+01:39:06.218 Running "vercel build"
+01:39:07.470 Vercel CLI 50.5.2
+01:39:08.267 Installing dependencies...
+01:39:09.442 
+01:39:09.443 added 1 package in 818ms
+01:39:09.444 
+01:39:09.444 7 packages are looking for funding
+01:39:09.444   run `npm fund` for details
+01:39:09.477 Running "npm run build"
+01:39:09.583 
+01:39:09.584 > my-test-store-architecture@1.0.0 build
+01:39:09.585 > tsc && vite build
+01:39:09.585 
+01:39:14.078 components/Header.tsx(45,56): error TS2322: Type '(shippingId?: string) => void' is not assignable to type 'MouseEventHandler<HTMLDivElement>'.
+01:39:14.079   Types of parameters 'shippingId' and 'event' are incompatible.
+01:39:14.079     Type 'MouseEvent<HTMLDivElement, MouseEvent>' is not assignable to type 'string'.
+01:39:14.079 components/Header.tsx(85,79): error TS2322: Type '(shippingId?: string) => void' is not assignable to type 'MouseEventHandler<HTMLDivElement>'.
+01:39:14.079   Types of parameters 'shippingId' and 'event' are incompatible.
+01:39:14.079     Type 'MouseEvent<HTMLDivElement, MouseEvent>' is not assignable to type 'string'.
+01:39:14.079 components/MobileLayout.tsx(78,59): error TS2322: Type '(shippingId?: string) => void' is not assignable to type 'MouseEventHandler<HTMLButtonElement>'.
+01:39:14.080   Types of parameters 'shippingId' and 'event' are incompatible.
+01:39:14.080     Type 'MouseEvent<HTMLButtonElement, MouseEvent>' is not assignable to type 'string'.
+01:39:14.080 components/MobileLayout.tsx(160,9): error TS2322: Type '(shippingId?: string) => void' is not assignable to type 'MouseEventHandler<HTMLButtonElement>'.
+01:39:14.080   Types of parameters 'shippingId' and 'event' are incompatible.
+01:39:14.080     Type 'MouseEvent<HTMLButtonElement, MouseEvent>' is not assignable to type 'string'.
+01:39:14.110 Error: Command "npm run build" exited with 2
