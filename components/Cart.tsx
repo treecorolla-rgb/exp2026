@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Trash2, ShoppingBag, ArrowRight, Minus, Plus, ShieldCheck, CreditCard, Lock, ChevronLeft, CheckCircle, ChevronDown, Check, AlertCircle } from 'lucide-react';
+import { Trash2, ShoppingBag, ArrowRight, Minus, Plus, ShieldCheck, CreditCard, Lock, ChevronLeft, CheckCircle, ChevronDown, Check, AlertCircle, Truck } from 'lucide-react';
 import { useStore } from '../context/StoreContext';
 import { CustomerDetails } from '../types';
 
@@ -17,7 +17,8 @@ const countryFlags: Record<string, string> = {
 };
 
 export const Cart: React.FC = () => {
-  const { cart, removeFromCart, updateCartQuantity, goHome, placeOrder, adminProfile, customerUser, isCustomerAuthenticated, formatPrice, paymentMethods } = useStore();
+  const { cart, removeFromCart, updateCartQuantity, goHome, placeOrder, adminProfile, customerUser, isCustomerAuthenticated, formatPrice, paymentMethods, deliveryOptions } = useStore();
+  const [selectedShippingId, setSelectedShippingId] = useState<string>('');
   const [step, setStep] = useState<'cart' | 'checkout' | 'success'>('cart');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [createAccount, setCreateAccount] = useState(true);
@@ -53,8 +54,21 @@ export const Cart: React.FC = () => {
   const subtotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
   // Logic: Free shipping if subtotal > 200 USD
   const freeShippingThreshold = 200;
-  const isFreeShipping = subtotal > freeShippingThreshold;
-  const shipping = isFreeShipping ? 0 : 25.00;
+  const isFreeShipping = subtotal >= freeShippingThreshold;
+  
+  // Get enabled delivery options
+  const enabledDeliveryOptions = deliveryOptions.filter(d => d.enabled);
+  
+  // Set default shipping option if not selected
+  useEffect(() => {
+    if (enabledDeliveryOptions.length > 0 && !selectedShippingId) {
+      setSelectedShippingId(enabledDeliveryOptions[0].id);
+    }
+  }, [enabledDeliveryOptions, selectedShippingId]);
+  
+  // Calculate shipping cost based on selection
+  const selectedDelivery = enabledDeliveryOptions.find(d => d.id === selectedShippingId);
+  const shipping = isFreeShipping ? 0 : (selectedDelivery?.price || 25.00);
   
   // Amount needed for free shipping
   const amountForFreeShipping = Math.max(0, freeShippingThreshold - subtotal);
@@ -560,23 +574,27 @@ ${itemsList}
       <h1 className="text-3xl font-extrabold text-slate-900 mb-8 tracking-tight">Shopping Cart</h1>
       
       {/* Free Shipping Alert */}
-      <div className="mb-6 bg-blue-50 border border-blue-200 rounded-lg p-4 flex flex-col sm:flex-row items-center justify-between gap-4">
-         <div className="flex items-center gap-3">
-            <div className={`w-12 h-12 rounded-full flex items-center justify-center shrink-0 ${isFreeShipping ? 'bg-green-100 text-green-600' : 'bg-blue-100 text-blue-600'}`}>
-                {isFreeShipping ? <CheckCircle size={24} /> : <ShoppingBag size={24} />}
+      <div className="mb-6 bg-[#e8f4fc] border border-[#b8dff5] rounded-lg p-4 flex flex-col sm:flex-row items-center justify-between gap-4">
+         <div className="flex items-center gap-4">
+            <div className="w-16 h-16 rounded-lg bg-[#d4ebf8] flex items-center justify-center shrink-0">
+                <Truck size={32} className="text-[#2196F3]" />
             </div>
             <div>
                 {isFreeShipping ? (
-                    <div className="font-bold text-green-700 text-lg">You are eligible for Free Shipping!</div>
+                    <div className="text-lg">
+                       <span className="font-bold text-[#2196F3]">Congratulations!</span>{' '}
+                       <span className="text-slate-700">You can complete your order with</span>{' '}
+                       <span className="font-bold text-[#2196F3]">FREE Shipping!</span>
+                    </div>
                 ) : (
                     <div>
                         <div className="font-bold text-slate-800 text-lg">
-                           Add <span className="text-primary">{formatPrice(amountForFreeShipping)}</span> to get Free Shipping
+                           Add <span className="text-[#2196F3]">{formatPrice(amountForFreeShipping)}</span> to get Free Shipping
                         </div>
-                        <div className="w-full bg-slate-200 rounded-full h-2 mt-2 max-w-[200px]">
+                        <div className="w-full bg-[#b8dff5] rounded-full h-2 mt-2 max-w-[200px]">
                            <div 
-                             className="bg-primary h-2 rounded-full transition-all duration-500" 
-                             style={{ width: `${(subtotal / freeShippingThreshold) * 100}%` }}
+                             className="bg-[#2196F3] h-2 rounded-full transition-all duration-500" 
+                             style={{ width: `${Math.min((subtotal / freeShippingThreshold) * 100, 100)}%` }}
                            ></div>
                         </div>
                     </div>
@@ -589,6 +607,49 @@ ${itemsList}
          >
            Continue Shopping
          </button>
+      </div>
+
+      {/* Shipping Option Selector */}
+      <div className="mb-6 bg-white border border-slate-200 rounded-lg p-4">
+         <h3 className="font-bold text-slate-800 mb-3 text-sm uppercase tracking-wide">Select Shipping Method</h3>
+         {isFreeShipping ? (
+            <div className="bg-green-50 border border-green-200 rounded-lg p-4 flex items-center gap-3">
+               <CheckCircle size={24} className="text-green-500" />
+               <div>
+                  <span className="font-bold text-green-700">Free Shipping Applied!</span>
+                  <span className="text-green-600 ml-2">Congratulations, you are eligible for free shipping!</span>
+               </div>
+            </div>
+         ) : (
+            <div className="space-y-2">
+               {enabledDeliveryOptions.map(option => (
+                  <label 
+                     key={option.id}
+                     className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition ${
+                        selectedShippingId === option.id 
+                           ? 'border-primary bg-blue-50' 
+                           : 'border-slate-200 hover:border-slate-300'
+                     }`}
+                  >
+                     <input 
+                        type="radio"
+                        name="shipping"
+                        value={option.id}
+                        checked={selectedShippingId === option.id}
+                        onChange={(e) => setSelectedShippingId(e.target.value)}
+                        className="w-4 h-4 text-primary"
+                     />
+                     <div className="flex-1">
+                        <div className="font-bold text-slate-800">{option.name}</div>
+                        <div className="text-sm text-slate-500">
+                           {option.minDays}-{option.maxDays} business days
+                        </div>
+                     </div>
+                     <div className="font-bold text-slate-800">{formatPrice(option.price)}</div>
+                  </label>
+               ))}
+            </div>
+         )}
       </div>
 
       <div className="flex flex-col lg:flex-row gap-8">
