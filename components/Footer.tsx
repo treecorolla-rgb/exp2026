@@ -132,13 +132,13 @@ export const Footer: React.FC = () => {
                  </div>
                  
                  {/* Payment Icons Row */}
-                 <div className="flex gap-2 mt-4 flex-wrap">
+                 <div className="flex gap-2 mt-4 items-center">
                     {paymentMethods.filter(pm => pm.enabled).map(pm => (
                        <img 
                           key={pm.id} 
                           src={pm.iconUrl} 
                           alt={pm.name}
-                          className="h-8 border border-slate-200 rounded object-contain bg-white" 
+                          className={`${pm.name.toLowerCase().includes('visa') ? 'h-5' : 'h-6'} w-auto object-contain`}
                           title={pm.name}
                        />
                     ))}
