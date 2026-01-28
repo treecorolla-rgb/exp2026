@@ -208,46 +208,46 @@ const ProductDetailsDesktop: React.FC = () => {
         )}
       </div>
 
-      <div className="flex flex-col md:flex-row gap-8 mb-10">
-        <div className="md:w-5/12">
-           <div className="bg-white flex items-center justify-center p-8 border border-slate-200 rounded-xl shadow-sm h-[350px]">
+      <div className="flex flex-col md:flex-row gap-6 mb-8">
+        <div className="md:w-4/12">
+           <div className="bg-white flex items-center justify-center p-6 border border-slate-200 rounded-lg h-[280px]">
               <img src={product.image} alt={product.name} className="w-full h-full object-contain" />
            </div>
         </div>
-        <div className="md:w-7/12 pt-2">
-          <h1 className="text-4xl font-extrabold text-slate-900 mb-6 tracking-tight">{product.name}</h1>
+        <div className="md:w-8/12">
+          <h1 className="text-3xl font-extrabold text-slate-900 mb-4 tracking-tight">{product.name}</h1>
           
-          <div className="flex flex-wrap gap-6 text-sm text-slate-600 mb-6 items-center border-b border-slate-100 pb-6">
-             <div className="flex items-baseline">
-               <span className="text-slate-400 font-extrabold uppercase text-[11px] tracking-widest mr-3">ACTIVE INGREDIENT:</span>
-               <span className="text-[#3b5998] hover:underline cursor-pointer font-bold text-[15px]">{product.activeIngredient}</span>
+          <div className="flex flex-wrap gap-4 text-sm text-slate-600 mb-4 items-center">
+             <div className="flex items-center gap-2">
+               <span className="text-slate-400 font-bold uppercase text-[10px] tracking-widest">ACTIVE INGREDIENT:</span>
+               <span className="text-[#3b5998] hover:underline cursor-pointer font-bold text-[14px]">{product.activeIngredient}</span>
              </div>
-             <div className="flex items-baseline">
-               <span className="text-slate-400 font-extrabold uppercase text-[11px] tracking-widest mr-3">AVAILABILITY:</span>
-               <span className="text-[#5cb85c] font-bold text-[15px]">In Stock</span>
+             <div className="flex items-center gap-2">
+               <span className="text-slate-400 font-bold uppercase text-[10px] tracking-widest">AVAILABILITY:</span>
+               <span className="text-[#5cb85c] font-bold text-[14px]">In Stock ({product.packages?.length || 0} packs)</span>
              </div>
           </div>
 
           {product.otherNames && product.otherNames.length > 0 && (
-            <div className="mb-6">
-               <p className="text-[11px] text-slate-400 uppercase font-extrabold tracking-widest mb-3">OTHER NAMES FOR THIS MEDICATION:</p>
-               <div className="flex flex-wrap gap-2">
+            <div className="mb-4">
+               <p className="text-[10px] text-slate-400 uppercase font-bold tracking-widest mb-2">OTHER NAMES FOR THIS MEDICATION:</p>
+               <div className="flex flex-wrap gap-1.5">
                  {product.otherNames.map(name => (
-                   <span key={name} className="bg-slate-100 text-slate-600 text-[11px] px-3 py-1.5 font-bold uppercase tracking-wide rounded-[4px] border border-slate-200">{name}</span>
+                   <span key={name} className="bg-slate-100 text-slate-600 text-[10px] px-2.5 py-1 font-bold uppercase tracking-wide rounded border border-slate-200">{name}</span>
                  ))}
                </div>
             </div>
           )}
 
-          <div className="text-[15px] text-slate-600 leading-relaxed font-normal mb-8 max-w-2xl">
+          <div className="text-[14px] text-slate-600 leading-relaxed font-normal mb-4 max-w-2xl">
               <p>{product.description}</p>
           </div>
 
-          <div className="mb-6">
-             <p className="text-[10px] text-slate-400 font-extrabold uppercase tracking-widest mb-3">WE ACCEPT:</p>
-             <div className="flex gap-2 flex-wrap">
+          <div className="mb-4">
+             <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mb-2">WE ACCEPT:</p>
+             <div className="flex gap-1.5 flex-wrap">
                 {paymentMethods.filter(pm => pm.enabled).map(pm => (
-                   <div key={pm.id} className="h-9 w-14 border border-slate-200 rounded bg-white flex items-center justify-center p-1 shadow-sm">
+                   <div key={pm.id} className="h-8 w-12 border border-slate-200 rounded bg-white flex items-center justify-center p-0.5">
                       <img src={pm.iconUrl} alt={pm.name} className="max-h-full max-w-full object-contain" title={pm.name} />
                    </div>
                 ))}
@@ -257,28 +257,18 @@ const ProductDetailsDesktop: React.FC = () => {
       </div>
 
       {activeDeliveryOptions.length > 0 && (
-        <div className="mb-10">
-           <h3 className="text-xl font-bold text-slate-800 mb-4 tracking-tight">Delivery Options</h3>
-           <div className="border border-slate-200 rounded-lg overflow-hidden bg-white shadow-sm">
-             {/* Free shipping hint */}
-             <div className="bg-green-50 px-4 py-2 flex items-center gap-2 text-sm border-b border-slate-100">
-                <svg width="20" height="14" viewBox="0 0 60 35" fill="none" xmlns="http://www.w3.org/2000/svg">
-                   <path d="M10 5H35V22H10V5Z" fill="#16a34a"/>
-                   <path d="M37 10H48L52 22H35V10Z" fill="#16a34a"/>
-                   <circle cx="18" cy="25" r="4" fill="#16a34a"/>
-                   <circle cx="44" cy="25" r="4" fill="#16a34a"/>
-                </svg>
-                <span className="text-green-700">Free shipping on orders over <span className="font-bold">$200.00</span></span>
-             </div>
+        <div className="mb-6">
+           <h3 className="text-lg font-bold text-slate-800 mb-3 tracking-tight">Delivery options</h3>
+           <div className="border border-slate-200 rounded-lg overflow-hidden bg-white">
              {activeDeliveryOptions.map((opt, idx) => (
-               <div key={opt.id} className={`flex flex-col sm:flex-row sm:items-center p-4 gap-4 ${idx !== activeDeliveryOptions.length -1 ? 'border-b border-slate-100' : ''}`}>
-                  <div className="w-24 flex items-center justify-center">{opt.icon === 'express' ? <ExpressIcon /> : <NormalIcon />}</div>
-                  <div className="flex items-center gap-2 w-28">
-                     <img src={`https://flagcdn.com/w20/${userCountryCode}.png`} alt="Origin" className="w-5 h-3.5 border border-slate-200 shadow-sm" />
-                     <span className="font-extrabold text-slate-800 text-base">{formatPrice(opt.price)}</span>
+               <div key={opt.id} className={`flex items-center p-3 gap-4 ${idx !== activeDeliveryOptions.length -1 ? 'border-b border-slate-100' : ''}`}>
+                  <div className="w-20 flex items-center justify-start">{opt.icon === 'express' ? <ExpressIcon /> : <NormalIcon />}</div>
+                  <div className="flex items-center gap-2 w-24">
+                     <img src={`https://flagcdn.com/w20/${userCountryCode}.png`} alt="Origin" className="w-5 h-3.5 border border-slate-200" />
+                     <span className="font-bold text-slate-800 text-[14px]">{formatPrice(opt.price)}</span>
                   </div>
-                  <div className="flex-1 text-[14px] text-slate-600 font-medium">Delivery period: <span className="font-bold text-slate-800">{opt.minDays}-{opt.maxDays} Days</span></div>
-                  <div className="text-[12px] text-slate-500 text-right font-medium">Approximate delivery time <br/><span className="text-slate-800 font-bold">{getDeliveryDate(opt.minDays)}</span></div>
+                  <div className="flex-1 text-[13px] text-slate-600">Delivery period: <span className="font-bold text-slate-800">{opt.minDays}-{opt.maxDays} Days</span></div>
+                  <div className="text-[12px] text-slate-500 text-right">Approximate delivery time <span className="text-slate-800 font-bold ml-1">{getDeliveryDate(opt.minDays)}</span></div>
                </div>
              ))}
            </div>
