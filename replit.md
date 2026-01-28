@@ -1,0 +1,33 @@
+# Happy Family Store
+
+## Overview
+This is an e-commerce pharmacy store built with React, Vite, and TypeScript. It uses Supabase as the backend database service.
+
+## Project Structure
+- `/components` - React UI components
+- `/context` - React context providers
+- `/lib` - Utility libraries and Supabase client
+- `/public` - Static assets
+- `App.tsx` - Main application component
+- `index.tsx` - Application entry point
+- `constants.ts` - Application constants and configuration
+- `types.ts` - TypeScript type definitions
+
+## Tech Stack
+- **Frontend**: React 18, TypeScript
+- **Build Tool**: Vite 5
+- **Styling**: Tailwind CSS (via CDN)
+- **Icons**: Lucide React
+- **Backend**: Supabase (PostgreSQL database + Auth)
+
+## Development
+- Run `npm run dev` to start the development server on port 5000
+- Run `npm run build` to build for production
+- Run `npm run preview` to preview the production build
+
+## Environment Variables
+- `VITE_SUPABASE_URL` - Supabase project URL
+- `VITE_SUPABASE_ANON_KEY` - Supabase anonymous key
+
+## Deployment
+This project is configured for static deployment. The build output is in the `dist` directory.
