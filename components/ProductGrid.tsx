@@ -12,33 +12,35 @@ export const ProductGrid: React.FC = () => {
     setCurrentPage(1);
   }, [activeCategoryId, searchQuery]);
 
-  // Filter products
-  const filteredProducts = products.filter((product) => {
-    // Hide disabled products
-    if (product.enabled === false) return false;
+  // Filter and sort products
+  const filteredProducts = products
+    .filter((product) => {
+      // Hide disabled products
+      if (product.enabled === false) return false;
 
-    const query = searchQuery.toLowerCase().trim();
-    
-    // Logic: If searching, search EVERYTHING (Global Search). 
-    // If not searching, filter by the selected Category tab.
-    if (query.length > 0) {
-        const nameMatch = product.name.toLowerCase().includes(query);
-        const ingredientMatch = product.activeIngredient.toLowerCase().includes(query);
-        const descriptionMatch = product.description?.toLowerCase().includes(query);
-        
-        // Search matches if product belongs to a category matching the search term
-        const categoryMatch = product.categoryIds?.some(catId => {
-            const cat = categories.find(c => c.id === catId);
-            return cat && cat.name.toLowerCase().includes(query);
-        });
+      const query = searchQuery.toLowerCase().trim();
+      
+      // Logic: If searching, search EVERYTHING (Global Search). 
+      // If not searching, filter by the selected Category tab.
+      if (query.length > 0) {
+          const nameMatch = product.name.toLowerCase().includes(query);
+          const ingredientMatch = product.activeIngredient.toLowerCase().includes(query);
+          const descriptionMatch = product.description?.toLowerCase().includes(query);
+          
+          // Search matches if product belongs to a category matching the search term
+          const categoryMatch = product.categoryIds?.some(catId => {
+              const cat = categories.find(c => c.id === catId);
+              return cat && cat.name.toLowerCase().includes(query);
+          });
 
-        return nameMatch || ingredientMatch || categoryMatch || descriptionMatch;
-    } else {
-        // Not searching, standard category filtering
-        if (activeCategoryId === 'all') return true;
-        return product.categoryIds && product.categoryIds.includes(activeCategoryId);
-    }
-  });
+          return nameMatch || ingredientMatch || categoryMatch || descriptionMatch;
+      } else {
+          // Not searching, standard category filtering
+          if (activeCategoryId === 'all') return true;
+          return product.categoryIds && product.categoryIds.includes(activeCategoryId);
+      }
+    })
+    .sort((a, b) => (a.featuredOrder || 9999) - (b.featuredOrder || 9999));
 
   // Pagination Logic
   const totalPages = Math.ceil(filteredProducts.length / itemsPerPage);

@@ -427,14 +427,21 @@ export const StoreProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     // Save to Supabase
     if (supabase) {
       try {
-        await supabase.from('orders').insert({
+        const orderPayload = {
           id: newOrder.id,
           customer_name: newOrder.customerName,
           total: newOrder.grandTotal,
           status: newOrder.status,
           date: newOrder.orderDate,
           details: { ...newOrder, details: undefined } // Store flattened details in JSONB
-        });
+        };
+        console.log('[ORDER] Saving to Supabase:', orderPayload.id);
+        const { error } = await supabase.from('orders').insert(orderPayload);
+        if (error) {
+          console.error("Error saving order to Supabase:", error);
+        } else {
+          console.log('[ORDER] Saved successfully:', orderPayload.id);
+        }
       } catch (e) {
         console.error("Error saving order to Supabase", e);
       }
@@ -856,7 +863,6 @@ export const StoreProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       o.id === id ? { ...o, ...updates } : o
     ));
     if(supabase) {
-      const { enabled, ...dbUpdates } = updates;
       const payload: any = {};
       if (updates.name !== undefined) payload.name = updates.name;
       if (updates.price !== undefined) payload.price = updates.price;
@@ -865,7 +871,8 @@ export const StoreProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       if (updates.icon !== undefined) payload.icon = updates.icon;
       if (updates.enabled !== undefined) payload.enabled = updates.enabled;
       if (Object.keys(payload).length > 0) {
-        await supabase.from('delivery_options').update(payload).eq('id', id);
+        const { error } = await supabase.from('delivery_options').update(payload).eq('id', id);
+        if (error) console.error('Error updating delivery option:', error);
       }
     }
   };
