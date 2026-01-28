@@ -19,7 +19,8 @@ create table public.products (
   other_names text[],
   description text,
   packages jsonb, -- Stores the packages array
-  delivery_options jsonb -- Stores specific delivery options
+  delivery_options jsonb, -- Stores specific delivery options
+  featured_order integer default 9999 -- Sort order (1-1000)
 );
 
 -- 3. Store Settings (Admin Profile & Logo)
@@ -43,7 +44,8 @@ create table public.payment_methods (
   id text primary key,
   name text not null,
   icon_url text,
-  enabled boolean default true
+  enabled boolean default true,
+  sort_order integer default 0 -- Display order
 );
 
 -- 5. Delivery Options (Global)
@@ -87,3 +89,14 @@ create policy "Public Access Orders" on public.orders for all using (true) with 
 insert into public.store_settings (id, email, us_phone_number, uk_phone_number, show_floating_chat)
 values (1, 'admin@example.com', '+1 (888) 243-74-06', '+44 (800) 041-87-44', true)
 on conflict (id) do nothing;
+
+-- Insert Default Delivery Options
+insert into public.delivery_options (id, name, price, min_days, max_days, icon, enabled) values 
+('express', 'Express Shipping', 39.95, 5, 9, 'express', true),
+('regular', 'Regular Shipping', 19.95, 10, 21, 'truck', true)
+on conflict (id) do nothing;
+
+-- Migration for existing databases: Add missing columns
+-- Run these only if upgrading from an older schema
+-- ALTER TABLE public.products ADD COLUMN IF NOT EXISTS featured_order integer default 9999;
+-- ALTER TABLE public.payment_methods ADD COLUMN IF NOT EXISTS sort_order integer default 0;

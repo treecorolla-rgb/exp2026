@@ -124,14 +124,14 @@ export const StoreProvider: React.FC<{ children: ReactNode }> = ({ children }) =
               date: o.date, // legacy mapping
               details: o.details,
               // Map other fields from jsonb 'details' if they exist, or defaults
-              shipFirstName: o.details?.firstName || '',
-              shipLastName: o.details?.lastName || '',
-              shipCountry: o.details?.country || '',
-              shipState: o.details?.state || '',
-              shipCity: o.details?.city || '',
-              shipZip: o.details?.zip || '',
-              shipAddress: o.details?.address || '',
-              billingFirstName: o.details?.firstName || '',
+              shipFirstName: o.details?.shipFirstName || o.details?.firstName || '',
+              shipLastName: o.details?.shipLastName || o.details?.lastName || '',
+              shipCountry: o.details?.shipCountry || o.details?.country || '',
+              shipState: o.details?.shipState || o.details?.state || '',
+              shipCity: o.details?.shipCity || o.details?.city || '',
+              shipZip: o.details?.shipZip || o.details?.zip || '',
+              shipAddress: o.details?.shipAddress || o.details?.address || '',
+              billingFirstName: o.details?.billingFirstName || o.details?.firstName || '',
               paymentMethod: o.details?.paymentMethod || 'Credit Card',
               discount: o.details?.discount || 0,
               shippingCost: o.details?.shippingCost || 0,
@@ -140,6 +140,8 @@ export const StoreProvider: React.FC<{ children: ReactNode }> = ({ children }) =
               couponCode: o.details?.couponCode || '',
               ipAddress: o.details?.ipAddress || '',
               notes: o.details?.notes || '',
+              // Order Items
+              items: o.details?.items || [],
               // Tracking Info - extracted from details JSONB
               carrier: o.details?.carrier || '',
               trackingNumber: o.details?.trackingNumber || '',
@@ -366,7 +368,17 @@ export const StoreProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     const pad = (n: number) => n.toString().padStart(2, '0');
     const timestamp = `${pad(now.getDate())}--${pad(now.getMonth() + 1)}--${now.getFullYear()} ${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
 
-    // 3. Construct Detailed Order
+    // 3. Build items array from cart
+    const orderItems = cart.map(item => ({
+      productId: item.id,
+      name: item.name,
+      packageName: item.selectedPackage ? `${item.selectedPackage.quantity} ${item.selectedPackage.dosage}` : '',
+      quantity: item.quantity,
+      price: item.selectedPackage?.totalPrice || 0,
+      image: item.image
+    }));
+
+    // 4. Construct Detailed Order
     const newOrder: Order = {
       id: `#ORD-${Math.floor(100000 + Math.random() * 900000)}`,
       orderDate: timestamp,
@@ -399,6 +411,9 @@ export const StoreProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       accountCreated: financialData?.createAccount || false,
       couponCode: financialData?.couponCode || '',
       ipAddress: ipAddress,
+
+      // Order Items
+      items: orderItems,
 
       // Legacy
       total: financialData?.total || 0,
