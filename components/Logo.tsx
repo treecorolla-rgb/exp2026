@@ -23,7 +23,7 @@ export const Logo: React.FC<LogoProps> = ({
          <img 
            src={adminProfile.logoUrl} 
            alt="Store Logo" 
-           className="h-12 md:h-14 object-contain transform group-hover:scale-105 transition-transform duration-300" 
+           className="h-12 md:h-16 lg:h-20 object-contain transform group-hover:scale-105 transition-transform duration-300" 
          />
       </div>
     );
