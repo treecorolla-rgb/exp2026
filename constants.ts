@@ -31,16 +31,13 @@ export const INITIAL_CATEGORIES: Category[] = [
 ];
 
 export const INITIAL_PAYMENT_METHODS: PaymentMethod[] = [
-  { id: 'pm_visa', name: 'VISA', iconUrl: 'https://upload.wikimedia.org/wikipedia/commons/5/5e/Visa_Inc._logo.svg', enabled: true },
-  { id: 'pm_mc', name: 'MasterCard', iconUrl: 'https://upload.wikimedia.org/wikipedia/commons/2/2a/Mastercard-logo.svg', enabled: true },
-  { id: 'pm_amex', name: 'Amex', iconUrl: 'https://upload.wikimedia.org/wikipedia/commons/3/30/American_Express_logo.svg', enabled: true },
-  { id: 'pm_btc', name: 'Bitcoin', iconUrl: 'https://upload.wikimedia.org/wikipedia/commons/4/46/Bitcoin.svg', enabled: true },
-  { id: 'pm_usdt', name: 'USDT', iconUrl: 'https://cryptologos.cc/logos/tether-usdt-logo.svg?v=025', enabled: true },
-  { id: 'pm_paypal', name: 'PayPal', iconUrl: 'https://upload.wikimedia.org/wikipedia/commons/b/b5/PayPal.svg', enabled: true },
-  { id: 'pm_venmo', name: 'Venmo', iconUrl: 'https://upload.wikimedia.org/wikipedia/commons/2/29/Venmo_logo.svg', enabled: true },
-  { id: 'pm_cashapp', name: 'Cash App', iconUrl: 'https://upload.wikimedia.org/wikipedia/commons/c/c5/Square_Cash_app_logo.svg', enabled: true },
-  { id: 'pm_wu', name: 'Western Union', iconUrl: 'https://upload.wikimedia.org/wikipedia/commons/9/9a/Western_Union_Logo.svg', enabled: true },
-  { id: 'pm_bank', name: 'Bank Transfer', iconUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/14/Bank_Building_icon.svg/1024px-Bank_Building_icon.svg.png', enabled: true },
+  { id: 'pm_visa', name: 'VISA', iconUrl: 'https://vdhgagzaeyvrsthxsbxn.supabase.co/storage/v1/object/public/images/visa.png', enabled: true },
+  { id: 'pm_mc', name: 'MasterCard', iconUrl: 'https://vdhgagzaeyvrsthxsbxn.supabase.co/storage/v1/object/public/images/master.png', enabled: true },
+  { id: 'pm_amex', name: 'Amex', iconUrl: 'https://vdhgagzaeyvrsthxsbxn.supabase.co/storage/v1/object/public/images/amex.png', enabled: true },
+  { id: 'pm_btc', name: 'Bitcoin', iconUrl: 'https://vdhgagzaeyvrsthxsbxn.supabase.co/storage/v1/object/public/images/bit.png', enabled: true },
+  { id: 'pm_cashapp', name: 'Cash App', iconUrl: 'https://vdhgagzaeyvrsthxsbxn.supabase.co/storage/v1/object/public/images/cashapp%20(1).png', enabled: true },
+  { id: 'pm_wu', name: 'Western Union', iconUrl: 'https://vdhgagzaeyvrsthxsbxn.supabase.co/storage/v1/object/public/images/western.png', enabled: true },
+  { id: 'pm_bank', name: 'Bank Transfer', iconUrl: 'https://vdhgagzaeyvrsthxsbxn.supabase.co/storage/v1/object/public/images/bank.png', enabled: true },
 ];
 
 export const STANDARD_DELIVERY: DeliveryOption[] = [
