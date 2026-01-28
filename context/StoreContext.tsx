@@ -225,7 +225,7 @@ export const StoreProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         .catch(() => setCurrency('USD'));
   }, []);
 
-  const [currentView, setCurrentView] = useState<'grid' | 'details' | 'cart' | 'login' | 'admin_dashboard' | 'not_found' | 'customer_auth'>('grid');
+  const [currentView, setCurrentView] = useState<'grid' | 'details' | 'cart' | 'login' | 'admin_dashboard' | 'not_found' | 'customer_auth' | 'faq'>('grid');
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
 
   const [isCallbackModalOpen, setIsCallbackModalOpen] = useState(false);
@@ -845,6 +845,10 @@ export const StoreProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     setCurrentView('not_found');
   };
 
+  const goToFaq = () => {
+    setCurrentView('faq');
+  };
+
   const toggleCallbackModal = () => {
     setIsCallbackModalOpen(!isCallbackModalOpen);
   };
@@ -909,6 +913,7 @@ export const StoreProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         customerSignup,
         customerLogout,
         goToNotFound,
+        goToFaq,
         toggleCallbackModal,
         login,
         logout,

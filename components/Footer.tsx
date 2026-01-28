@@ -4,7 +4,7 @@ import { useStore } from '../context/StoreContext';
 import { Logo } from './Logo';
 
 export const Footer: React.FC = () => {
-  const { isAuthenticated, logout, goToLogin, goToNotFound, goHome, setActiveCategoryId, paymentMethods, adminProfile, categories } = useStore();
+  const { isAuthenticated, logout, goToLogin, goToNotFound, goToFaq, goHome, setActiveCategoryId, paymentMethods, adminProfile, categories } = useStore();
 
   const handleLink = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -158,7 +158,7 @@ export const Footer: React.FC = () => {
               <a href="#" onClick={handleLink} className="text-slate-600 hover:text-primary transition text-[13px]">Testimonials</a>
               <a href="#" onClick={handleHome} className="text-slate-600 hover:text-primary transition text-[13px]">Home</a>
               <a href="#" onClick={handleBestsellers} className="text-slate-600 hover:text-primary transition text-[13px]">Bestsellers</a>
-              <a href="#" onClick={handleLink} className="text-slate-600 hover:text-primary transition text-[13px]">FAQ</a>
+              <a href="#" onClick={(e) => { e.preventDefault(); goToFaq(); }} className="text-slate-600 hover:text-primary transition text-[13px]">FAQ</a>
               <a href="#" onClick={handleLink} className="text-slate-600 hover:text-primary transition text-[13px]">Contact Us</a>
               <a href="#" onClick={handleLink} className="text-slate-600 hover:text-primary transition text-[13px]">Policy</a>
            </div>

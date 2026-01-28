@@ -4,7 +4,7 @@ import { useStore } from '../context/StoreContext';
 import { Logo } from './Logo';
 
 export const Header: React.FC = () => {
-  const { cart, goHome, setActiveCategoryId, goToNotFound, goToCart, favorites, formatPrice, searchQuery, setSearchQuery } = useStore();
+  const { cart, goHome, setActiveCategoryId, goToNotFound, goToFaq, goToCart, favorites, formatPrice, searchQuery, setSearchQuery } = useStore();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const total = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
 
@@ -105,7 +105,7 @@ export const Header: React.FC = () => {
              <button onClick={handleHomeClick} className="h-full flex items-center hover:text-primary transition border-b-2 border-transparent hover:border-primary">Home</button>
              <button onClick={handleProductsClick} className="h-full flex items-center hover:text-primary transition border-b-2 border-transparent hover:border-primary">All Products</button>
              <a href="#" onClick={handleNotFound} className="h-full flex items-center hover:text-primary transition border-b-2 border-transparent hover:border-primary">About us</a>
-             <a href="#" onClick={handleNotFound} className="h-full flex items-center hover:text-primary transition border-b-2 border-transparent hover:border-primary">FAQ</a>
+             <a href="#" onClick={(e) => { e.preventDefault(); goToFaq(); }} className="h-full flex items-center hover:text-primary transition border-b-2 border-transparent hover:border-primary">FAQ</a>
              <a href="#" onClick={handleNotFound} className="h-full flex items-center hover:text-primary transition border-b-2 border-transparent hover:border-primary">Testimonials</a>
              <a href="#" onClick={handleNotFound} className="h-full flex items-center hover:text-primary transition border-b-2 border-transparent hover:border-primary">Contact Us</a>
              <div className="flex-1"></div>
@@ -131,7 +131,7 @@ export const Header: React.FC = () => {
           <button onClick={handleHomeClick} className="text-left font-bold text-slate-700 hover:text-primary py-3 border-b border-slate-50 uppercase text-sm">Home</button>
           <button onClick={handleProductsClick} className="text-left font-bold text-slate-700 hover:text-primary py-3 border-b border-slate-50 uppercase text-sm">Products</button>
           <a href="#" onClick={handleNotFound} className="font-bold text-slate-700 hover:text-primary py-3 border-b border-slate-50 uppercase text-sm">About us</a>
-          <a href="#" onClick={handleNotFound} className="font-bold text-slate-700 hover:text-primary py-3 border-b border-slate-50 uppercase text-sm">FAQ</a>
+          <a href="#" onClick={(e) => { e.preventDefault(); goToFaq(); setIsMobileMenuOpen(false); }} className="font-bold text-slate-700 hover:text-primary py-3 border-b border-slate-50 uppercase text-sm">FAQ</a>
           <a href="#" onClick={handleNotFound} className="font-bold text-slate-700 hover:text-primary py-3 border-b border-slate-50 uppercase text-sm">Contact</a>
         </div>
       )}

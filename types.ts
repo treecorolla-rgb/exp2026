@@ -159,7 +159,7 @@ export interface StoreContextType {
   searchQuery: string;
   isAdminMode: boolean;
   isAuthenticated: boolean;
-  currentView: 'grid' | 'details' | 'cart' | 'login' | 'admin_dashboard' | 'not_found' | 'customer_auth';
+  currentView: 'grid' | 'details' | 'cart' | 'login' | 'admin_dashboard' | 'not_found' | 'customer_auth' | 'faq';
   selectedProduct: Product | null;
   activeCategoryId: string;
   
@@ -218,6 +218,7 @@ export interface StoreContextType {
   goHome: () => void;
   goToCart: () => void;
   goToNotFound: () => void;
+  goToFaq: () => void;
   goToLogin: () => void;
   
   // Customer Auth
