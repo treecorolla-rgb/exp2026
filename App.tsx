@@ -24,7 +24,11 @@ function AppContent() {
     return (
       <div className="min-h-screen bg-white flex items-center justify-center">
         <div className="text-center">
-          <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <img 
+            src="https://vdhgagzaeyvrsthxsbxn.supabase.co/storage/v1/object/public/images/favicon1.png" 
+            alt="Loading..." 
+            className="w-20 h-20 mx-auto mb-4 animate-pulse"
+          />
           <p className="text-slate-500">Loading...</p>
         </div>
       </div>
