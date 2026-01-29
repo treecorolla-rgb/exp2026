@@ -204,6 +204,7 @@ export const StoreProvider: React.FC<{ children: ReactNode }> = ({ children }) =
   
   const [isAdminMode, setIsAdminMode] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isCheckoutMode, setIsCheckoutMode] = useState(false);
   
   const [customerUser, setCustomerUser] = useState<CustomerDetails | null>(null);
   const [isCustomerAuthenticated, setIsCustomerAuthenticated] = useState(false);
@@ -974,6 +975,8 @@ export const StoreProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         searchQuery,
         isAdminMode,
         isAuthenticated,
+        isCheckoutMode,
+        setIsCheckoutMode,
         customerUser,
         isCustomerAuthenticated,
         currentView,

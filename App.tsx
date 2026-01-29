@@ -19,7 +19,7 @@ import { FloatingChat } from './components/FloatingChat';
 import { MobileHeader, MobileBottomNav } from './components/MobileLayout';
 
 function AppContent() {
-  const { currentView, isMobile, isLoading } = useStore();
+  const { currentView, isMobile, isLoading, isCheckoutMode } = useStore();
 
   // Show loading screen while fetching data from Supabase
   if (isLoading) {
@@ -46,7 +46,7 @@ function AppContent() {
     <div className="min-h-screen bg-white flex flex-col font-sans relative">
       
       {/* --- DESKTOP HEADER LAYOUT --- */}
-      {!isMobile && (
+      {!isMobile && !isCheckoutMode && (
         <>
           <TopBar />
           <Header />
@@ -54,7 +54,7 @@ function AppContent() {
       )}
 
       {/* --- MOBILE HEADER LAYOUT --- */}
-      {isMobile && currentView !== 'login' && currentView !== 'customer_auth' && (
+      {isMobile && !isCheckoutMode && currentView !== 'login' && currentView !== 'customer_auth' && (
         <MobileHeader />
       )}
 

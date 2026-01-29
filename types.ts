@@ -181,6 +181,8 @@ export interface StoreContextType {
   searchQuery: string;
   isAdminMode: boolean;
   isAuthenticated: boolean;
+  isCheckoutMode: boolean;
+  setIsCheckoutMode: (value: boolean) => void;
   currentView: 'grid' | 'details' | 'cart' | 'login' | 'admin_dashboard' | 'not_found' | 'customer_auth' | 'faq';
   selectedProduct: Product | null;
   activeCategoryId: string;

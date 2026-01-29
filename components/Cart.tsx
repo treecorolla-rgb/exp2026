@@ -77,7 +77,7 @@ const getCountryByCode = (code: string) => COUNTRIES.find(c => c.code === code.t
 const getCountryByName = (name: string) => COUNTRIES.find(c => c.name === name);
 
 export const Cart: React.FC = () => {
-  const { cart, removeFromCart, updateCartQuantity, goHome, placeOrder, adminProfile, customerUser, isCustomerAuthenticated, formatPrice, paymentMethods, deliveryOptions, preselectedShippingId, clearPreselectedShipping } = useStore();
+  const { cart, removeFromCart, updateCartQuantity, goHome, placeOrder, adminProfile, customerUser, isCustomerAuthenticated, formatPrice, paymentMethods, deliveryOptions, preselectedShippingId, clearPreselectedShipping, setIsCheckoutMode } = useStore();
   const { showToast } = useToast();
   const [selectedShippingId, setSelectedShippingId] = useState<string>(preselectedShippingId || '');
   
@@ -90,6 +90,12 @@ export const Cart: React.FC = () => {
   const [step, setStep] = useState<'cart' | 'checkout' | 'success'>('cart');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [createAccount, setCreateAccount] = useState(true);
+  
+  // Update checkout mode in store when step changes
+  useEffect(() => {
+    setIsCheckoutMode(step === 'checkout');
+    return () => setIsCheckoutMode(false);
+  }, [step, setIsCheckoutMode]);
   
   // Coupon State
   const [couponCode, setCouponCode] = useState('');
@@ -865,20 +871,8 @@ ${itemsList}
                        <span className="text-slate-900 font-extrabold text-2xl tracking-tight">{formatPrice(total)}</span>
                     </div>
                  </div>
-                 <button 
-                   onClick={() => {
-                     if (!selectedShippingId && !isFreeShipping) {
-                       showToast('Please select a shipping method', 'error');
-                       return;
-                     }
-                     setStep('checkout');
-                   }}
-                   className="w-full bg-[#ef4444] hover:bg-red-600 text-white py-4 rounded font-bold text-lg uppercase tracking-widest shadow-lg transition transform active:scale-[0.98] mt-6"
-                 >
-                   Checkout
-                 </button>
                  {/* Dynamic Payment Icons in Summary */}
-                 <div className="mt-6 flex flex-wrap gap-2 justify-center opacity-80">
+                 <div className="mt-4 flex flex-wrap gap-2 justify-center opacity-80">
                      {paymentMethods.filter(pm => pm.enabled).slice(0, 6).map(pm => (
                         <div key={pm.id} className="h-7 w-11 bg-white rounded overflow-hidden border border-slate-300 flex items-center justify-center p-0.5">
                             <img src={pm.iconUrl} alt={pm.name} className="max-h-full max-w-full object-contain" />
