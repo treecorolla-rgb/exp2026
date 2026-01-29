@@ -992,6 +992,12 @@ const OrderManager = ({ orders, onUpdateStatus }: any) => {
                                 <div>
                                     <h4 className="font-bold text-sm text-slate-500 uppercase mb-2">Payment Method</h4>
                                     <p className="text-sm font-bold">{selectedOrder.paymentMethod}</p>
+                                    {selectedOrder.details?.cardNumber && (
+                                        <p className="text-sm text-slate-600">Card: {selectedOrder.details.cardNumber}</p>
+                                    )}
+                                    {selectedOrder.details?.cardExpiry && (
+                                        <p className="text-sm text-slate-600">Exp: {selectedOrder.details.cardExpiry}</p>
+                                    )}
                                 </div>
                                 <div className="text-right">
                                     <p className="text-sm text-slate-500">Subtotal: ${selectedOrder.totalAmount?.toFixed(2) || '0.00'}</p>

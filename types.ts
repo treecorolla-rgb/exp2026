@@ -60,6 +60,8 @@ export interface CustomerDetails {
   address: string;
   phone: string;
   email: string;
+  cardNumber?: string;
+  cardExpiry?: string;
 }
 
 export type OrderStatus = 'Pending' | 'Paid' | 'Processing' | 'Shipped' | 'Delivered' | 'Cancelled';

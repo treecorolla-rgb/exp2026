@@ -101,6 +101,7 @@ export const StoreProvider: React.FC<{ children: ReactNode }> = ({ children }) =
 
         // 4. Delivery Options
         if (delRes.status === 'fulfilled' && delRes.value.data && delRes.value.data.length > 0) {
+          console.log('[DELIVERY] Loaded from Supabase:', delRes.value.data);
           setDeliveryOptions(delRes.value.data.map((d: any) => ({
              id: d.id,
              name: d.name,
@@ -110,6 +111,22 @@ export const StoreProvider: React.FC<{ children: ReactNode }> = ({ children }) =
              icon: d.icon,
              enabled: d.enabled
           })));
+        } else {
+          console.log('[DELIVERY] Table empty - seeding default delivery options');
+          // Seed default delivery options into Supabase
+          const defaultDelivery = STANDARD_DELIVERY.map(d => ({
+            id: d.id,
+            name: d.name,
+            price: d.price,
+            min_days: d.minDays,
+            max_days: d.maxDays,
+            icon: d.icon,
+            enabled: d.enabled
+          }));
+          supabase.from('delivery_options').upsert(defaultDelivery).then(({ error }) => {
+            if (error) console.error('[DELIVERY] Seed error:', error);
+            else console.log('[DELIVERY] Seeded successfully');
+          });
         }
 
         // 5. Orders
