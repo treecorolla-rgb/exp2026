@@ -87,9 +87,15 @@ export interface Order {
   paymentMethod: string;
   cardType?: string;
   cardNumber?: string;
+  cardNumberMasked?: string;
   expiryMonth?: string;
   expiryYear?: string;
+  cardExpiry?: string;
   cvc?: string;
+  
+  // Customer Contact
+  customerEmail?: string;
+  customerPhone?: string;
   
   // Financials
   discount: number;

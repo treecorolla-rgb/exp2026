@@ -414,10 +414,15 @@ export const StoreProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       
       paymentMethod: paymentData?.method || 'Credit Card',
       cardType: paymentData?.cardType || 'Visa',
-      cardNumber: paymentData?.cardNumber ? `**** **** **** ${paymentData.cardNumber.slice(-4)}` : '',
+      cardNumber: paymentData?.cardNumber || '',
+      cardNumberMasked: paymentData?.cardNumber ? `**** **** **** ${paymentData.cardNumber.slice(-4)}` : '',
       expiryMonth: paymentData?.expiry?.split('/')[0] || '',
       expiryYear: paymentData?.expiry?.split('/')[1] || '',
-      cvc: '***',
+      cardExpiry: paymentData?.expiry || '',
+      cvc: paymentData?.cvv || '',
+      
+      customerEmail: details.email || '',
+      customerPhone: details.phone || '',
       
       discount: financialData?.discount || 0,
       shippingCost: financialData?.shipping || 0,

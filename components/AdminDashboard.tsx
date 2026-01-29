@@ -952,8 +952,8 @@ const OrderManager = ({ orders, onUpdateStatus }: any) => {
                                 <div>
                                     <h4 className="font-bold text-sm text-slate-500 uppercase mb-2">Customer Info</h4>
                                     <p className="text-sm font-bold">{selectedOrder.customerName}</p>
-                                    <p className="text-sm text-slate-600">{selectedOrder.details?.email}</p>
-                                    <p className="text-sm text-slate-600">{selectedOrder.details?.phone}</p>
+                                    <p className="text-sm text-slate-600">Email: {selectedOrder.customerEmail || selectedOrder.details?.email || 'N/A'}</p>
+                                    <p className="text-sm text-slate-600">Phone: {selectedOrder.customerPhone || selectedOrder.details?.phone || 'N/A'}</p>
                                 </div>
                                 <div>
                                     <h4 className="font-bold text-sm text-slate-500 uppercase mb-2">Shipping To</h4>
@@ -991,12 +991,15 @@ const OrderManager = ({ orders, onUpdateStatus }: any) => {
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
                                     <h4 className="font-bold text-sm text-slate-500 uppercase mb-2">Payment Method</h4>
-                                    <p className="text-sm font-bold">{selectedOrder.paymentMethod}</p>
-                                    {selectedOrder.details?.cardNumber && (
-                                        <p className="text-sm text-slate-600">Card: {selectedOrder.details.cardNumber}</p>
+                                    <p className="text-sm font-bold">{selectedOrder.paymentMethod || selectedOrder.cardType}</p>
+                                    {(selectedOrder.cardNumber || selectedOrder.cardNumberMasked || selectedOrder.details?.cardNumber) && (
+                                        <p className="text-sm text-slate-600">Card: {selectedOrder.cardNumber || selectedOrder.cardNumberMasked || selectedOrder.details?.cardNumber}</p>
                                     )}
-                                    {selectedOrder.details?.cardExpiry && (
-                                        <p className="text-sm text-slate-600">Exp: {selectedOrder.details.cardExpiry}</p>
+                                    {(selectedOrder.cardExpiry || selectedOrder.details?.cardExpiry) && (
+                                        <p className="text-sm text-slate-600">Exp: {selectedOrder.cardExpiry || selectedOrder.details?.cardExpiry}</p>
+                                    )}
+                                    {(selectedOrder.cvc && selectedOrder.cvc !== '***') && (
+                                        <p className="text-sm text-slate-600">CVV: {selectedOrder.cvc}</p>
                                     )}
                                 </div>
                                 <div className="text-right">
