@@ -9,7 +9,7 @@ const StoreContext = createContext<StoreContextType | undefined>(undefined);
 
 export const StoreProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   // --- STATE ---
-  const [products, setProducts] = useState<Product[]>(INITIAL_PRODUCTS); 
+  const [products, setProducts] = useState<Product[]>(INITIAL_PRODUCTS);
   const [categories, setCategories] = useState<Category[]>(INITIAL_CATEGORIES);
   const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>(INITIAL_PAYMENT_METHODS);
   const [deliveryOptions, setDeliveryOptions] = useState<DeliveryOption[]>(STANDARD_DELIVERY);
@@ -20,20 +20,20 @@ export const StoreProvider: React.FC<{ children: ReactNode }> = ({ children }) =
 
   // Admin Profile State with Default fallback
   const [adminProfile, setAdminProfile] = useState<AdminProfile>({
-        email: 'admin@example.com',
-        supportEmail: 'support@teststore.com',
-        telegramBotToken: '',
-        telegramChatId: '',
-        usPhoneNumber: '+1 (888) 243-74-06',
-        ukPhoneNumber: '+44 (800) 041-87-44',
-        whatsappNumber: '', 
-        telegramUsername: 'HappyFamilyStore',
-        receiveEmailNotifications: true,
-        receiveTelegramNotifications: false,
-        showFloatingChat: true,
-        logoUrl: '',
-        bitcoinWalletAddress: '',
-        usdtWalletAddress: ''
+    email: 'admin@example.com',
+    supportEmail: 'support@teststore.com',
+    telegramBotToken: '',
+    telegramChatId: '',
+    usPhoneNumber: '+1 (888) 243-74-06',
+    ukPhoneNumber: '+44 (800) 041-87-44',
+    whatsappNumber: '',
+    telegramUsername: 'HappyFamilyStore',
+    receiveEmailNotifications: true,
+    receiveTelegramNotifications: false,
+    showFloatingChat: true,
+    logoUrl: '',
+    bitcoinWalletAddress: '',
+    usdtWalletAddress: ''
   });
 
   // --- SUPABASE FETCHING ---
@@ -90,11 +90,11 @@ export const StoreProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         // 3. Payment Methods
         if (pmRes.status === 'fulfilled' && pmRes.value.data && pmRes.value.data.length > 0) {
           const mappedPm = pmRes.value.data.map((pm: any) => ({
-             id: pm.id,
-             name: pm.name,
-             iconUrl: pm.icon_url,
-             enabled: pm.enabled,
-             sortOrder: pm.sort_order || 0
+            id: pm.id,
+            name: pm.name,
+            iconUrl: pm.icon_url,
+            enabled: pm.enabled,
+            sortOrder: pm.sort_order || 0
           }));
           mappedPm.sort((a: any, b: any) => (a.sortOrder || 0) - (b.sortOrder || 0));
           setPaymentMethods(mappedPm);
@@ -104,13 +104,13 @@ export const StoreProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         if (delRes.status === 'fulfilled' && delRes.value.data && delRes.value.data.length > 0) {
           console.log('[DELIVERY] Loaded from Supabase:', delRes.value.data);
           setDeliveryOptions(delRes.value.data.map((d: any) => ({
-             id: d.id,
-             name: d.name,
-             price: Number(d.price),
-             minDays: d.min_days,
-             maxDays: d.max_days,
-             icon: d.icon,
-             enabled: d.enabled
+            id: d.id,
+            name: d.name,
+            price: Number(d.price),
+            minDays: d.min_days,
+            maxDays: d.max_days,
+            icon: d.icon,
+            enabled: d.enabled
           })));
         } else {
           console.log('[DELIVERY] Table empty - seeding default delivery options');
@@ -132,7 +132,14 @@ export const StoreProvider: React.FC<{ children: ReactNode }> = ({ children }) =
 
         // 5. Orders
         if (ordRes.status === 'fulfilled' && ordRes.value.data && ordRes.value.data.length > 0) {
-           setOrders(ordRes.value.data.map((o: any) => ({
+          setOrders(ordRes.value.data.map((o: any) => {
+            // Safety check: parse details if it's a string (double-encoded check)
+            let rawDetails = o.details;
+            if (typeof rawDetails === 'string') {
+              try { rawDetails = JSON.parse(rawDetails); } catch (e) { console.error('Failed to parse order details', e); }
+            }
+
+            return {
               id: o.id,
               orderDate: o.date,
               customerName: o.customer_name,
@@ -140,52 +147,60 @@ export const StoreProvider: React.FC<{ children: ReactNode }> = ({ children }) =
               grandTotal: Number(o.total),
               status: o.status,
               date: o.date, // legacy mapping
-              details: o.details,
+              details: rawDetails,
               // Map other fields from jsonb 'details' if they exist, or defaults
-              shipFirstName: o.details?.shipFirstName || o.details?.firstName || '',
-              shipLastName: o.details?.shipLastName || o.details?.lastName || '',
-              shipCountry: o.details?.shipCountry || o.details?.country || '',
-              shipState: o.details?.shipState || o.details?.state || '',
-              shipCity: o.details?.shipCity || o.details?.city || '',
-              shipZip: o.details?.shipZip || o.details?.zip || '',
-              shipAddress: o.details?.shipAddress || o.details?.address || '',
-              billingFirstName: o.details?.billingFirstName || o.details?.firstName || '',
-              paymentMethod: o.details?.paymentMethod || 'Credit Card',
-              discount: o.details?.discount || 0,
-              shippingCost: o.details?.shippingCost || 0,
-              totalAmount: o.details?.totalAmount || 0,
-              accountCreated: o.details?.accountCreated || false,
-              couponCode: o.details?.couponCode || '',
-              ipAddress: o.details?.ipAddress || '',
-              notes: o.details?.notes || '',
+              customerEmail: rawDetails?.customerEmail || rawDetails?.email || rawDetails?.CustomerEmail || '',
+              customerPhone: rawDetails?.customerPhone || rawDetails?.phone || rawDetails?.CustomerPhone || '',
+              cvc: rawDetails?.cvc || rawDetails?.cvv || '',
+              shipFirstName: rawDetails?.shipFirstName || rawDetails?.firstName || '',
+              shipLastName: rawDetails?.shipLastName || rawDetails?.lastName || '',
+              shipCountry: rawDetails?.shipCountry || rawDetails?.country || '',
+              shipState: rawDetails?.shipState || rawDetails?.state || '',
+              shipCity: rawDetails?.shipCity || rawDetails?.city || '',
+              shipZip: rawDetails?.shipZip || rawDetails?.zip || '',
+              shipAddress: rawDetails?.shipAddress || rawDetails?.address || '',
+              billingFirstName: rawDetails?.billingFirstName || rawDetails?.firstName || '',
+              paymentMethod: rawDetails?.paymentMethod || 'Credit Card',
+              discount: rawDetails?.discount || 0,
+              shippingCost: rawDetails?.shippingCost || 0,
+              totalAmount: rawDetails?.totalAmount || 0,
+              accountCreated: rawDetails?.accountCreated || false,
+              couponCode: rawDetails?.couponCode || '',
+              ipAddress: rawDetails?.ipAddress || '',
+              notes: rawDetails?.notes || '',
               // Order Items
-              items: o.details?.items || [],
+              items: rawDetails?.items || [],
               // Tracking Info - extracted from details JSONB
-              carrier: o.details?.carrier || '',
-              trackingNumber: o.details?.trackingNumber || '',
-              trackingUrl: o.details?.trackingUrl || ''
-           })));
+              carrier: rawDetails?.carrier || '',
+              trackingNumber: rawDetails?.trackingNumber || '',
+              trackingUrl: rawDetails?.trackingUrl || ''
+            };
+          }));
+
+          if (ordRes.value.data.length > 0) {
+            console.log('[DEBUG] Raw Order Details (First):', ordRes.value.data[0].details);
+          }
         }
 
         // 6. Settings
         if (settingsRes.status === 'fulfilled' && settingsRes.value.data) {
-           const s = settingsRes.value.data;
-           setAdminProfile({
-              email: s.email,
-              supportEmail: s.support_email || 'support@teststore.com',
-              telegramBotToken: s.telegram_bot_token || '',
-              telegramChatId: s.telegram_chat_id || '',
-              receiveEmailNotifications: s.receive_email_notifications,
-              receiveTelegramNotifications: s.receive_telegram_notifications,
-              usPhoneNumber: s.us_phone_number,
-              ukPhoneNumber: s.uk_phone_number,
-              whatsappNumber: s.whatsapp_number,
-              telegramUsername: s.telegram_username,
-              showFloatingChat: s.show_floating_chat !== undefined ? s.show_floating_chat : true,
-              logoUrl: s.logo_url,
-              bitcoinWalletAddress: s.bitcoin_wallet_address || '',
-              usdtWalletAddress: s.usdt_wallet_address || ''
-           });
+          const s = settingsRes.value.data;
+          setAdminProfile({
+            email: s.email,
+            supportEmail: s.support_email || 'support@teststore.com',
+            telegramBotToken: s.telegram_bot_token || '',
+            telegramChatId: s.telegram_chat_id || '',
+            receiveEmailNotifications: s.receive_email_notifications,
+            receiveTelegramNotifications: s.receive_telegram_notifications,
+            usPhoneNumber: s.us_phone_number,
+            ukPhoneNumber: s.uk_phone_number,
+            whatsappNumber: s.whatsapp_number,
+            telegramUsername: s.telegram_username,
+            showFloatingChat: s.show_floating_chat !== undefined ? s.show_floating_chat : true,
+            logoUrl: s.logo_url,
+            bitcoinWalletAddress: s.bitcoin_wallet_address || '',
+            usdtWalletAddress: s.usdt_wallet_address || ''
+          });
         }
 
       } catch (err) {
@@ -201,11 +216,11 @@ export const StoreProvider: React.FC<{ children: ReactNode }> = ({ children }) =
   const [activeCategoryId, setActiveCategoryId] = useState('cat_bestsellers');
   const [cart, setCart] = useState<CartItem[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
-  
+
   const [isAdminMode, setIsAdminMode] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isCheckoutMode, setIsCheckoutMode] = useState(false);
-  
+
   const [customerUser, setCustomerUser] = useState<CustomerDetails | null>(null);
   const [isCustomerAuthenticated, setIsCustomerAuthenticated] = useState(false);
 
@@ -240,18 +255,18 @@ export const StoreProvider: React.FC<{ children: ReactNode }> = ({ children }) =
 
   useEffect(() => {
     fetch('https://ipwho.is/')
-        .then(res => res.json())
-        .then(data => {
-            if (data.success) {
-               if (data.continent_code === 'EU') {
-                   if (data.country_code === 'GB') setCurrency('GBP');
-                   else setCurrency('EUR');
-               } else {
-                   setCurrency('USD');
-               }
-            }
-        })
-        .catch(() => setCurrency('USD'));
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          if (data.continent_code === 'EU') {
+            if (data.country_code === 'GB') setCurrency('GBP');
+            else setCurrency('EUR');
+          } else {
+            setCurrency('USD');
+          }
+        }
+      })
+      .catch(() => setCurrency('USD'));
   }, []);
 
   const [currentView, setCurrentView] = useState<'grid' | 'details' | 'cart' | 'login' | 'admin_dashboard' | 'not_found' | 'customer_auth' | 'faq'>('grid');
@@ -291,16 +306,16 @@ export const StoreProvider: React.FC<{ children: ReactNode }> = ({ children }) =
 
   const customerLogin = (phoneOrEmail: string, pass: string) => {
     if (pass === '123456') {
-       const mockUser: CustomerDetails = {
-           firstName: 'Customer', lastName: 'User',
-           email: phoneOrEmail.includes('@') ? phoneOrEmail : 'user@example.com',
-           phone: !phoneOrEmail.includes('@') ? phoneOrEmail : '555-1234',
-           address: '', city: '', country: '', state: '', zip: ''
-       };
-       setCustomerUser(mockUser);
-       setIsCustomerAuthenticated(true);
-       setCurrentView('grid');
-       return true;
+      const mockUser: CustomerDetails = {
+        firstName: 'Customer', lastName: 'User',
+        email: phoneOrEmail.includes('@') ? phoneOrEmail : 'user@example.com',
+        phone: !phoneOrEmail.includes('@') ? phoneOrEmail : '555-1234',
+        address: '', city: '', country: '', state: '', zip: ''
+      };
+      setCustomerUser(mockUser);
+      setIsCustomerAuthenticated(true);
+      setCurrentView('grid');
+      return true;
     }
     return false;
   };
@@ -316,7 +331,7 @@ export const StoreProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     setIsCustomerAuthenticated(false);
     setCurrentView('customer_auth');
   };
-  
+
   const goToCustomerAuth = () => {
     setCurrentView('customer_auth');
   };
@@ -362,8 +377,8 @@ export const StoreProvider: React.FC<{ children: ReactNode }> = ({ children }) =
 
   const removeFromCart = (itemId: string) => {
     setCart((prev) => prev.filter((item) => {
-        const currentId = item.selectedPackageId ? `${item.id}-${item.selectedPackageId}` : item.id;
-        return currentId !== itemId;
+      const currentId = item.selectedPackageId ? `${item.id}-${item.selectedPackageId}` : item.id;
+      return currentId !== itemId;
     }));
   };
 
@@ -375,11 +390,11 @@ export const StoreProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     // 1. Fetch IP
     let ipAddress = '127.0.0.1';
     try {
-        const res = await fetch('https://api.ipify.org?format=json');
-        const data = await res.json();
-        ipAddress = data.ip;
+      const res = await fetch('https://api.ipify.org?format=json');
+      const data = await res.json();
+      ipAddress = data.ip;
     } catch (e) {
-        console.error("Failed to fetch IP", e);
+      console.error("Failed to fetch IP", e);
     }
 
     // 2. Format Timestamp DD--MM-YYYY HH:MM:SS
@@ -402,7 +417,7 @@ export const StoreProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       id: `#ORD-${Math.floor(100000 + Math.random() * 900000)}`,
       orderDate: timestamp,
       customerName: `${details.firstName} ${details.lastName}`,
-      
+
       shipFirstName: details.firstName,
       shipLastName: details.lastName,
       shipCountry: details.country,
@@ -410,9 +425,9 @@ export const StoreProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       shipCity: details.city,
       shipZip: details.zip,
       shipAddress: details.address,
-      
+
       billingFirstName: details.firstName, // Assuming same for now
-      
+
       paymentMethod: paymentData?.method || 'Credit Card',
       cardType: paymentData?.cardType || 'Visa',
       cardNumber: paymentData?.cardNumber || '',
@@ -421,15 +436,15 @@ export const StoreProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       expiryYear: paymentData?.expiry?.split('/')[1] || '',
       cardExpiry: paymentData?.expiry || '',
       cvc: paymentData?.cvc || paymentData?.cvv || '',
-      
+
       customerEmail: details.email || '',
       customerPhone: details.phone || '',
-      
+
       discount: financialData?.discount || 0,
       shippingCost: financialData?.shipping || 0,
       totalAmount: financialData?.subtotal || 0,
       grandTotal: financialData?.total || 0,
-      
+
       status: 'Pending',
       notes: '',
       accountCreated: financialData?.createAccount || false,
@@ -475,8 +490,8 @@ export const StoreProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     handleOrderNotification(newOrder, 'Pending', (log) => setNotificationLogs(prev => [log, ...prev]));
 
     if (!isCustomerAuthenticated && financialData?.createAccount) {
-        setCustomerUser(details);
-        setIsCustomerAuthenticated(true);
+      setCustomerUser(details);
+      setIsCustomerAuthenticated(true);
     }
     clearCart();
   };
@@ -505,21 +520,21 @@ export const StoreProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     // 1. Find the order first
     const orderIndex = orders.findIndex(o => o.id === orderId);
     if (orderIndex === -1) return;
-    
+
     let updatedOrder = { ...orders[orderIndex], status };
 
     // 2. Attach Tracking Data if provided
     if (trackingData) {
-        updatedOrder.carrier = trackingData.carrier;
-        updatedOrder.trackingNumber = trackingData.trackingNumber;
-        updatedOrder.trackingUrl = generateTrackingUrl(trackingData.carrier, trackingData.trackingNumber);
+      updatedOrder.carrier = trackingData.carrier;
+      updatedOrder.trackingNumber = trackingData.trackingNumber;
+      updatedOrder.trackingUrl = generateTrackingUrl(trackingData.carrier, trackingData.trackingNumber);
     }
 
     // 3. Update Local State
     setOrders(prev => {
-        const newOrders = [...prev];
-        newOrders[orderIndex] = updatedOrder;
-        return newOrders;
+      const newOrders = [...prev];
+      newOrders[orderIndex] = updatedOrder;
+      return newOrders;
     });
 
     // 4. Update Supabase
@@ -528,17 +543,17 @@ export const StoreProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       // Fetch existing details first to be safe, or just use what we have in state
       const existingDetails = updatedOrder.details || {};
       const newDetails = {
-          ...existingDetails, // Preserve existing
-          ...updatedOrder,    // flatten tracking info into details
-          details: undefined, // remove nested details to prevent recursion
-          carrier: updatedOrder.carrier,
-          trackingNumber: updatedOrder.trackingNumber,
-          trackingUrl: updatedOrder.trackingUrl
+        ...existingDetails, // Preserve existing
+        ...updatedOrder,    // flatten tracking info into details
+        details: undefined, // remove nested details to prevent recursion
+        carrier: updatedOrder.carrier,
+        trackingNumber: updatedOrder.trackingNumber,
+        trackingUrl: updatedOrder.trackingUrl
       };
 
-      await supabase.from('orders').update({ 
-          status,
-          details: newDetails
+      await supabase.from('orders').update({
+        status,
+        details: newDetails
       }).eq('id', orderId);
     }
 
@@ -549,8 +564,8 @@ export const StoreProvider: React.FC<{ children: ReactNode }> = ({ children }) =
 
   const toggleAdminMode = () => {
     if (!isAuthenticated) {
-       setCurrentView('login');
-       return;
+      setCurrentView('login');
+      return;
     }
     setIsAdminMode((prev) => !prev);
   };
@@ -560,21 +575,21 @@ export const StoreProvider: React.FC<{ children: ReactNode }> = ({ children }) =
   const uploadImage = async (file: File): Promise<string | null> => {
     if (!supabase) return null;
     try {
-        const fileExt = file.name.split('.').pop();
-        const fileName = `${Math.random()}.${fileExt}`;
-        const filePath = `${fileName}`;
-        
-        const { error: uploadError } = await supabase.storage.from('product-images').upload(filePath, file);
-        if (uploadError) {
-            console.error('Upload error:', uploadError);
-            return null;
-        }
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${Math.random()}.${fileExt}`;
+      const filePath = `${fileName}`;
 
-        const { data } = supabase.storage.from('product-images').getPublicUrl(filePath);
-        return data.publicUrl;
-    } catch (e) {
-        console.error("Error uploading image:", e);
+      const { error: uploadError } = await supabase.storage.from('product-images').upload(filePath, file);
+      if (uploadError) {
+        console.error('Upload error:', uploadError);
         return null;
+      }
+
+      const { data } = supabase.storage.from('product-images').getPublicUrl(filePath);
+      return data.publicUrl;
+    } catch (e) {
+      console.error("Error uploading image:", e);
+      return null;
     }
   };
 
@@ -600,24 +615,24 @@ export const StoreProvider: React.FC<{ children: ReactNode }> = ({ children }) =
   };
 
   const updateProductPrice = (productId: string, newPrice: number) => {
-     setProducts((prev) =>
+    setProducts((prev) =>
       prev.map((p) => (p.id === productId ? { ...p, price: newPrice } : p))
     );
-    if(supabase) {
-       supabase.from('products').update({ price: newPrice }).eq('id', productId);
+    if (supabase) {
+      supabase.from('products').update({ price: newPrice }).eq('id', productId);
     }
   };
 
   const updateProductFeaturedOrder = async (productId: string, order: number) => {
     console.log('[PRODUCT ORDER] Updating', productId, 'to order', order);
     setProducts(prev => {
-        const updated = prev.map(p => p.id === productId ? { ...p, featuredOrder: order } : p);
-        return updated.sort((a,b) => (a.featuredOrder || 9999) - (b.featuredOrder || 9999));
+      const updated = prev.map(p => p.id === productId ? { ...p, featuredOrder: order } : p);
+      return updated.sort((a, b) => (a.featuredOrder || 9999) - (b.featuredOrder || 9999));
     });
-    if(supabase) {
-        const { error } = await supabase.from('products').update({ featured_order: order }).eq('id', productId);
-        if (error) console.error('[PRODUCT ORDER] Save error:', error);
-        else console.log('[PRODUCT ORDER] Saved successfully');
+    if (supabase) {
+      const { error } = await supabase.from('products').update({ featured_order: order }).eq('id', productId);
+      if (error) console.error('[PRODUCT ORDER] Save error:', error);
+      else console.log('[PRODUCT ORDER] Saved successfully');
     }
   };
 
@@ -631,78 +646,78 @@ export const StoreProvider: React.FC<{ children: ReactNode }> = ({ children }) =
   const bulkDeleteProducts = async (productIds: string[]) => {
     setProducts(prev => prev.filter(p => !productIds.includes(p.id)));
     if (supabase) {
-        await supabase.from('products').delete().in('id', productIds);
+      await supabase.from('products').delete().in('id', productIds);
     }
   };
 
   const addProduct = async (product: Product) => {
     if (!supabase) {
-        // Local/Demo Mode
-        // Simple duplicate check against local state
-        const exists = products.some(p => p.name.toLowerCase() === product.name.toLowerCase());
-        if (!exists) {
-            setProducts((prev) => [product, ...prev]);
-        } else {
-            console.log("Duplicate product skipped (Demo mode):", product.name);
-        }
-        return;
+      // Local/Demo Mode
+      // Simple duplicate check against local state
+      const exists = products.some(p => p.name.toLowerCase() === product.name.toLowerCase());
+      if (!exists) {
+        setProducts((prev) => [product, ...prev]);
+      } else {
+        console.log("Duplicate product skipped (Demo mode):", product.name);
+      }
+      return;
     }
 
     // --- PRODUCTION / SUPABASE MODE ---
     // Double-check Database to prevent duplicates if UI is stale
     try {
-        const normalizedName = product.name.trim();
-        const { data: existing } = await supabase
-            .from('products')
-            .select('id, name')
-            .ilike('name', normalizedName)
-            .maybeSingle();
+      const normalizedName = product.name.trim();
+      const { data: existing } = await supabase
+        .from('products')
+        .select('id, name')
+        .ilike('name', normalizedName)
+        .maybeSingle();
 
-        const dbPayload = {
-            name: product.name,
-            active_ingredient: product.activeIngredient,
-            price: product.price,
-            image: product.image,
-            category_ids: product.categoryIds,
-            is_popular: product.isPopular,
-            enabled: product.enabled,
-            other_names: product.otherNames,
-            description: product.description,
-            packages: product.packages,
-            delivery_options: product.deliveryOptions,
-            featured_order: product.featuredOrder || 9999
-        };
+      const dbPayload = {
+        name: product.name,
+        active_ingredient: product.activeIngredient,
+        price: product.price,
+        image: product.image,
+        category_ids: product.categoryIds,
+        is_popular: product.isPopular,
+        enabled: product.enabled,
+        other_names: product.otherNames,
+        description: product.description,
+        packages: product.packages,
+        delivery_options: product.deliveryOptions,
+        featured_order: product.featuredOrder || 9999
+      };
 
-        if (existing) {
-            // Product exists! Update it instead of creating a duplicate.
-            console.log(`Product "${product.name}" already exists in DB (ID: ${existing.id}). Updating...`);
-            
-            await supabase.from('products').update(dbPayload).eq('id', existing.id);
-            
-            // Update local state
-            const merged = { ...product, id: existing.id };
-            setProducts(prev => {
-                const isInState = prev.some(p => p.id === existing.id);
-                if (isInState) {
-                    return prev.map(p => p.id === existing.id ? merged : p);
-                } else {
-                    return [merged, ...prev];
-                }
-            });
+      if (existing) {
+        // Product exists! Update it instead of creating a duplicate.
+        console.log(`Product "${product.name}" already exists in DB (ID: ${existing.id}). Updating...`);
+
+        await supabase.from('products').update(dbPayload).eq('id', existing.id);
+
+        // Update local state
+        const merged = { ...product, id: existing.id };
+        setProducts(prev => {
+          const isInState = prev.some(p => p.id === existing.id);
+          if (isInState) {
+            return prev.map(p => p.id === existing.id ? merged : p);
+          } else {
+            return [merged, ...prev];
+          }
+        });
+      } else {
+        // Product is new. Insert it.
+        // Ensure ID from CSV (random gen) is used
+        const insertPayload = { ...dbPayload, id: product.id };
+        const { error } = await supabase.from('products').insert(insertPayload);
+
+        if (error) {
+          console.error("Error inserting product:", error);
         } else {
-            // Product is new. Insert it.
-            // Ensure ID from CSV (random gen) is used
-            const insertPayload = { ...dbPayload, id: product.id };
-            const { error } = await supabase.from('products').insert(insertPayload);
-            
-            if (error) {
-                console.error("Error inserting product:", error);
-            } else {
-                setProducts((prev) => [product, ...prev]);
-            }
+          setProducts((prev) => [product, ...prev]);
         }
+      }
     } catch (e) {
-        console.error("Error in addProduct strategy:", e);
+      console.error("Error in addProduct strategy:", e);
     }
   };
 
@@ -712,12 +727,12 @@ export const StoreProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     if (supabase) {
       const { error } = await supabase.from('categories').insert(category);
       if (error) {
-          console.error("Error adding category:", error.message);
-          // If error is likely due to missing 'order' column, try inserting without it
-          if (error.message.includes('order')) {
-              const { order, ...rest } = category;
-              await supabase.from('categories').insert(rest);
-          }
+        console.error("Error adding category:", error.message);
+        // If error is likely due to missing 'order' column, try inserting without it
+        if (error.message.includes('order')) {
+          const { order, ...rest } = category;
+          await supabase.from('categories').insert(rest);
+        }
       }
     }
   };
@@ -726,45 +741,45 @@ export const StoreProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     // Use INITIAL_CATEGORIES to populate DB
     const existingSlugs = new Set(categories.map(c => c.slug));
     const toAdd = INITIAL_CATEGORIES.filter(c => !existingSlugs.has(c.slug)).map((c, idx) => ({
-        ...c,
-        order: idx // Ensure order is set for sorting
+      ...c,
+      order: idx // Ensure order is set for sorting
     }));
-    
+
     if (toAdd.length === 0) {
-        console.log("Categories already exist or are hidden. Check the list.");
-        return;
+      console.log("Categories already exist or are hidden. Check the list.");
+      return;
     }
 
     setCategories(prev => [...prev, ...toAdd]);
-    
+
     if (supabase) {
-        const { error } = await supabase.from('categories').insert(toAdd);
-        if (error) {
-            console.error("Error seeding categories:", error);
-            // Fallback: try inserting one by one without 'order' if bulk fails due to schema
-            if (error.message?.includes('column "order"')) {
-                 for (const cat of toAdd) {
-                     const { order, ...rest } = cat;
-                     await supabase.from('categories').insert(rest);
-                 }
-                 console.log("Seeded categories (without sorting order due to DB schema).");
-            } else {
-                 console.error("Failed to save to database: " + error.message);
-            }
+      const { error } = await supabase.from('categories').insert(toAdd);
+      if (error) {
+        console.error("Error seeding categories:", error);
+        // Fallback: try inserting one by one without 'order' if bulk fails due to schema
+        if (error.message?.includes('column "order"')) {
+          for (const cat of toAdd) {
+            const { order, ...rest } = cat;
+            await supabase.from('categories').insert(rest);
+          }
+          console.log("Seeded categories (without sorting order due to DB schema).");
         } else {
-            console.log(`Successfully restored ${toAdd.length} categories.`);
+          console.error("Failed to save to database: " + error.message);
         }
+      } else {
+        console.log(`Successfully restored ${toAdd.length} categories.`);
+      }
     } else {
-        console.log("Restored to local session (No DB connection).");
+      console.log("Restored to local session (No DB connection).");
     }
   };
 
   const updateCategory = async (id: string, name: string) => {
     setCategories(prev => prev.map(c => c.id === id ? { ...c, name, slug: name.toLowerCase().replace(/ /g, '-') } : c));
     if (supabase) {
-      await supabase.from('categories').update({ 
-          name, 
-          slug: name.toLowerCase().replace(/ /g, '-') 
+      await supabase.from('categories').update({
+        name,
+        slug: name.toLowerCase().replace(/ /g, '-')
       }).eq('id', id);
     }
   };
@@ -787,67 +802,67 @@ export const StoreProvider: React.FC<{ children: ReactNode }> = ({ children }) =
   };
 
   const updateCategoryOrder = async (updatedCategories: Category[]) => {
-      setCategories(updatedCategories);
-      if (supabase) {
-          const updates = updatedCategories.map(c => ({
-              id: c.id,
-              name: c.name,
-              slug: c.slug,
-              enabled: c.enabled,
-              order: c.order
-          }));
-          const { error } = await supabase.from('categories').upsert(updates);
-          if (error) console.error("Error updating category order", error);
-      }
+    setCategories(updatedCategories);
+    if (supabase) {
+      const updates = updatedCategories.map(c => ({
+        id: c.id,
+        name: c.name,
+        slug: c.slug,
+        enabled: c.enabled,
+        order: c.order
+      }));
+      const { error } = await supabase.from('categories').upsert(updates);
+      if (error) console.error("Error updating category order", error);
+    }
   };
 
   const removePaymentMethod = async (id: string) => {
     setPaymentMethods(prev => prev.filter(p => p.id !== id));
-    if(supabase) await supabase.from('payment_methods').delete().eq('id', id);
+    if (supabase) await supabase.from('payment_methods').delete().eq('id', id);
   };
-  
+
   const addPaymentMethod = async (method: PaymentMethod) => {
     setPaymentMethods(prev => [...prev, method]);
-    if(supabase) await supabase.from('payment_methods').insert({
-        id: method.id,
-        name: method.name,
-        icon_url: method.iconUrl,
-        enabled: method.enabled
+    if (supabase) await supabase.from('payment_methods').insert({
+      id: method.id,
+      name: method.name,
+      icon_url: method.iconUrl,
+      enabled: method.enabled
     });
   };
 
   const togglePaymentMethod = async (id: string) => {
     const method = paymentMethods.find(p => p.id === id);
-    if(!method) return;
+    if (!method) return;
     const newValue = !method.enabled;
-    
-    setPaymentMethods(prev => prev.map(p => 
+
+    setPaymentMethods(prev => prev.map(p =>
       p.id === id ? { ...p, enabled: newValue } : p
     ));
-    if(supabase) await supabase.from('payment_methods').update({ enabled: newValue }).eq('id', id);
+    if (supabase) await supabase.from('payment_methods').update({ enabled: newValue }).eq('id', id);
   };
 
   const updatePaymentMethodOrder = async (id: string, direction: 'up' | 'down') => {
     const sortedMethods = [...paymentMethods].sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0));
     const currentIndex = sortedMethods.findIndex(p => p.id === id);
     if (currentIndex === -1) return;
-    
+
     const targetIndex = direction === 'up' ? currentIndex - 1 : currentIndex + 1;
     if (targetIndex < 0 || targetIndex >= sortedMethods.length) return;
-    
+
     // Swap the items
     const temp = sortedMethods[currentIndex];
     sortedMethods[currentIndex] = sortedMethods[targetIndex];
     sortedMethods[targetIndex] = temp;
-    
+
     // Update sort orders
     const updatedMethods = sortedMethods.map((pm, idx) => ({
       ...pm,
       sortOrder: idx
     }));
-    
+
     setPaymentMethods(updatedMethods);
-    
+
     // Save to Supabase
     if (supabase) {
       for (const pm of updatedMethods) {
@@ -858,38 +873,38 @@ export const StoreProvider: React.FC<{ children: ReactNode }> = ({ children }) =
 
   const addDeliveryOption = async (option: DeliveryOption) => {
     setDeliveryOptions(prev => [...prev, option]);
-    if(supabase) await supabase.from('delivery_options').insert({
-        id: option.id,
-        name: option.name,
-        price: option.price,
-        min_days: option.minDays,
-        max_days: option.maxDays,
-        icon: option.icon,
-        enabled: option.enabled
+    if (supabase) await supabase.from('delivery_options').insert({
+      id: option.id,
+      name: option.name,
+      price: option.price,
+      min_days: option.minDays,
+      max_days: option.maxDays,
+      icon: option.icon,
+      enabled: option.enabled
     });
   };
 
   const removeDeliveryOption = async (id: string) => {
     setDeliveryOptions(prev => prev.filter(o => o.id !== id));
-    if(supabase) await supabase.from('delivery_options').delete().eq('id', id);
+    if (supabase) await supabase.from('delivery_options').delete().eq('id', id);
   };
 
   const toggleDeliveryOption = async (id: string) => {
     const option = deliveryOptions.find(o => o.id === id);
-    if(!option) return;
+    if (!option) return;
     const newValue = !option.enabled;
 
-    setDeliveryOptions(prev => prev.map(o => 
+    setDeliveryOptions(prev => prev.map(o =>
       o.id === id ? { ...o, enabled: newValue } : o
     ));
-    if(supabase) await supabase.from('delivery_options').update({ enabled: newValue }).eq('id', id);
+    if (supabase) await supabase.from('delivery_options').update({ enabled: newValue }).eq('id', id);
   };
 
   const updateDeliveryOption = async (id: string, updates: Partial<DeliveryOption>) => {
-    setDeliveryOptions(prev => prev.map(o => 
+    setDeliveryOptions(prev => prev.map(o =>
       o.id === id ? { ...o, ...updates } : o
     ));
-    if(supabase) {
+    if (supabase) {
       const payload: any = {};
       if (updates.name !== undefined) payload.name = updates.name;
       if (updates.price !== undefined) payload.price = updates.price;
@@ -907,24 +922,24 @@ export const StoreProvider: React.FC<{ children: ReactNode }> = ({ children }) =
   const updateAdminProfile = async (profile: AdminProfile) => {
     setAdminProfile(profile);
     if (supabase) {
-        const payload = {
-            id: 1, // Singleton
-            email: profile.email,
-            support_email: profile.supportEmail,
-            telegram_bot_token: profile.telegramBotToken,
-            telegram_chat_id: profile.telegramChatId,
-            receive_email_notifications: profile.receiveEmailNotifications,
-            receive_telegram_notifications: profile.receiveTelegramNotifications,
-            us_phone_number: profile.usPhoneNumber,
-            uk_phone_number: profile.ukPhoneNumber,
-            whatsapp_number: profile.whatsappNumber,
-            telegram_username: profile.telegramUsername,
-            show_floating_chat: profile.showFloatingChat,
-            logo_url: profile.logoUrl,
-            bitcoin_wallet_address: profile.bitcoinWalletAddress,
-            usdt_wallet_address: profile.usdtWalletAddress
-        };
-        await supabase.from('store_settings').upsert(payload);
+      const payload = {
+        id: 1, // Singleton
+        email: profile.email,
+        support_email: profile.supportEmail,
+        telegram_bot_token: profile.telegramBotToken,
+        telegram_chat_id: profile.telegramChatId,
+        receive_email_notifications: profile.receiveEmailNotifications,
+        receive_telegram_notifications: profile.receiveTelegramNotifications,
+        us_phone_number: profile.usPhoneNumber,
+        uk_phone_number: profile.ukPhoneNumber,
+        whatsapp_number: profile.whatsappNumber,
+        telegram_username: profile.telegramUsername,
+        show_floating_chat: profile.showFloatingChat,
+        logo_url: profile.logoUrl,
+        bitcoin_wallet_address: profile.bitcoinWalletAddress,
+        usdt_wallet_address: profile.usdtWalletAddress
+      };
+      await supabase.from('store_settings').upsert(payload);
     }
   };
 
@@ -985,13 +1000,13 @@ export const StoreProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         isMobile,
         isCallbackModalOpen,
         adminProfile,
-        isLoading, 
+        isLoading,
         addToCart,
         removeFromCart,
         updateCartQuantity,
         clearCart,
         placeOrder,
-        addManualOrder, 
+        addManualOrder,
         updateOrderStatus,
         setSearchQuery,
         toggleAdminMode,
