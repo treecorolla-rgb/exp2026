@@ -218,7 +218,7 @@ export const Cart: React.FC = () => {
   
   // Calculate shipping cost based on selection
   const selectedDelivery = enabledDeliveryOptions.find(d => d.id === selectedShippingId);
-  const shipping = isFreeShipping ? 0 : (selectedDelivery?.price || 25.00);
+  const shipping = isFreeShipping ? 0 : (selectedDelivery?.price || 0);
   
   // Amount needed for free shipping
   const amountForFreeShipping = Math.max(0, freeShippingThreshold - subtotal);
@@ -866,7 +866,13 @@ ${itemsList}
                     </div>
                  </div>
                  <button 
-                   onClick={() => setStep('checkout')}
+                   onClick={() => {
+                     if (!selectedShippingId && !isFreeShipping) {
+                       showToast('Please select a shipping method', 'error');
+                       return;
+                     }
+                     setStep('checkout');
+                   }}
                    className="w-full bg-[#ef4444] hover:bg-red-600 text-white py-4 rounded font-bold text-lg uppercase tracking-widest shadow-lg transition transform active:scale-[0.98] mt-6"
                  >
                    Checkout
@@ -1156,7 +1162,13 @@ ${itemsList}
                 <span className="font-extrabold text-primary text-xl tracking-tight">{formatPrice(total)}</span>
              </div>
              <button 
-               onClick={() => setStep('checkout')}
+               onClick={() => {
+                 if (!selectedShippingId && !isFreeShipping) {
+                   showToast('Please select a shipping method', 'error');
+                   return;
+                 }
+                 setStep('checkout');
+               }}
                className="w-full bg-[#ef4444] hover:bg-red-600 text-white py-3 rounded font-bold uppercase tracking-widest shadow-lg transition transform active:scale-[0.98]"
              >
                Checkout
