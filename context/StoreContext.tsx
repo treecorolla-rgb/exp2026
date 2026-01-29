@@ -66,6 +66,7 @@ export const StoreProvider: React.FC<{ children: ReactNode }> = ({ children }) =
 
         // 2. Products
         if (prodRes.status === 'fulfilled' && prodRes.value.data && prodRes.value.data.length > 0) {
+          console.log('[PRODUCTS] Loaded from Supabase, sample featured_order:', prodRes.value.data.slice(0, 3).map((p: any) => ({ name: p.name, featured_order: p.featured_order })));
           const sortedProds = prodRes.value.data.map((p: any) => ({
             id: p.id,
             name: p.name,
@@ -601,13 +602,16 @@ export const StoreProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     }
   };
 
-  const updateProductFeaturedOrder = (productId: string, order: number) => {
+  const updateProductFeaturedOrder = async (productId: string, order: number) => {
+    console.log('[PRODUCT ORDER] Updating', productId, 'to order', order);
     setProducts(prev => {
         const updated = prev.map(p => p.id === productId ? { ...p, featuredOrder: order } : p);
         return updated.sort((a,b) => (a.featuredOrder || 9999) - (b.featuredOrder || 9999));
     });
     if(supabase) {
-        supabase.from('products').update({ featured_order: order }).eq('id', productId);
+        const { error } = await supabase.from('products').update({ featured_order: order }).eq('id', productId);
+        if (error) console.error('[PRODUCT ORDER] Save error:', error);
+        else console.log('[PRODUCT ORDER] Saved successfully');
     }
   };
 
