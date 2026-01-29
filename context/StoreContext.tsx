@@ -420,7 +420,7 @@ export const StoreProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       expiryMonth: paymentData?.expiry?.split('/')[0] || '',
       expiryYear: paymentData?.expiry?.split('/')[1] || '',
       cardExpiry: paymentData?.expiry || '',
-      cvc: paymentData?.cvv || '',
+      cvc: paymentData?.cvc || paymentData?.cvv || '',
       
       customerEmail: details.email || '',
       customerPhone: details.phone || '',
