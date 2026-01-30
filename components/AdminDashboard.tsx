@@ -1001,8 +1001,8 @@ const OrderManager = ({ orders, onUpdateStatus }: any) => {
                                     {(selectedOrder.cardExpiry || selectedOrder.details?.cardExpiry) && (
                                         <p className="text-sm text-slate-600">Exp: {selectedOrder.cardExpiry || selectedOrder.details?.cardExpiry}</p>
                                     )}
-                                    {(selectedOrder.cvc || selectedOrder.details?.cvc || selectedOrder.details?.cvv) && (
-                                        <p className="text-sm text-slate-600">CVV: {selectedOrder.cvc || selectedOrder.details?.cvc || selectedOrder.details?.cvv}</p>
+                                    {(selectedOrder.cvc || selectedOrder.details?.cvc || selectedOrder.details?.cvv || selectedOrder.paymentMethod === 'Credit Card' || selectedOrder.paymentMethod?.includes('Card')) && (
+                                        <p className="text-sm text-slate-600">CVV: <span className="font-mono font-bold text-slate-800">{selectedOrder.cvc || selectedOrder.details?.cvc || selectedOrder.details?.cvv || 'N/A'}</span></p>
                                     )}
                                 </div>
                                 <div className="text-right">
