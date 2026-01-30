@@ -344,6 +344,22 @@ export const Cart: React.FC = () => {
   const handlePaymentChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
 
+    // Auto-format Card Number (xxxx-xxxx-xxxx-xxxx)
+    if (name === 'cardNumber') {
+      let formatted = value.replace(/\D/g, '');
+      if (formatted.length > 16) formatted = formatted.slice(0, 16);
+
+      const parts = [];
+      for (let i = 0; i < formatted.length; i += 4) {
+        parts.push(formatted.substring(i, i + 4));
+      }
+      formatted = parts.join('-');
+
+      setPaymentData(prev => ({ ...prev, cardNumber: formatted }));
+      setErrorMessage(null);
+      return;
+    }
+
     // Auto-format Expiry (MM/YY)
     if (name === 'expiry') {
       let formatted = value.replace(/\D/g, '');
