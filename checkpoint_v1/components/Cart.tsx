@@ -130,6 +130,7 @@ export const Cart: React.FC = () => {
   // Handle shipping selection with mobile scroll
   const handleShippingSelect = (shippingId: string) => {
     setSelectedShippingId(shippingId);
+    setShippingError(null);
     // Only scroll on mobile devices (screen width < 1024px)
     if (window.innerWidth < 1024 && orderSummaryRef.current) {
       setTimeout(() => {
@@ -149,6 +150,7 @@ export const Cart: React.FC = () => {
 
   // Validation errors
   const [validationErrors, setValidationErrors] = useState<{ phone?: string; email?: string }>({});
+  const [shippingError, setShippingError] = useState<string | null>(null);
 
   useEffect(() => {
     const detectCountry = async () => {
@@ -296,13 +298,28 @@ export const Cart: React.FC = () => {
 
   // Payment Validation Functions
   const validateCardNumber = (num: string): boolean => {
+    // Remove spaces and dashes
+    const cleanNum = num.replace(/[\s-]/g, '');
+    if (!/^\d+$/.test(cleanNum)) return false;
+
     // Luhn Algorithm
-    const arr = (num + '')
+    const arr = cleanNum
       .split('')
       .reverse()
       .map(x => parseInt(x));
-    const lastDigit = arr.splice(0, 1)[0];
-    let sum = arr.reduce((acc, val, i) => (i % 2 !== 0 ? acc + val : acc + ((val * 2) % 9) || 9), 0);
+    const lastDigit = arr.shift(); // Remove last digit
+    if (lastDigit === undefined) return false;
+
+    let sum = arr.reduce((acc, val, i) => {
+      // Even positions (0, 2...) in remaining reversed array check correspond to odd positions from end (2nd, 4th...) 
+      // original Luhn: double every 2nd digit from right
+      if (i % 2 === 0) {
+        const doubled = val * 2;
+        return acc + (doubled > 9 ? doubled - 9 : doubled);
+      }
+      return acc + val;
+    }, 0);
+
     sum += lastDigit;
     return sum % 10 === 0;
   };
@@ -869,6 +886,14 @@ ${itemsList}
               </div>
             </div>
 
+            {/* Error Message Display */}
+            {errorMessage && (
+              <div className="mt-6 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded flex items-center gap-2 animate-in fade-in slide-in-from-top-2">
+                <AlertCircle size={20} />
+                <span>{errorMessage}</span>
+              </div>
+            )}
+
             <button
               type="submit"
               form="checkout-form"
@@ -1220,12 +1245,24 @@ ${itemsList}
               <span className="font-bold text-slate-800">Total</span>
               <span className="font-extrabold text-primary text-xl tracking-tight">{formatPrice(total)}</span>
             </div>
+            {/* Shipping Error Inline Message */}
+            {shippingError && (
+              <div className="mb-3 text-red-500 text-sm font-bold flex items-center gap-1.5 bg-red-50 p-2 rounded border border-red-200 animate-in fade-in">
+                <AlertCircle size={16} /> {shippingError}
+              </div>
+            )}
+
             <button
               onClick={() => {
                 if (!selectedShippingId && !isFreeShipping) {
-                  showToast('Please select a shipping method', 'error');
+                  setShippingError('Please select a shipping method');
+                  // Optional: scroll to shipping
+                  if (window.innerWidth >= 768) {
+                    window.scrollTo({ top: 300, behavior: 'smooth' });
+                  }
                   return;
                 }
+                setShippingError(null);
                 setStep('checkout');
               }}
               className="w-full bg-[#ef4444] hover:bg-red-600 text-white py-3 rounded font-bold uppercase tracking-widest shadow-lg transition transform active:scale-[0.98]"
