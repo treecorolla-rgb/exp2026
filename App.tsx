@@ -29,7 +29,7 @@ function AppContent() {
           <img
             src="https://vdhgagzaeyvrsthxsbxn.supabase.co/storage/v1/object/public/images/favicon1.png"
             alt="Loading..."
-            className="w-20 h-20 mx-auto mb-4 animate-pulse"
+            className="w-20 h-20 mx-auto mb-4 animate-pulse object-contain"
           />
           <p className="text-slate-500">Loading...</p>
         </div>
