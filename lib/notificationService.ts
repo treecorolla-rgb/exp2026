@@ -1,4 +1,5 @@
 
+// --- SUPABASE CLIENT IMPORT ---
 import { supabase } from './supabaseClient';
 import { CARRIERS } from '../constants';
 import { Order, OrderStatus, NotificationLog } from '../types';
@@ -26,7 +27,7 @@ export const generateTrackingUrl = (carrier: string, trackingNumber: string): st
 const triggerRealEmail = async (
   recipientEmail: string,
   recipientName: string,
-  templateId: string,
+  eventTrigger: string,
   contextData: any
 ): Promise<boolean> => {
   if (!supabase) {
@@ -34,19 +35,34 @@ const triggerRealEmail = async (
     return false;
   }
 
-  console.log(`[EMAIL SERVICE] Triggering email for ${recipientEmail} (Template: ${templateId})`);
+  console.log(`[EMAIL SERVICE] Triggering email for ${recipientEmail} (Event: ${eventTrigger})`);
 
   try {
-    const { error } = await supabase.from('email_logs').insert({
+    // 1. Fetch Template ID first (UUID)
+    const { data: template, error: templateError } = await supabase
+      .from('email_templates')
+      .select('id')
+      .eq('event_trigger', eventTrigger)
+      .single();
+
+    if (templateError || !template) {
+      console.warn(`[EMAIL SERVICE] Template not found for trigger '${eventTrigger}'. Using DB trigger or skipping.`);
+      // Note: If the Database Trigger (SQL) is active, we don't strictly need to do this insert here.
+      // We log it as 'Pending' in UI, but don't force a possibly invalid DB insert.
+      return false;
+    }
+
+    // 2. Insert into Logs
+    const { error: insertError } = await supabase.from('email_logs').insert({
       status: 'PENDING',
       recipient_email: recipientEmail,
       recipient_name: recipientName,
-      template_id: templateId, // Must match an ID in 'email_templates' table
+      template_id: template.id,
       context_data: contextData
     });
 
-    if (error) {
-      console.error('[EMAIL SERVICE] Failed to insert email log:', error);
+    if (insertError) {
+      console.error('[EMAIL SERVICE] Failed to insert email log:', insertError);
       return false;
     }
     return true;
@@ -97,16 +113,16 @@ export const handleOrderNotification = async (
   const name = order.customerName || 'Valued Customer';
 
   // 1. PENDING (New Order Confirmation)
-  // Triggered when order is placed
   if (newStatus === 'Pending') {
     const success = await triggerRealEmail(
       email,
       name,
-      'order_confirmation', // Ensure this ID exists in your 'email_templates' table
+      'ORDER_CREATED', // Matches 'event_trigger' in SQL
       {
         order_id: order.id,
         total_amount: order.grandTotal?.toFixed(2),
         customer_name: name,
+        shipping_address: order.shipAddress || 'Address on file',
         items_html: (order.items || []).map(i => `<li>${i.name} x ${i.quantity}</li>`).join('')
       }
     );
@@ -117,16 +133,15 @@ export const handleOrderNotification = async (
       channel: 'Email',
       type: 'Confirmation',
       recipient: email,
-      status: success ? 'Sent' : 'Failed', // 'Sent' means successfully queued in DB
+      status: success ? 'Sent' : 'Failed',
       timestamp,
-      details: `Queued via Supabase (Template: order_confirmation)`
+      details: `Queued via Supabase (Template: ORDER_CREATED)`
     });
   }
 
   // 2. SHIPPED -> SMS & Email with Tracking
   if (newStatus === 'Shipped') {
     if (!order.trackingNumber || !order.carrier) {
-      console.warn("[NOTIFICATION] Skipping Shipped notification: Missing tracking info.");
       return;
     }
 
@@ -150,13 +165,15 @@ export const handleOrderNotification = async (
     const emailSuccess = await triggerRealEmail(
       email,
       name,
-      'order_shipped', // Ensure this ID exists in 'email_templates'
+      'ORDER_SHIPPED', // Matches 'event_trigger' in SQL
       {
         order_id: order.id,
         tracking_number: order.trackingNumber,
         carrier: order.carrier,
         tracking_link: trackingLink,
-        customer_name: name
+        customer_name: name,
+        courier_name: order.carrier,
+        estimated_delivery_date: '3-5 Business Days'
       }
     );
 
@@ -168,7 +185,7 @@ export const handleOrderNotification = async (
       recipient: email,
       status: emailSuccess ? 'Sent' : 'Failed',
       timestamp,
-      details: `Queued via Supabase (Template: order_shipped)`
+      details: `Queued via Supabase (Template: ORDER_SHIPPED)`
     });
   }
 
