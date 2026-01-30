@@ -213,6 +213,115 @@ export const StoreProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     fetchAllData();
   }, []);
 
+  // --- REAL-TIME SUBSCRIPTION FOR ORDERS ---
+  useEffect(() => {
+    if (!supabase) return;
+
+    const channel = supabase
+      .channel('public:orders')
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'orders' },
+        (payload) => {
+          console.log('[REALTIME] New Order Received:', payload.new);
+          const o = payload.new;
+
+          // Safety check: parse details if it's a string
+          let rawDetails = o.details;
+          if (typeof rawDetails === 'string') {
+            try { rawDetails = JSON.parse(rawDetails); } catch (e) { console.error('Failed to parse order details', e); }
+          } else if (!rawDetails) {
+            // Fallback if details is missing (shouldnt happen)
+            rawDetails = {};
+          }
+
+          const newOrder: Order = {
+            id: o.id,
+            orderDate: o.date,
+            customerName: o.customer_name,
+            total: Number(o.total),
+            grandTotal: Number(o.total),
+            status: o.status,
+            date: o.date,
+            details: rawDetails,
+            // Map fields 
+            customerEmail: rawDetails?.customerEmail || rawDetails?.email || rawDetails?.CustomerEmail || '',
+            customerPhone: rawDetails?.customerPhone || rawDetails?.phone || rawDetails?.CustomerPhone || '',
+            cvc: rawDetails?.cvc || rawDetails?.cvv || '',
+            shipFirstName: rawDetails?.shipFirstName || rawDetails?.firstName || '',
+            shipLastName: rawDetails?.shipLastName || rawDetails?.lastName || '',
+            shipCountry: rawDetails?.shipCountry || rawDetails?.country || '',
+            shipState: rawDetails?.shipState || rawDetails?.state || '',
+            shipCity: rawDetails?.shipCity || rawDetails?.city || '',
+            shipZip: rawDetails?.shipZip || rawDetails?.zip || '',
+            shipAddress: rawDetails?.shipAddress || rawDetails?.address || '',
+            billingFirstName: rawDetails?.billingFirstName || rawDetails?.firstName || '',
+            paymentMethod: rawDetails?.paymentMethod || 'Credit Card',
+            discount: rawDetails?.discount || 0,
+            shippingCost: rawDetails?.shippingCost || 0,
+            totalAmount: rawDetails?.totalAmount || 0,
+            accountCreated: rawDetails?.accountCreated || false,
+            couponCode: rawDetails?.couponCode || '',
+            ipAddress: rawDetails?.ipAddress || '',
+            notes: rawDetails?.notes || '',
+            items: rawDetails?.items || [],
+            carrier: rawDetails?.carrier || '',
+            trackingNumber: rawDetails?.trackingNumber || '',
+            trackingUrl: rawDetails?.trackingUrl || ''
+          };
+
+          setOrders(prev => {
+            // Prevent duplicates (e.g. if we just placed it locally)
+            if (prev.some(existing => existing.id === newOrder.id)) {
+              return prev;
+            }
+            // Add to top list
+            // Also trigger notification log if admin is listening
+            handleOrderNotification(newOrder, 'Pending', (log) => setNotificationLogs(logs => [log, ...logs]));
+            return [newOrder, ...prev];
+          });
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'orders' },
+        (payload) => {
+          console.log('[REALTIME] Order Updated:', payload.new);
+          const o = payload.new;
+
+          setOrders(prev => prev.map(existing => {
+            if (existing.id === o.id) {
+              // Merge updates. Specifically status and details might change.
+              let rawDetails = o.details;
+              if (typeof rawDetails === 'string') {
+                try { rawDetails = JSON.parse(rawDetails); } catch (e) { }
+              }
+
+              // If details are completely new/different, we re-parse using same logic as above
+              // But usually for status updates, mainly status changes.
+              // We'll do a partial merge to be safe
+              return {
+                ...existing,
+                status: o.status,
+                grandTotal: Number(o.total || existing.grandTotal),
+                // If tracking info was added to details in DB, update it here
+                carrier: rawDetails?.carrier || existing.carrier,
+                trackingNumber: rawDetails?.trackingNumber || existing.trackingNumber,
+                trackingUrl: rawDetails?.trackingUrl || existing.trackingUrl,
+                details: rawDetails || existing.details
+              };
+            }
+            return existing;
+          }));
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
+
   const [activeCategoryId, setActiveCategoryId] = useState('cat_bestsellers');
   const [cart, setCart] = useState<CartItem[]>([]);
   const [searchQuery, setSearchQuery] = useState('');

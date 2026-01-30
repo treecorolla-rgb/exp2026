@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Trash2, ShoppingBag, ArrowRight, Minus, Plus, ShieldCheck, CreditCard, Lock, ChevronLeft, CheckCircle, ChevronDown, Check, AlertCircle, Truck, Copy, RefreshCw } from 'lucide-react';
+import { Trash2, ShoppingBag, ArrowRight, Minus, Plus, ShieldCheck, CreditCard, Lock, ChevronLeft, CheckCircle, ChevronDown, Check, AlertCircle, Truck, Copy, RefreshCw, X } from 'lucide-react';
 import { useStore } from '../context/StoreContext';
 import { useToast } from './Toast';
 import { CustomerDetails } from '../types';
@@ -88,12 +88,14 @@ export const Cart: React.FC = () => {
     }
   }, []);
   const [step, setStep] = useState<'cart' | 'checkout' | 'success'>('cart');
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [createAccount, setCreateAccount] = useState(true);
 
   // Update checkout mode in store when step changes
   useEffect(() => {
     setIsCheckoutMode(step === 'checkout');
+    setErrorMessage(null); // Clear errors on step change
     return () => setIsCheckoutMode(false);
   }, [step, setIsCheckoutMode]);
 
@@ -279,14 +281,14 @@ export const Cart: React.FC = () => {
       if (value && !validatePhone(value)) {
         setValidationErrors(prev => ({ ...prev, phone: 'Please enter a valid phone number' }));
       } else {
-        setValidationErrors(prev => ({ ...prev, phone: undefined }));
+        setErrorMessage(null);
       }
     }
     if (name === 'email') {
       if (value && !validateEmail(value)) {
         setValidationErrors(prev => ({ ...prev, email: 'Please enter a valid email address' }));
       } else {
-        setValidationErrors(prev => ({ ...prev, email: undefined }));
+        setErrorMessage(null);
       }
     }
   };
@@ -352,10 +354,12 @@ export const Cart: React.FC = () => {
       let formatted = value.replace(/\D/g, '');
       if (formatted.length > 4) formatted = formatted.slice(0, 4);
       setPaymentData(prev => ({ ...prev, cvc: formatted }));
+      setErrorMessage(null);
       return;
     }
 
     setPaymentData(prev => ({ ...prev, [name]: value }));
+    setErrorMessage(null);
   };
 
   const handleCompleteOrder = async (e: React.FormEvent) => {
@@ -365,15 +369,15 @@ export const Cart: React.FC = () => {
     if (isCardPayment) {
       const rawCardNum = paymentData.cardNumber?.replace(/\s/g, '') || '';
       if (rawCardNum.length < 13 || !validateCardNumber(rawCardNum)) {
-        showToast('Invalid Credit Card Number. Please check and try again.', 'error');
+        setErrorMessage('Invalid Credit Card Number. Please check and try again.');
         return;
       }
       if (!validateCardExpiry(paymentData.expiry || '')) {
-        showToast('Invalid or Expired Card Date (MM/YY).', 'error');
+        setErrorMessage('Invalid or Expired Card Date (MM/YY).');
         return;
       }
       if ((paymentData.cvc || '').length < 3) {
-        showToast('Invalid CVC/CVV code.', 'error');
+        setErrorMessage('Invalid CVC/CVV code.');
         return;
       }
     }
@@ -869,6 +873,16 @@ ${itemsList}
               </div>
             </div>
 
+            {errorMessage && (
+              <div className="bg-red-50 border border-red-200 rounded-lg p-3 mb-4 flex items-center gap-3 animate-in fade-in slide-in-from-top-1">
+                <AlertCircle className="text-red-500 shrink-0" size={20} />
+                <p className="text-red-700 text-sm font-medium flex-1">{errorMessage}</p>
+                <button type="button" onClick={() => setErrorMessage(null)} className="text-red-400 hover:text-red-600">
+                  <X size={16} />
+                </button>
+              </div>
+            )}
+
             <button
               type="submit"
               form="checkout-form"
@@ -1286,10 +1300,20 @@ ${itemsList}
               <span className="font-bold text-slate-800">Total</span>
               <span className="font-extrabold text-primary text-xl tracking-tight">{formatPrice(total)}</span>
             </div>
+            {errorMessage && (
+              <div className="bg-red-50 border border-red-200 rounded-lg p-3 mb-4 flex items-center gap-3 animate-in fade-in slide-in-from-top-1">
+                <AlertCircle className="text-red-500 shrink-0" size={20} />
+                <p className="text-red-700 text-sm font-medium flex-1">{errorMessage}</p>
+                <button onClick={() => setErrorMessage(null)} className="text-red-400 hover:text-red-600">
+                  <X size={16} />
+                </button>
+              </div>
+            )}
+
             <button
               onClick={() => {
                 if (!selectedShippingId && !isFreeShipping) {
-                  showToast('Please select a shipping method', 'error');
+                  setErrorMessage('Please select a shipping method');
                   return;
                 }
                 setStep('checkout');
