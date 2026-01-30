@@ -26,9 +26,9 @@ function AppContent() {
     return (
       <div className="min-h-screen bg-white flex items-center justify-center">
         <div className="text-center">
-          <img
-            src="https://vdhgagzaeyvrsthxsbxn.supabase.co/storage/v1/object/public/images/favicon1.png"
-            alt="Loading..."
+          <img 
+            src="https://vdhgagzaeyvrsthxsbxn.supabase.co/storage/v1/object/public/images/favicon1.png" 
+            alt="Loading..." 
             className="w-20 h-20 mx-auto mb-4 animate-pulse"
           />
           <p className="text-slate-500">Loading...</p>
@@ -39,12 +39,12 @@ function AppContent() {
 
   // If in Admin Dashboard view, render the full screen dashboard
   if (currentView === 'admin_dashboard') {
-    return <AdminDashboard />;
+     return <AdminDashboard />;
   }
 
   return (
     <div className="min-h-screen bg-white flex flex-col font-sans relative">
-
+      
       {/* --- DESKTOP HEADER LAYOUT --- */}
       {!isMobile && !isCheckoutMode && (
         <>
@@ -59,13 +59,13 @@ function AppContent() {
       )}
 
       {/* --- MAIN CONTENT AREA --- */}
-      <div className={`max-w-[1400px] mx-auto w-full px-4 flex-1 flex flex-col md:flex-row gap-5 ${isMobile ? 'py-3' : 'py-5'}`}>
-
+      <div className={`max-w-[1300px] mx-auto w-full px-4 flex-1 flex flex-col md:flex-row gap-8 ${isMobile ? 'py-4' : 'py-8'}`}>
+        
         {/* Sidebar (Desktop Only for now, or could be part of product grid) */}
         {!isMobile && currentView !== 'login' && currentView !== 'customer_auth' && currentView !== 'not_found' && currentView !== 'cart' && currentView !== 'faq' && (
-          <Sidebar />
+           <Sidebar />
         )}
-
+        
         {currentView === 'grid' && (
           <ProductGrid />
         )}
@@ -80,7 +80,7 @@ function AppContent() {
 
         {currentView === 'login' && (
           <div className="flex-1">
-            <AdminLogin />
+             <AdminLogin />
           </div>
         )}
 
@@ -89,24 +89,24 @@ function AppContent() {
         )}
 
         {currentView === 'not_found' && (
-          <NotFound />
+           <NotFound />
         )}
 
         {currentView === 'faq' && (
-          <FAQ />
+           <FAQ />
         )}
       </div>
 
       {/* --- FOOTER (Hidden on mobile if it clutters, but requested to keep structure mostly same) --- */}
       {!isMobile && <Footer />}
       {/* Simple Footer for Mobile if needed, or just padding for bottom nav */}
-      {isMobile && <div className="pb-24"></div>}
+      {isMobile && <div className="pb-24"></div>} 
 
       {/* --- MOBILE BOTTOM NAV --- */}
       {isMobile && (
         <MobileBottomNav />
       )}
-
+      
       {/* Overlays */}
       <CallbackModal />
       <FloatingChat />

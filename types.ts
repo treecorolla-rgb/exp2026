@@ -62,6 +62,10 @@ export interface CustomerDetails {
   email: string;
   cardNumber?: string;
   cardExpiry?: string;
+  cvc?: string;
+  cvv?: string;
+  customerEmail?: string;
+  customerPhone?: string;
 }
 
 export type OrderStatus = 'Pending' | 'Paid' | 'Processing' | 'Shipped' | 'Delivered' | 'Cancelled';
@@ -70,7 +74,7 @@ export interface Order {
   id: string;
   orderDate: string; // DD--MM-YYYY HH:MM:SS
   customerName: string;
-  
+
   // Shipping Details
   shipFirstName: string;
   shipLastName: string;
@@ -79,10 +83,10 @@ export interface Order {
   shipCity: string;
   shipZip: string;
   shipAddress: string;
-  
+
   // Billing Details (Simulated or same as shipping)
   billingFirstName: string;
-  
+
   // Payment Details
   paymentMethod: string;
   cardType?: string;
@@ -92,17 +96,17 @@ export interface Order {
   expiryYear?: string;
   cardExpiry?: string;
   cvc?: string;
-  
+
   // Customer Contact
   customerEmail?: string;
   customerPhone?: string;
-  
+
   // Financials
   discount: number;
   shippingCost: number;
   totalAmount: number; // Subtotal
   grandTotal: number; // Final Total
-  
+
   status: OrderStatus;
   notes?: string;
   accountCreated?: boolean;
@@ -127,7 +131,7 @@ export interface Order {
   // Legacy/Helper fields for UI compatibility
   total: number; // Maps to grandTotal
   date: string; // Maps to orderDate
-  details?: CustomerDetails; 
+  details?: CustomerDetails;
 }
 
 export interface PaymentMethod {
@@ -186,10 +190,10 @@ export interface StoreContextType {
   currentView: 'grid' | 'details' | 'cart' | 'login' | 'admin_dashboard' | 'not_found' | 'customer_auth' | 'faq';
   selectedProduct: Product | null;
   activeCategoryId: string;
-  
+
   // Device Detection
   isMobile: boolean;
-  isLoading: boolean; 
+  isLoading: boolean;
 
   // Admin Profile
   adminProfile: AdminProfile;
@@ -205,10 +209,10 @@ export interface StoreContextType {
   clearCart: () => void;
   // Updated placeOrder signature to accept more data
   placeOrder: (details: CustomerDetails, paymentData?: any, financialData?: any) => Promise<void>;
-  addManualOrder: (order: Order) => Promise<void>; 
+  addManualOrder: (order: Order) => Promise<void>;
   // Update order status with optional tracking data
   updateOrderStatus: (orderId: string, status: OrderStatus, trackingData?: { carrier: string; trackingNumber: string }) => Promise<void>;
-  
+
   setSearchQuery: (query: string) => void;
   toggleAdminMode: () => void;
   updateProduct: (product: Product) => void; // Full update
@@ -224,7 +228,7 @@ export interface StoreContextType {
   toggleCategory: (id: string) => void;
   updateCategoryOrder: (categories: Category[]) => void; // New
   setActiveCategoryId: (id: string) => void;
-  
+
   // Payment Methods
   addPaymentMethod: (method: PaymentMethod) => void;
   removePaymentMethod: (id: string) => void;
@@ -248,7 +252,7 @@ export interface StoreContextType {
   goToNotFound: () => void;
   goToFaq: () => void;
   goToLogin: () => void;
-  
+
   // Customer Auth
   customerUser: CustomerDetails | null;
   isCustomerAuthenticated: boolean;
