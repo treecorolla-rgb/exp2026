@@ -31,9 +31,9 @@ export const Header: React.FC = () => {
   return (
     <header className="bg-white shadow-sm sticky top-0 z-40">
       {/* Upper Header: Logo, Search, Cart */}
-      <div className="border-b border-slate-100 py-3 px-4">
-        <div className="max-w-[1400px] mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
-
+      <div className="border-b border-slate-100 py-4 px-4">
+        <div className="max-w-[1300px] mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
+          
           {/* Logo & Mobile Actions */}
           <div className="w-full md:w-auto flex justify-between items-center">
             <div onClick={handleHomeClick}>
@@ -48,7 +48,7 @@ export const Header: React.FC = () => {
                   {cart.reduce((acc, item) => acc + item.quantity, 0)}
                 </span>
               </div>
-              <button
+              <button 
                 onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
                 className="text-slate-700 hover:text-primary transition"
               >
@@ -60,16 +60,16 @@ export const Header: React.FC = () => {
           {/* Search Bar (Desktop) */}
           <div className="hidden md:block flex-1 max-w-xl mx-8">
             <div className="relative group">
-              <input
-                type="text"
-                placeholder="Search by name, ingredient, or category..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-4 pr-12 py-2.5 border border-slate-300 rounded-full focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/20 transition text-sm bg-slate-50 focus:bg-white"
-              />
-              <button className="absolute right-1 top-1 bottom-1 bg-primary hover:bg-blue-600 text-white w-10 rounded-full flex items-center justify-center transition">
-                <Search size={18} />
-              </button>
+               <input 
+                 type="text" 
+                 placeholder="Search by name, ingredient, or category..." 
+                 value={searchQuery}
+                 onChange={(e) => setSearchQuery(e.target.value)}
+                 className="w-full pl-4 pr-12 py-2.5 border border-slate-300 rounded-full focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/20 transition text-sm bg-slate-50 focus:bg-white"
+               />
+               <button className="absolute right-1 top-1 bottom-1 bg-primary hover:bg-blue-600 text-white w-10 rounded-full flex items-center justify-center transition">
+                 <Search size={18} />
+               </button>
             </div>
           </div>
 
@@ -100,34 +100,34 @@ export const Header: React.FC = () => {
 
       {/* Navigation Bar (Desktop) */}
       <div className="hidden lg:block bg-slate-50 border-b border-slate-200">
-        <div className="max-w-[1400px] mx-auto px-4">
-          <nav className="flex items-center space-x-8 text-[13px] font-bold text-slate-600 tracking-wide uppercase h-10">
-            <button onClick={handleHomeClick} className="h-full flex items-center hover:text-primary transition border-b-2 border-transparent hover:border-primary">Home</button>
-            <button onClick={handleProductsClick} className="h-full flex items-center hover:text-primary transition border-b-2 border-transparent hover:border-primary">All Products</button>
-            <a href="#" onClick={handleNotFound} className="h-full flex items-center hover:text-primary transition border-b-2 border-transparent hover:border-primary">About us</a>
-            <a href="#" onClick={(e) => { e.preventDefault(); goToFaq(); }} className="h-full flex items-center hover:text-primary transition border-b-2 border-transparent hover:border-primary">FAQ</a>
-            <a href="#" onClick={handleNotFound} className="h-full flex items-center hover:text-primary transition border-b-2 border-transparent hover:border-primary">Testimonials</a>
-            <a href="#" onClick={handleNotFound} className="h-full flex items-center hover:text-primary transition border-b-2 border-transparent hover:border-primary">Contact Us</a>
-            <div className="flex-1"></div>
-            <a href="#" onClick={handleNotFound} className="h-full flex items-center text-secondary hover:text-red-600 transition font-extrabold">Special Offers</a>
-          </nav>
+        <div className="max-w-[1300px] mx-auto px-4">
+           <nav className="flex items-center space-x-8 text-[13px] font-bold text-slate-600 tracking-wide uppercase h-10">
+             <button onClick={handleHomeClick} className="h-full flex items-center hover:text-primary transition border-b-2 border-transparent hover:border-primary">Home</button>
+             <button onClick={handleProductsClick} className="h-full flex items-center hover:text-primary transition border-b-2 border-transparent hover:border-primary">All Products</button>
+             <a href="#" onClick={handleNotFound} className="h-full flex items-center hover:text-primary transition border-b-2 border-transparent hover:border-primary">About us</a>
+             <a href="#" onClick={(e) => { e.preventDefault(); goToFaq(); }} className="h-full flex items-center hover:text-primary transition border-b-2 border-transparent hover:border-primary">FAQ</a>
+             <a href="#" onClick={handleNotFound} className="h-full flex items-center hover:text-primary transition border-b-2 border-transparent hover:border-primary">Testimonials</a>
+             <a href="#" onClick={handleNotFound} className="h-full flex items-center hover:text-primary transition border-b-2 border-transparent hover:border-primary">Contact Us</a>
+             <div className="flex-1"></div>
+             <a href="#" onClick={handleNotFound} className="h-full flex items-center text-secondary hover:text-red-600 transition font-extrabold">Special Offers</a>
+           </nav>
         </div>
       </div>
 
       {/* Mobile Menu Overlay */}
       {isMobileMenuOpen && (
         <div className="md:hidden absolute top-full left-0 w-full bg-white border-t border-slate-100 shadow-xl py-4 px-6 flex flex-col space-y-1 animate-in slide-in-from-top-5 duration-200 z-50">
-          {/* Search in Mobile Menu */}
-          <div className="mb-4 relative">
-            <input
-              type="text"
-              placeholder="Search..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-4 pr-10 py-2 border border-slate-300 rounded-lg focus:outline-none focus:border-primary"
-            />
-            <Search className="absolute right-3 top-2.5 text-slate-400" size={18} />
-          </div>
+           {/* Search in Mobile Menu */}
+           <div className="mb-4 relative">
+               <input 
+                 type="text" 
+                 placeholder="Search..." 
+                 value={searchQuery}
+                 onChange={(e) => setSearchQuery(e.target.value)}
+                 className="w-full pl-4 pr-10 py-2 border border-slate-300 rounded-lg focus:outline-none focus:border-primary"
+               />
+               <Search className="absolute right-3 top-2.5 text-slate-400" size={18} />
+           </div>
           <button onClick={handleHomeClick} className="text-left font-bold text-slate-700 hover:text-primary py-3 border-b border-slate-50 uppercase text-sm">Home</button>
           <button onClick={handleProductsClick} className="text-left font-bold text-slate-700 hover:text-primary py-3 border-b border-slate-50 uppercase text-sm">Products</button>
           <a href="#" onClick={handleNotFound} className="font-bold text-slate-700 hover:text-primary py-3 border-b border-slate-50 uppercase text-sm">About us</a>
