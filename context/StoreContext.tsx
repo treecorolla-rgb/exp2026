@@ -720,6 +720,18 @@ export const StoreProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     handleOrderNotification(updatedOrder, status, (log) => setNotificationLogs(prev => [log, ...prev]));
   };
 
+  const deleteOrder = async (orderId: string) => {
+    setOrders(prev => prev.filter(o => o.id !== orderId));
+    if (supabase) {
+      try {
+        await supabase.from('orders').delete().eq('id', orderId);
+        console.log('[ORDER] Deleted successfully:', orderId);
+      } catch (e) {
+        console.error("Error deleting order from Supabase:", e);
+      }
+    }
+  };
+
   const toggleAdminMode = () => {
     if (!isAuthenticated) {
       setCurrentView('login');
@@ -1166,6 +1178,7 @@ export const StoreProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         placeOrder,
         addManualOrder,
         updateOrderStatus,
+        deleteOrder,
         setSearchQuery,
         toggleAdminMode,
         updateProduct,

@@ -212,6 +212,7 @@ export interface StoreContextType {
   addManualOrder: (order: Order) => Promise<void>;
   // Update order status with optional tracking data
   updateOrderStatus: (orderId: string, status: OrderStatus, trackingData?: { carrier: string; trackingNumber: string }) => Promise<void>;
+  deleteOrder: (orderId: string) => Promise<void>;
 
   setSearchQuery: (query: string) => void;
   toggleAdminMode: () => void;

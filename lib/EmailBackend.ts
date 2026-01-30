@@ -10,6 +10,15 @@ import { Order } from '../types';
  * await EmailBackend.trigger('ORDER_CREATED', { ... });
  */
 
+// Global Variables injected into every email
+const GLOBAL_VARS = {
+    // You can replace this with a real logo upload URL from AdminSettings in the future
+    logo_url: 'https://cdn-icons-png.flaticon.com/512/3144/3144456.png',
+    store_name: 'Anti Gravity Store',
+    support_email: 'support@antigravity.com',
+    year: new Date().getFullYear().toString()
+};
+
 export const EmailBackend = {
     /**
      * Generic Trigger Function
@@ -21,20 +30,22 @@ export const EmailBackend = {
         try {
             console.log(`[EmailBackend] Triggering '${triggerName}' for ${recipient}...`);
 
+            // Merge Global Vars with specific Payload
+            const finalPayload = { ...GLOBAL_VARS, ...payload };
+
             const { data, error } = await supabase.functions.invoke('dynamic-endpoint', {
                 body: {
                     trigger: triggerName,
                     recipient,
-                    payload
+                    payload: finalPayload
                 }
             });
 
             if (error) {
                 console.error('[EmailBackend] Dispatch Failed:', error);
-                // Extract useful message from Supabase error if possible
+
                 let msg = error.message || 'Unknown Function Error';
                 try {
-                    // Sometimes error body is JSON string
                     const body = JSON.parse(error);
                     if (body && body.error) msg = body.error;
                 } catch (e) { }
@@ -73,6 +84,7 @@ export const EmailBackend = {
 
         return this.trigger('ORDER_CREATED', order.customerEmail, {
             order_id: order.id,
+            order_number: order.id.slice(0, 8).toUpperCase(), // Shorter friendly ID
             customer_name: order.customerName,
             total_amount: `$${order.grandTotal.toFixed(2)}`,
             shipping_address: order.shipAddress,
@@ -81,8 +93,9 @@ export const EmailBackend = {
     },
 
     async sendPaymentReceipt(order: Order, method: string, txnId: string) {
-        return this.trigger('PAYMENT_SUCCESS', order.customerEmail, {
+        return this.trigger('PAYMENT_RECEIVED', order.customerEmail, {
             order_id: order.id,
+            order_number: order.id.slice(0, 8).toUpperCase(),
             amount_paid: `$${order.grandTotal.toFixed(2)}`,
             payment_method: method,
             transaction_id: txnId
@@ -92,6 +105,7 @@ export const EmailBackend = {
     async sendShippingNotification(order: Order) {
         return this.trigger('ORDER_SHIPPED', order.customerEmail, {
             order_id: order.id,
+            order_number: order.id.slice(0, 8).toUpperCase(),
             courier_name: order.carrier || 'Standard',
             tracking_number: order.trackingNumber || 'Pending',
             tracking_link: order.trackingUrl || '#'

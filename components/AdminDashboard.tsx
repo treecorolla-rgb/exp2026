@@ -47,19 +47,13 @@ const NormalIcon = () => (
 // --- EMAIL SYSTEM COMPONENTS ---
 
 const EmailManager = ({ providers, templates, onSaveProvider, onSaveTemplate }: any) => {
-    const [subTab, setSubTab] = useState<'server' | 'templates' | 'triggers'>('server');
+    const [subTab, setSubTab] = useState<'server' | 'templates' | 'triggers'>('templates');
 
     return (
         <div className="p-8">
             <h2 className="text-2xl font-bold text-slate-800 mb-6">Email System Configuration</h2>
 
             <div className="flex gap-4 mb-6 border-b border-slate-200 pb-2">
-                <button
-                    onClick={() => setSubTab('server')}
-                    className={`pb-2 px-4 font-bold ${subTab === 'server' ? 'border-b-2 border-primary text-primary' : 'text-slate-500'}`}
-                >
-                    Server Config
-                </button>
                 <button
                     onClick={() => setSubTab('templates')}
                     className={`pb-2 px-4 font-bold ${subTab === 'templates' ? 'border-b-2 border-primary text-primary' : 'text-slate-500'}`}
@@ -72,11 +66,17 @@ const EmailManager = ({ providers, templates, onSaveProvider, onSaveTemplate }: 
                 >
                     Triggers
                 </button>
+                <button
+                    onClick={() => setSubTab('server')}
+                    className={`pb-2 px-4 font-bold ${subTab === 'server' ? 'border-b-2 border-primary text-primary' : 'text-slate-500'}`}
+                >
+                    Server Config
+                </button>
             </div>
 
-            {subTab === 'server' && <EmailServerConfig providers={providers} onSave={onSaveProvider} />}
             {subTab === 'templates' && <EmailTemplateEditor templates={templates} onSave={onSaveTemplate} />}
             {subTab === 'triggers' && <EmailTriggers templates={templates} onSave={onSaveTemplate} />}
+            {subTab === 'server' && <EmailServerConfig providers={providers} onSave={onSaveProvider} />}
         </div>
     );
 };
@@ -254,8 +254,29 @@ const EmailTemplateEditor = ({ templates, onSave }: any) => {
                         <div className="bg-white p-4 rounded-lg border border-slate-200">
                             <label className="block text-xs font-bold text-slate-500 mb-1">Email Subject</label>
                             <input className="w-full border p-2 rounded font-bold text-slate-700" value={subject} onChange={e => setSubject(e.target.value)} />
-                            <div className="mt-2 text-xs text-slate-500">
-                                <strong>Available Variables:</strong> {selectedTemplate.variables_help || '{{customer_name}}, {{order_number}}'}
+
+                            <div className="mt-4">
+                                <label className="block text-xs font-bold text-slate-500 mb-2">Available Variables</label>
+                                <div className="bg-slate-50 p-3 rounded border border-slate-200 text-xs overflow-x-auto">
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <h4 className="font-bold text-slate-700 mb-1">Global Variables</h4>
+                                            <div className="flex flex-wrap gap-1">
+                                                {['{{logo_url}}', '{{store_name}}', '{{support_email}}', '{{year}}'].map(v => (
+                                                    <code key={v} className="bg-white border border-slate-200 px-1 rounded text-primary">{v}</code>
+                                                ))}
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <h4 className="font-bold text-slate-700 mb-1">Template Variables</h4>
+                                            <div className="flex flex-wrap gap-1">
+                                                {(selectedTemplate.variables_help || '').split(/,\s*/).map((v: string) => (
+                                                    <code key={v} className="bg-white border border-slate-200 px-1 rounded text-purple-600">{v.trim()}</code>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
 
@@ -345,7 +366,7 @@ export const AdminDashboard: React.FC = () => {
         adminProfile, updateAdminProfile, uploadImage, placeOrder, addManualOrder, notificationLogs,
         updateProductFeaturedOrder, bulkDeleteProducts, paymentMethods, deliveryOptions, addPaymentMethod,
         removePaymentMethod, togglePaymentMethod, updatePaymentMethodOrder, addDeliveryOption,
-        removeDeliveryOption, toggleDeliveryOption, updateDeliveryOption, updateOrderStatus,
+        removeDeliveryOption, toggleDeliveryOption, updateDeliveryOption, updateOrderStatus, deleteOrder,
         emailProviders, emailTemplates, saveEmailProvider, saveEmailTemplate
     } = useStore();
     const { showToast } = useToast();
@@ -425,7 +446,7 @@ export const AdminDashboard: React.FC = () => {
                     onDelete={deleteCategory}
                 />
             );
-            case 'orders': return <OrderManager orders={orders} onUpdateStatus={updateOrderStatus} />;
+            case 'orders': return <OrderManager orders={orders} onUpdateStatus={updateOrderStatus} onDelete={deleteOrder} />;
             case 'notifications': return <NotificationLogView logs={notificationLogs} />;
             case 'emails': return (
                 <EmailManager
@@ -1142,10 +1163,14 @@ const CategoryManager = ({ categories, onToggle, onAdd, onSeed, onReorder, onUpd
     );
 };
 
-// --- 5. ORDER MANAGER ---
-const OrderManager = ({ orders, onUpdateStatus }: any) => {
+const OrderManager = ({ orders, onUpdateStatus, onDelete }: any) => {
     const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
     const [statusModalOpen, setStatusModalOpen] = useState(false);
+
+    // Pagination & Search
+    const [currentPage, setCurrentPage] = useState(1);
+    const [searchQuery, setSearchQuery] = useState('');
+    const itemsPerPage = 10;
 
     // Tracking form
     const [trackingInput, setTrackingInput] = useState({ carrier: 'USPS', trackingNumber: '' });
@@ -1158,15 +1183,43 @@ const OrderManager = ({ orders, onUpdateStatus }: any) => {
 
     const handleStatusUpdate = (status: OrderStatus) => {
         if (!selectedOrder) return;
-
         if (status === 'Shipped') {
-            // If shipped, pass tracking data
             onUpdateStatus(selectedOrder.id, status, trackingInput);
         } else {
             onUpdateStatus(selectedOrder.id, status);
         }
         setStatusModalOpen(false);
     };
+
+    const handleDelete = (e: React.MouseEvent, orderId: string) => {
+        e.stopPropagation(); // Prevent row click
+        if (confirm(`Are you sure you want to PERMANENTLY delete Order ${orderId}? This cannot be undone.`)) {
+            onDelete(orderId);
+            if (selectedOrder?.id === orderId) {
+                setStatusModalOpen(false);
+                setSelectedOrder(null);
+            }
+        }
+    };
+
+    // Filter Logic
+    const filteredOrders = orders.filter((o: Order) => {
+        const query = searchQuery.toLowerCase();
+        // Search in ID, Customer Name, Email, Total, or Items
+        return (
+            o.id.toLowerCase().includes(query) ||
+            o.customerName.toLowerCase().includes(query) ||
+            (o.customerEmail || '').toLowerCase().includes(query) ||
+            (o.details?.email || '').toLowerCase().includes(query) ||
+            o.grandTotal.toString().includes(query) ||
+            (o.items || []).some((i: any) => i.name.toLowerCase().includes(query))
+        );
+    });
+
+    // Pagination Logic
+    const totalPages = Math.ceil(filteredOrders.length / itemsPerPage);
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const paginatedOrders = filteredOrders.slice(startIndex, startIndex + itemsPerPage);
 
     const exportOrdersCSV = () => {
         const headers = ['Order ID', 'Date', 'Customer Name', 'Email', 'Phone', 'Address', 'City', 'State', 'Zip', 'Country', 'Items', 'Subtotal', 'Shipping', 'Total', 'Payment Method', 'Status', 'Carrier', 'Tracking'];
@@ -1212,6 +1265,23 @@ const OrderManager = ({ orders, onUpdateStatus }: any) => {
                     Export All Orders
                 </button>
             </div>
+
+            {/* Search Bar */}
+            <div className="bg-white p-4 rounded-lg border border-slate-200 shadow-sm mb-6 flex gap-3 items-center">
+                <Search className="text-slate-400" size={20} />
+                <input
+                    className="flex-1 border-none outline-none text-slate-700 bg-transparent"
+                    placeholder="Search orders (ID, Customer, Product, Email)..."
+                    value={searchQuery}
+                    onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1); }}
+                />
+                {searchQuery && (
+                    <button onClick={() => setSearchQuery('')} className="text-slate-400 hover:text-slate-600">
+                        <X size={18} />
+                    </button>
+                )}
+            </div>
+
             <div className="bg-white rounded-lg border border-slate-200 shadow-sm overflow-x-auto">
                 <table className="w-full text-left whitespace-nowrap">
                     <thead className="bg-slate-50 border-b border-slate-200 text-xs uppercase text-slate-500 font-semibold">
@@ -1225,13 +1295,20 @@ const OrderManager = ({ orders, onUpdateStatus }: any) => {
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100">
-                        {orders.map((order: Order) => (
+                        {paginatedOrders.length === 0 && (
+                            <tr>
+                                <td colSpan={6} className="px-6 py-8 text-center text-slate-500">
+                                    No orders found matching "{searchQuery}"
+                                </td>
+                            </tr>
+                        )}
+                        {paginatedOrders.map((order: Order) => (
                             <tr key={order.id} className="hover:bg-slate-50 transition cursor-pointer" onClick={() => openStatusModal(order)}>
                                 <td className="px-6 py-4 font-bold text-primary">{order.id}</td>
                                 <td className="px-6 py-4 text-sm text-slate-600">{order.orderDate}</td>
                                 <td className="px-6 py-4">
                                     <div className="font-bold text-slate-700">{order.customerName}</div>
-                                    <div className="text-xs text-slate-400">{order.details?.email}</div>
+                                    <div className="text-xs text-slate-400">{order.details?.email || order.customerEmail || 'No Email'}</div>
                                 </td>
                                 <td className="px-6 py-4">
                                     <span className={`px-2 py-1 rounded text-xs font-bold uppercase ${order.status === 'Pending' ? 'bg-yellow-100 text-yellow-700' :
@@ -1242,14 +1319,55 @@ const OrderManager = ({ orders, onUpdateStatus }: any) => {
                                         }`}>{order.status}</span>
                                 </td>
                                 <td className="px-6 py-4 font-bold text-slate-800">${order.grandTotal.toFixed(2)}</td>
-                                <td className="px-6 py-4 text-right">
-                                    <button className="text-blue-600 hover:underline text-sm font-bold">Manage</button>
+                                <td className="px-6 py-4 text-right flex justify-end items-center gap-2">
+                                    <button className="text-blue-600 hover:bg-blue-50 px-3 py-1 rounded text-sm font-bold">Manage</button>
+                                    <button
+                                        onClick={(e) => handleDelete(e, order.id)}
+                                        className="text-red-400 hover:text-red-600 hover:bg-red-50 p-2 rounded transition"
+                                        title="Delete Order"
+                                    >
+                                        <Trash2 size={16} />
+                                    </button>
                                 </td>
                             </tr>
                         ))}
                     </tbody>
                 </table>
             </div>
+
+            {/* Pagination Controls */}
+            {totalPages > 1 && (
+                <div className="flex justify-between items-center mt-6">
+                    <p className="text-sm text-slate-500">
+                        Showing {startIndex + 1} to {Math.min(startIndex + itemsPerPage, filteredOrders.length)} of {filteredOrders.length} orders
+                    </p>
+                    <div className="flex gap-2">
+                        <button
+                            disabled={currentPage === 1}
+                            onClick={() => setCurrentPage(prev => prev - 1)}
+                            className={`px-3 py-1 rounded border ${currentPage === 1 ? 'bg-slate-100 text-slate-400' : 'bg-white hover:bg-slate-50 text-slate-700'}`}
+                        >
+                            Previous
+                        </button>
+                        {[...Array(totalPages)].map((_, idx) => (
+                            <button
+                                key={idx}
+                                onClick={() => setCurrentPage(idx + 1)}
+                                className={`px-3 py-1 rounded border ${currentPage === idx + 1 ? 'bg-primary text-white border-primary' : 'bg-white hover:bg-slate-50 text-slate-700'}`}
+                            >
+                                {idx + 1}
+                            </button>
+                        ))}
+                        <button
+                            disabled={currentPage === totalPages}
+                            onClick={() => setCurrentPage(prev => prev + 1)}
+                            className={`px-3 py-1 rounded border ${currentPage === totalPages ? 'bg-slate-100 text-slate-400' : 'bg-white hover:bg-slate-50 text-slate-700'}`}
+                        >
+                            Next
+                        </button>
+                    </div>
+                </div>
+            )}
 
             {/* Order Detail Modal */}
             {statusModalOpen && selectedOrder && (
