@@ -1,11 +1,16 @@
 
+import { supabase } from './supabaseClient';
 import { CARRIERS } from '../constants';
 import { Order, OrderStatus, NotificationLog } from '../types';
 
 /**
  * Notification Service
- * Handles the logic for generating tracking URLs, managing retry queues,
- * and dispatching notifications via different channels (simulated).
+ * Handles the logic for generating tracking URLs and triggers REAL emails via Supabase Edge Functions.
+ * 
+ * ARCHITECTURE:
+ * 1. App inserts row into 'email_logs' with status 'PENDING'
+ * 2. Supabase Webhook triggers 'send-email' Edge Function
+ * 3. Edge Function calls Resend API -> Updates 'email_logs' to 'SENT' or 'FAILED'
  */
 
 const MAX_RETRIES = 3;
@@ -17,29 +22,49 @@ export const generateTrackingUrl = (carrier: string, trackingNumber: string): st
   return pattern.replace('{TRACKING_NUMBER}', trackingNumber);
 };
 
-// --- SIMULATED PROVIDERS ---
+// --- REAL EMAIL TRIGGER ---
+const triggerRealEmail = async (
+  recipientEmail: string,
+  recipientName: string,
+  templateId: string,
+  contextData: any
+): Promise<boolean> => {
+  if (!supabase) {
+    console.error('[EMAIL SERVICE] Supabase client not initialized. Cannot send real email.');
+    return false;
+  }
 
-// Simulated Email Provider (e.g., SendGrid/AWS SES)
-const sendEmail = async (to: string, subject: string, htmlBody: string): Promise<boolean> => {
-  console.log(`[EMAIL SERVICE] Sending to ${to}: ${subject}`);
-  // Simulate API latency and random failure (95% success rate)
-  await new Promise(r => setTimeout(r, 800));
-  if (Math.random() > 0.95) throw new Error("SMTP Connection Timeout");
-  return true;
+  console.log(`[EMAIL SERVICE] Triggering email for ${recipientEmail} (Template: ${templateId})`);
+
+  try {
+    const { error } = await supabase.from('email_logs').insert({
+      status: 'PENDING',
+      recipient_email: recipientEmail,
+      recipient_name: recipientName,
+      template_id: templateId, // Must match an ID in 'email_templates' table
+      context_data: contextData
+    });
+
+    if (error) {
+      console.error('[EMAIL SERVICE] Failed to insert email log:', error);
+      return false;
+    }
+    return true;
+  } catch (err) {
+    console.error('[EMAIL SERVICE] Unexpected error:', err);
+    return false;
+  }
 };
 
-// Simulated SMS Provider (e.g., Twilio)
+// --- SIMULATED SMS/WHATSAPP (Keep simulated for now unless Gateway is added) ---
 const sendSMS = async (to: string, message: string): Promise<boolean> => {
   console.log(`[SMS SERVICE] Sending to ${to}: ${message}`);
-  // Simulate API latency
   await new Promise(r => setTimeout(r, 500));
   return true;
 };
 
-// Simulated WhatsApp Provider (e.g., Meta/Twilio WhatsApp API)
 const sendWhatsApp = async (to: string, template: string, vars: any): Promise<boolean> => {
   console.log(`[WHATSAPP SERVICE] Sending to ${to} using template ${template}`, vars);
-  // Simulate API latency
   await new Promise(r => setTimeout(r, 600));
   return true;
 };
@@ -51,7 +76,7 @@ const withRetry = async (fn: () => Promise<boolean>, retries = MAX_RETRIES): Pro
   } catch (error) {
     if (retries > 0) {
       console.warn(`[NOTIFICATION] Failed. Retrying... (${retries} attempts left)`);
-      await new Promise(r => setTimeout(r, 1000 * (MAX_RETRIES - retries + 1))); // Exponentialish backoff
+      await new Promise(r => setTimeout(r, 1000 * (MAX_RETRIES - retries + 1)));
       return withRetry(fn, retries - 1);
     }
     console.error("[NOTIFICATION] Max retries reached. Failed.");
@@ -62,31 +87,39 @@ const withRetry = async (fn: () => Promise<boolean>, retries = MAX_RETRIES): Pro
 // --- WORKFLOW CONTROLLER ---
 
 export const handleOrderNotification = async (
-  order: Order, 
+  order: Order,
   newStatus: OrderStatus,
   logCallback: (log: NotificationLog) => void
 ) => {
   const timestamp = new Date().toLocaleString();
-  const email = order.details?.email || 'customer@example.com';
-  const phone = order.details?.phone || '555-0000';
+  const email = order.details?.email || order.customerEmail || 'customer@example.com';
+  const phone = order.details?.phone || order.customerPhone || '555-0000';
+  const name = order.customerName || 'Valued Customer';
 
-  // 1. PENDING / PAID -> Email Confirmation
-  if (newStatus === 'Pending' || newStatus === 'Paid') {
-    const success = await withRetry(() => sendEmail(
-      email, 
-      `Order Confirmation ${order.id}`, 
-      `<h1>Thank you for your order!</h1><p>Status: ${newStatus}</p>`
-    ));
-    
+  // 1. PENDING (New Order Confirmation)
+  // Triggered when order is placed
+  if (newStatus === 'Pending') {
+    const success = await triggerRealEmail(
+      email,
+      name,
+      'order_confirmation', // Ensure this ID exists in your 'email_templates' table
+      {
+        order_id: order.id,
+        total_amount: order.grandTotal?.toFixed(2),
+        customer_name: name,
+        items_html: (order.items || []).map(i => `<li>${i.name} x ${i.quantity}</li>`).join('')
+      }
+    );
+
     logCallback({
       id: `log_${Date.now()}_email`,
       orderId: order.id,
       channel: 'Email',
       type: 'Confirmation',
       recipient: email,
-      status: success ? 'Sent' : 'Failed',
+      status: success ? 'Sent' : 'Failed', // 'Sent' means successfully queued in DB
       timestamp,
-      details: `Status update: ${newStatus}`
+      details: `Queued via Supabase (Template: order_confirmation)`
     });
   }
 
@@ -100,7 +133,7 @@ export const handleOrderNotification = async (
     const trackingLink = order.trackingUrl || generateTrackingUrl(order.carrier, order.trackingNumber);
     const msg = `Your order ${order.id} has been shipped via ${order.carrier}. Track here: ${trackingLink}`;
 
-    // Send SMS
+    // Send SMS (Simulated)
     const smsSuccess = await withRetry(() => sendSMS(phone, msg));
     logCallback({
       id: `log_${Date.now()}_sms`,
@@ -113,12 +146,20 @@ export const handleOrderNotification = async (
       details: `Carrier: ${order.carrier}, Track: ${order.trackingNumber}`
     });
 
-    // Send Email
-    const emailSuccess = await withRetry(() => sendEmail(
-      email, 
-      `Order Shipped! ${order.id}`, 
-      `<h1>Good News!</h1><p>${msg}</p><a href="${trackingLink}" style="padding:10px;background:blue;color:white;">Track My Order</a>`
-    ));
+    // Send Email (Real)
+    const emailSuccess = await triggerRealEmail(
+      email,
+      name,
+      'order_shipped', // Ensure this ID exists in 'email_templates'
+      {
+        order_id: order.id,
+        tracking_number: order.trackingNumber,
+        carrier: order.carrier,
+        tracking_link: trackingLink,
+        customer_name: name
+      }
+    );
+
     logCallback({
       id: `log_${Date.now()}_email_ship`,
       orderId: order.id,
@@ -127,18 +168,18 @@ export const handleOrderNotification = async (
       recipient: email,
       status: emailSuccess ? 'Sent' : 'Failed',
       timestamp,
-      details: `HTML Template sent with Tracking Button`
+      details: `Queued via Supabase (Template: order_shipped)`
     });
   }
 
-  // 3. DELIVERED -> WhatsApp Confirmation
+  // 3. DELIVERED -> WhatsApp Confirmation (Simulated)
   if (newStatus === 'Delivered') {
     const waSuccess = await withRetry(() => sendWhatsApp(
-      phone, 
-      'delivery_confirmation_v1', 
+      phone,
+      'delivery_confirmation_v1',
       { orderId: order.id, customerName: order.customerName }
     ));
-    
+
     logCallback({
       id: `log_${Date.now()}_wa`,
       orderId: order.id,
