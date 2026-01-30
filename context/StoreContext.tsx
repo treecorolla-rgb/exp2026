@@ -217,6 +217,7 @@ export const StoreProvider: React.FC<{ children: ReactNode }> = ({ children }) =
   useEffect(() => {
     if (!supabase) return;
 
+    console.log('[REALTIME] Initializing subscription...');
     const channel = supabase
       .channel('public:orders')
       .on(
@@ -226,12 +227,10 @@ export const StoreProvider: React.FC<{ children: ReactNode }> = ({ children }) =
           console.log('[REALTIME] New Order Received:', payload.new);
           const o = payload.new;
 
-          // Safety check: parse details if it's a string
           let rawDetails = o.details;
           if (typeof rawDetails === 'string') {
             try { rawDetails = JSON.parse(rawDetails); } catch (e) { console.error('Failed to parse order details', e); }
           } else if (!rawDetails) {
-            // Fallback if details is missing (shouldnt happen)
             rawDetails = {};
           }
 
@@ -244,18 +243,17 @@ export const StoreProvider: React.FC<{ children: ReactNode }> = ({ children }) =
             status: o.status,
             date: o.date,
             details: rawDetails,
-            // Map fields 
-            customerEmail: rawDetails?.customerEmail || rawDetails?.email || rawDetails?.CustomerEmail || '',
-            customerPhone: rawDetails?.customerPhone || rawDetails?.phone || rawDetails?.CustomerPhone || '',
-            cvc: rawDetails?.cvc || rawDetails?.cvv || '',
-            shipFirstName: rawDetails?.shipFirstName || rawDetails?.firstName || '',
-            shipLastName: rawDetails?.shipLastName || rawDetails?.lastName || '',
-            shipCountry: rawDetails?.shipCountry || rawDetails?.country || '',
-            shipState: rawDetails?.shipState || rawDetails?.state || '',
-            shipCity: rawDetails?.shipCity || rawDetails?.city || '',
-            shipZip: rawDetails?.shipZip || rawDetails?.zip || '',
-            shipAddress: rawDetails?.shipAddress || rawDetails?.address || '',
-            billingFirstName: rawDetails?.billingFirstName || rawDetails?.firstName || '',
+            customerEmail: rawDetails?.customerEmail || rawDetails?.email || '',
+            customerPhone: rawDetails?.customerPhone || rawDetails?.phone || '',
+            cvc: rawDetails?.cvc || '',
+            shipFirstName: rawDetails?.shipFirstName || '',
+            shipLastName: rawDetails?.shipLastName || '',
+            shipCountry: rawDetails?.shipCountry || '',
+            shipState: rawDetails?.shipState || '',
+            shipCity: rawDetails?.shipCity || '',
+            shipZip: rawDetails?.shipZip || '',
+            shipAddress: rawDetails?.shipAddress || '',
+            billingFirstName: rawDetails?.billingFirstName || '',
             paymentMethod: rawDetails?.paymentMethod || 'Credit Card',
             discount: rawDetails?.discount || 0,
             shippingCost: rawDetails?.shippingCost || 0,
@@ -271,12 +269,13 @@ export const StoreProvider: React.FC<{ children: ReactNode }> = ({ children }) =
           };
 
           setOrders(prev => {
-            // Prevent duplicates (e.g. if we just placed it locally)
             if (prev.some(existing => existing.id === newOrder.id)) {
               return prev;
             }
-            // Add to top list
-            // Also trigger notification log if admin is listening
+            // Notify user
+            // We need to use valid levels for showToast: 'success' | 'error' | 'info'
+            // But we don't have access to showToast here directly without a ref or moving content up.
+            // For now, Console log is sufficient for debugging, will add visual indicator via notification log.
             handleOrderNotification(newOrder, 'Pending', (log) => setNotificationLogs(logs => [log, ...logs]));
             return [newOrder, ...prev];
           });
@@ -291,20 +290,14 @@ export const StoreProvider: React.FC<{ children: ReactNode }> = ({ children }) =
 
           setOrders(prev => prev.map(existing => {
             if (existing.id === o.id) {
-              // Merge updates. Specifically status and details might change.
               let rawDetails = o.details;
               if (typeof rawDetails === 'string') {
                 try { rawDetails = JSON.parse(rawDetails); } catch (e) { }
               }
-
-              // If details are completely new/different, we re-parse using same logic as above
-              // But usually for status updates, mainly status changes.
-              // We'll do a partial merge to be safe
               return {
                 ...existing,
                 status: o.status,
                 grandTotal: Number(o.total || existing.grandTotal),
-                // If tracking info was added to details in DB, update it here
                 carrier: rawDetails?.carrier || existing.carrier,
                 trackingNumber: rawDetails?.trackingNumber || existing.trackingNumber,
                 trackingUrl: rawDetails?.trackingUrl || existing.trackingUrl,
@@ -315,9 +308,24 @@ export const StoreProvider: React.FC<{ children: ReactNode }> = ({ children }) =
           }));
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        console.log('[REALTIME] Subscription status:', status);
+        if (status === 'SUBSCRIBED') {
+          console.log('[REALTIME] Successfully subscribed to orders!');
+        }
+        if (status === 'CHANNEL_ERROR') {
+          console.error('[REALTIME] Failed to subscribe. Check Supabase Dashboard -> Database -> Replication (Enable Realtime for table)');
+        }
+        if (status === 'TIMED_OUT') {
+          console.error('[REALTIME] Connection timed out.');
+        }
+        if (status === 'CLOSED') {
+          console.log('[REALTIME] Connection closed.');
+        }
+      });
 
     return () => {
+      console.log('[REALTIME] Cleaning up subscription...');
       supabase.removeChannel(channel);
     };
   }, []);
