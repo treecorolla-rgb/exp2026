@@ -59,7 +59,7 @@ function AppContent() {
       )}
 
       {/* --- MAIN CONTENT AREA --- */}
-      <div className={`max-w-[1400px] mx-auto w-full px-4 flex-1 flex flex-col md:flex-row gap-5 ${isMobile ? 'py-3' : 'py-5'}`}>
+      <div className={`max-w-[1300px] mx-auto w-full px-4 flex-1 flex flex-col md:flex-row gap-8 ${isMobile ? 'py-4' : 'py-8'}`}>
 
         {/* Sidebar (Desktop Only for now, or could be part of product grid) */}
         {!isMobile && currentView !== 'login' && currentView !== 'customer_auth' && currentView !== 'not_found' && currentView !== 'cart' && currentView !== 'faq' && (
