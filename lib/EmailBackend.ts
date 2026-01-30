@@ -21,7 +21,7 @@ export const EmailBackend = {
         try {
             console.log(`[EmailBackend] Triggering '${triggerName}' for ${recipient}...`);
 
-            const { data, error } = await supabase.functions.invoke('email-dispatcher', {
+            const { data, error } = await supabase.functions.invoke('dynamic-endpoint', {
                 body: {
                     trigger: triggerName,
                     recipient,
@@ -31,20 +31,32 @@ export const EmailBackend = {
 
             if (error) {
                 console.error('[EmailBackend] Dispatch Failed:', error);
-                return false;
+                // Extract useful message from Supabase error if possible
+                let msg = error.message || 'Unknown Function Error';
+                try {
+                    // Sometimes error body is JSON string
+                    const body = JSON.parse(error);
+                    if (body && body.error) msg = body.error;
+                } catch (e) { }
+
+                return { success: false, error: msg };
             }
 
             if (data?.skipped) {
                 console.warn(`[EmailBackend] Trigger '${triggerName}' was SKIPPED (Disabled in DB).`);
-                return false;
+                return { success: false, error: 'Email Trigger Disabled in System' };
+            }
+
+            if (data?.error) {
+                return { success: false, error: data.error };
             }
 
             console.log(`[EmailBackend] Success! Email ID: ${data?.id}`);
-            return true;
+            return { success: true, id: data?.id };
 
-        } catch (e) {
+        } catch (e: any) {
             console.error('[EmailBackend] Network Error:', e);
-            return false;
+            return { success: false, error: e.message || 'Network Exception' };
         }
     },
 
@@ -83,6 +95,13 @@ export const EmailBackend = {
             courier_name: order.carrier || 'Standard',
             tracking_number: order.trackingNumber || 'Pending',
             tracking_link: order.trackingUrl || '#'
+        });
+    },
+
+    async sendLoginOTP(email: string, otp: string) {
+        return this.trigger('LOGIN_OTP', email, {
+            otp_code: otp,
+            customer_name: 'Valued Customer'
         });
     }
 };

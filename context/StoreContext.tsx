@@ -213,6 +213,47 @@ export const StoreProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     fetchAllData();
   }, []);
 
+  // --- EMAIL SYSTEM STATE ---
+  const [emailProviders, setEmailProviders] = useState<any[]>([]);
+  const [emailTemplates, setEmailTemplates] = useState<any[]>([]);
+
+  useEffect(() => {
+    if (!supabase) return;
+    const fetchEmailSystem = async () => {
+      const { data: provs } = await supabase.from('email_providers').select('*').order('provider_type');
+      if (provs) setEmailProviders(provs);
+
+      const { data: temps } = await supabase.from('email_templates').select('*').order('name');
+      if (temps) setEmailTemplates(temps);
+    };
+    fetchEmailSystem();
+  }, []);
+
+  const saveEmailProvider = async (provider: any) => {
+    if (!supabase) return;
+    // If setting default, unset others
+    if (provider.is_default) {
+      await supabase.from('email_providers').update({ is_default: false }).neq('id', provider.id);
+    }
+
+    const { error } = await supabase.from('email_providers').upsert(provider);
+    if (!error) {
+      // Refresh
+      const { data } = await supabase.from('email_providers').select('*').order('provider_type');
+      if (data) setEmailProviders(data);
+    }
+  };
+
+  const saveEmailTemplate = async (template: any) => {
+    if (!supabase) return;
+    const { error } = await supabase.from('email_templates').upsert(template);
+    if (!error) {
+      // Refresh
+      const { data } = await supabase.from('email_templates').select('*').order('name');
+      if (data) setEmailTemplates(data);
+    }
+  };
+
   // --- REAL-TIME SUBSCRIPTION FOR ORDERS ---
   useEffect(() => {
     if (!supabase) return;
@@ -1169,7 +1210,12 @@ export const StoreProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         toggleFavorite,
         currency,
         setCurrency,
-        formatPrice
+        formatPrice,
+        // Email System
+        emailProviders,
+        emailTemplates,
+        saveEmailProvider,
+        saveEmailTemplate
       }}
     >
       {children}

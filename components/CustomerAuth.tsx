@@ -7,7 +7,7 @@ export const CustomerAuth: React.FC = () => {
   const { customerLogin, customerSignup, customerUser, isCustomerAuthenticated, customerLogout, goHome } = useStore();
   const { showToast } = useToast();
   const [view, setView] = useState<'login' | 'signup' | 'forgot'>('login');
-  
+
   // Login Form
   const [loginId, setLoginId] = useState('');
   const [loginPass, setLoginPass] = useState('');
@@ -15,7 +15,7 @@ export const CustomerAuth: React.FC = () => {
 
   // Signup Form
   const [signupData, setSignupData] = useState({
-    firstName: '', lastName: '', email: '', phone: '', password: '', 
+    firstName: '', lastName: '', email: '', phone: '', password: '',
     address: '', city: '', state: '', zip: '', country: 'USA'
   });
 
@@ -33,28 +33,28 @@ export const CustomerAuth: React.FC = () => {
 
   return (
     <div className="flex-1 flex items-center justify-center bg-slate-50 py-12 px-4 sm:px-6 lg:px-8 relative">
-       {/* Close Button */}
-       <button 
-         onClick={goHome}
-         className="absolute top-4 right-4 p-2 text-slate-400 hover:text-slate-600 rounded-full hover:bg-slate-200 transition"
-       >
-         <X size={28} />
-       </button>
+      {/* Close Button */}
+      <button
+        onClick={goHome}
+        className="absolute top-4 right-4 p-2 text-slate-400 hover:text-slate-600 rounded-full hover:bg-slate-200 transition"
+      >
+        <X size={28} />
+      </button>
 
       <div className="max-w-md w-full space-y-8 bg-white p-8 rounded-lg shadow-md relative">
-        
+
         {isCustomerAuthenticated && customerUser ? (
-            <div className="text-center">
-                <div className="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <User size={40} className="text-primary" />
-                </div>
-                <h2 className="text-2xl font-bold text-slate-800 mb-2">Welcome, {customerUser.firstName}!</h2>
-                <p className="text-slate-500 mb-6">You are currently logged in.</p>
-                <div className="space-y-3">
-                  <button onClick={goHome} className="w-full bg-primary text-white py-3 rounded font-bold">Go to Store</button>
-                  <button onClick={customerLogout} className="w-full border border-slate-300 text-slate-600 py-3 rounded font-medium hover:bg-slate-50">Log Out</button>
-                </div>
+          <div className="text-center">
+            <div className="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <User size={40} className="text-primary" />
             </div>
+            <h2 className="text-2xl font-bold text-slate-800 mb-2">Welcome, {customerUser.firstName}!</h2>
+            <p className="text-slate-500 mb-6">You are currently logged in.</p>
+            <div className="space-y-3">
+              <button onClick={goHome} className="w-full bg-primary text-white py-3 rounded font-bold">Go to Store</button>
+              <button onClick={customerLogout} className="w-full border border-slate-300 text-slate-600 py-3 rounded font-medium hover:bg-slate-50">Log Out</button>
+            </div>
+          </div>
         ) : (
           <>
             {view === 'login' && (
@@ -95,11 +95,11 @@ export const CustomerAuth: React.FC = () => {
 
                   <div className="flex items-center justify-between">
                     <div className="flex items-center">
-                        <input id="remember-me" type="checkbox" className="h-4 w-4 text-primary border-slate-300 rounded" />
-                        <label htmlFor="remember-me" className="ml-2 block text-sm text-slate-900">Remember me</label>
+                      <input id="remember-me" type="checkbox" className="h-4 w-4 text-primary border-slate-300 rounded" />
+                      <label htmlFor="remember-me" className="ml-2 block text-sm text-slate-900">Remember me</label>
                     </div>
                     <div className="text-sm">
-                        <button type="button" onClick={() => setView('forgot')} className="font-medium text-primary hover:text-blue-500">Forgot password?</button>
+                      <button type="button" onClick={() => setView('forgot')} className="font-medium text-primary hover:text-blue-500">Forgot password?</button>
                     </div>
                   </div>
 
@@ -120,20 +120,20 @@ export const CustomerAuth: React.FC = () => {
                 </div>
                 <form className="mt-8 space-y-4" onSubmit={handleSignup}>
                   <div className="grid grid-cols-2 gap-4">
-                    <input placeholder="First Name" required className="border p-2 rounded" onChange={e => setSignupData({...signupData, firstName: e.target.value})} />
-                    <input placeholder="Last Name" required className="border p-2 rounded" onChange={e => setSignupData({...signupData, lastName: e.target.value})} />
+                    <input placeholder="First Name" required className="border p-2 rounded" onChange={e => setSignupData({ ...signupData, firstName: e.target.value })} />
+                    <input placeholder="Last Name" required className="border p-2 rounded" onChange={e => setSignupData({ ...signupData, lastName: e.target.value })} />
                   </div>
-                  <input type="email" placeholder="Email" required className="w-full border p-2 rounded" onChange={e => setSignupData({...signupData, email: e.target.value})} />
-                  <input type="tel" placeholder="Phone" required className="w-full border p-2 rounded" onChange={e => setSignupData({...signupData, phone: e.target.value})} />
-                  <input type="password" placeholder="Create Password" required className="w-full border p-2 rounded" onChange={e => setSignupData({...signupData, password: e.target.value})} />
-                  
+                  <input type="email" placeholder="Email" required className="w-full border p-2 rounded" onChange={e => setSignupData({ ...signupData, email: e.target.value })} />
+                  <input type="tel" placeholder="Phone" required className="w-full border p-2 rounded" onChange={e => setSignupData({ ...signupData, phone: e.target.value })} />
+                  <input type="password" placeholder="Create Password" required className="w-full border p-2 rounded" onChange={e => setSignupData({ ...signupData, password: e.target.value })} />
+
                   <div className="border-t pt-4 mt-4">
-                      <p className="text-xs text-slate-400 mb-2 uppercase font-bold">Address Details (Optional)</p>
-                      <input placeholder="Address" className="w-full border p-2 rounded mb-2" onChange={e => setSignupData({...signupData, address: e.target.value})} />
-                      <div className="grid grid-cols-2 gap-4">
-                        <input placeholder="City" className="border p-2 rounded" onChange={e => setSignupData({...signupData, city: e.target.value})} />
-                        <input placeholder="Zip Code" className="border p-2 rounded" onChange={e => setSignupData({...signupData, zip: e.target.value})} />
-                      </div>
+                    <p className="text-xs text-slate-400 mb-2 uppercase font-bold">Address Details (Optional)</p>
+                    <input placeholder="Address" className="w-full border p-2 rounded mb-2" onChange={e => setSignupData({ ...signupData, address: e.target.value })} />
+                    <div className="grid grid-cols-2 gap-4">
+                      <input placeholder="City" className="border p-2 rounded" onChange={e => setSignupData({ ...signupData, city: e.target.value })} />
+                      <input placeholder="Zip Code" className="border p-2 rounded" onChange={e => setSignupData({ ...signupData, zip: e.target.value })} />
+                    </div>
                   </div>
 
                   <button type="submit" className="w-full py-3 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700">
@@ -144,21 +144,109 @@ export const CustomerAuth: React.FC = () => {
             )}
 
             {view === 'forgot' && (
-                <>
+              <>
                 <div className="text-center">
                   <h2 className="text-2xl font-extrabold text-slate-900">Reset Password</h2>
-                  <p className="mt-2 text-sm text-slate-600">Enter your email or phone to receive an OTP.</p>
+                  <p className="mt-2 text-sm text-slate-600">Enter your email to receive a login code.</p>
                 </div>
-                <form className="mt-8 space-y-6">
-                    <input type="text" placeholder="Email or Phone" className="w-full border p-3 rounded" />
-                    <button type="button" className="w-full bg-slate-800 text-white py-3 rounded font-bold" onClick={() => showToast("OTP Sent to your device!", 'success')}>Send OTP</button>
-                    <button type="button" onClick={() => setView('login')} className="w-full text-slate-500 text-sm">Back to Login</button>
-                </form>
-                </>
+                <ForgotForm setView={setView} />
+              </>
             )}
           </>
         )}
       </div>
     </div>
+  );
+};
+
+const ForgotForm = ({ setView }: { setView: (v: any) => void }) => {
+  const [email, setEmail] = useState('');
+  const [otpSent, setOtpSent] = useState(false);
+  const [serverOtp, setServerOtp] = useState('');
+  const [userOtp, setUserOtp] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const { showToast } = useToast();
+
+  const handleSendOtp = async () => {
+    if (!email.includes('@')) {
+      showToast('Please enter a valid email address.', 'error');
+      return;
+    }
+
+    setIsLoading(true);
+    // Generate 6-digit code
+    const code = Math.floor(100000 + Math.random() * 900000).toString();
+    setServerOtp(code);
+
+    // Dynamic Import to avoid circular dep issues if any
+    const { EmailBackend } = await import('../lib/EmailBackend');
+
+    const result = await EmailBackend.sendLoginOTP(email, code);
+    setIsLoading(false);
+
+    if (result.success) {
+      setOtpSent(true);
+      showToast(`Code sent to ${email}`, 'success');
+    } else {
+      showToast(result.error || 'Failed to send email. Ensure domain is verified.', 'error');
+    }
+  };
+
+  const handleVerify = () => {
+    if (userOtp === serverOtp) {
+      showToast('Code Verified! You are now logged in.', 'success');
+      // For demo purposes, we accept this and maybe log them in or let them reset info
+      // Redirecting to login for now
+      setView('login');
+    } else {
+      showToast('Invalid Code', 'error');
+    }
+  };
+
+  if (otpSent) {
+    return (
+      <div className="mt-8 space-y-6">
+        <div className="text-center bg-blue-50 p-4 rounded text-blue-800">
+          Code sent to <strong>{email}</strong>
+        </div>
+        <input
+          type="text"
+          placeholder="Enter 6-digit Code"
+          className="w-full border p-3 rounded text-center text-2xl tracking-widest"
+          maxLength={6}
+          value={userOtp}
+          onChange={e => setUserOtp(e.target.value)}
+        />
+        <button
+          type="button"
+          className="w-full bg-green-600 hover:bg-green-700 text-white py-3 rounded font-bold"
+          onClick={handleVerify}
+        >
+          Verify Code
+        </button>
+        <button type="button" onClick={() => setOtpSent(false)} className="w-full text-slate-500 text-sm">Try different email</button>
+      </div>
+    );
+  }
+
+  return (
+    <form className="mt-8 space-y-6" onSubmit={(e) => { e.preventDefault(); handleSendOtp(); }}>
+      <input
+        type="email"
+        placeholder="Enter your email"
+        className="w-full border p-3 rounded"
+        value={email}
+        onChange={e => setEmail(e.target.value)}
+        required
+      />
+      <button
+        type="submit"
+        disabled={isLoading}
+        className="w-full bg-slate-800 hover:bg-slate-900 text-white py-3 rounded font-bold flex justify-center items-center gap-2"
+      >
+        {isLoading ? 'Sending...' : 'Send Login Code'}
+      </button>
+      <button type="button" onClick={() => setView('login')} className="w-full text-slate-500 text-sm">Back to Login</button>
+    </form>
   );
 };

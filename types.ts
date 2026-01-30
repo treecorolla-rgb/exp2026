@@ -271,4 +271,30 @@ export interface StoreContextType {
   currency: 'USD' | 'EUR' | 'GBP';
   setCurrency: (c: 'USD' | 'EUR' | 'GBP') => void;
   formatPrice: (price: number) => string;
+
+  // Email System
+  emailProviders: any[]; // relaxed type for now
+  emailTemplates: any[];
+  saveEmailProvider: (p: any) => Promise<void>;
+  saveEmailTemplate: (t: any) => Promise<void>;
+}
+
+export interface EmailProvider {
+  id: string;
+  provider_type: 'RESEND' | 'SMTP' | 'MAILGUN';
+  display_name: string;
+  config: any; // JSON object for creds
+  is_active: boolean;
+  is_default: boolean;
+}
+
+export interface EmailTemplate {
+  id: string;
+  event_trigger: string;
+  name: string;
+  subject: string;
+  description?: string;
+  variables_help?: string;
+  body_html: string;
+  is_active: boolean;
 }

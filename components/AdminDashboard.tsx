@@ -11,6 +11,7 @@ import { useToast } from './Toast';
 import { Product, ProductPackage, DeliveryOption, Order, OrderStatus, NotificationLog, Category, PaymentMethod, AdminProfile } from '../types';
 import { CARRIERS, STANDARD_DELIVERY } from '../constants';
 import { supabase } from '../lib/supabaseClient';
+import { EmailBackend } from '../lib/EmailBackend';
 
 // --- ICONS ---
 const ExpressIcon = () => (
@@ -43,11 +44,313 @@ const NormalIcon = () => (
     </svg>
 );
 
-export const AdminDashboard: React.FC = () => {
-    const { logout, products, orders, deleteProduct, updateProduct, addProduct, categories, toggleCategory, addCategory, seedCategories, updateCategory, deleteCategory, updateCategoryOrder, adminProfile, updateAdminProfile, uploadImage, placeOrder, addManualOrder, notificationLogs, updateProductFeaturedOrder, bulkDeleteProducts, paymentMethods, deliveryOptions, addPaymentMethod, removePaymentMethod, togglePaymentMethod, updatePaymentMethodOrder, addDeliveryOption, removeDeliveryOption, toggleDeliveryOption, updateDeliveryOption, updateOrderStatus } = useStore();
+// --- EMAIL SYSTEM COMPONENTS ---
+
+const EmailManager = ({ providers, templates, onSaveProvider, onSaveTemplate }: any) => {
+    const [subTab, setSubTab] = useState<'server' | 'templates' | 'triggers'>('server');
+
+    return (
+        <div className="p-8">
+            <h2 className="text-2xl font-bold text-slate-800 mb-6">Email System Configuration</h2>
+
+            <div className="flex gap-4 mb-6 border-b border-slate-200 pb-2">
+                <button
+                    onClick={() => setSubTab('server')}
+                    className={`pb-2 px-4 font-bold ${subTab === 'server' ? 'border-b-2 border-primary text-primary' : 'text-slate-500'}`}
+                >
+                    Server Config
+                </button>
+                <button
+                    onClick={() => setSubTab('templates')}
+                    className={`pb-2 px-4 font-bold ${subTab === 'templates' ? 'border-b-2 border-primary text-primary' : 'text-slate-500'}`}
+                >
+                    Templates
+                </button>
+                <button
+                    onClick={() => setSubTab('triggers')}
+                    className={`pb-2 px-4 font-bold ${subTab === 'triggers' ? 'border-b-2 border-primary text-primary' : 'text-slate-500'}`}
+                >
+                    Triggers
+                </button>
+            </div>
+
+            {subTab === 'server' && <EmailServerConfig providers={providers} onSave={onSaveProvider} />}
+            {subTab === 'templates' && <EmailTemplateEditor templates={templates} onSave={onSaveTemplate} />}
+            {subTab === 'triggers' && <EmailTriggers templates={templates} onSave={onSaveTemplate} />}
+        </div>
+    );
+};
+
+const EmailServerConfig = ({ providers, onSave }: any) => {
+    const [activeType, setActiveType] = useState('RESEND');
+    const [form, setForm] = useState<any>({});
     const { showToast } = useToast();
 
-    const [activeTab, setActiveTab] = useState<'overview' | 'products' | 'categories' | 'orders' | 'settings' | 'profile' | 'notifications' | 'system'>('overview');
+    useEffect(() => {
+        const current = providers.find((p: any) => p.provider_type === activeType);
+        if (current) {
+            setForm(current);
+        } else {
+            setForm({ provider_type: activeType, display_name: activeType, config: {}, is_active: false, is_default: false });
+        }
+    }, [activeType, providers]);
+
+    const handleSave = () => {
+        onSave(form);
+        showToast('Server configuration saved.', 'success');
+    };
+
+    const handleTest = async () => {
+        if (!form.is_active || !form.is_default) {
+            if (!confirm('This provider is not currently active/default. The test will use the currently SAVED default provider in the database, not necessarily these unsaved settings. Continue?')) {
+                return;
+            }
+        }
+
+        const email = prompt("Enter an email address to send a test message to:");
+        if (!email) return;
+
+        showToast('Sending test email...', 'info');
+        const result = await EmailBackend.trigger('ACCOUNT_WELCOME', email, {
+            customer_name: 'Admin Tester'
+        });
+
+        if (result.success) showToast('Test email sent successfully! Check inbox.', 'success');
+        else showToast(`Failed: ${result.error}`, 'error');
+    };
+
+    return (
+        <div className="bg-white p-6 rounded-lg shadow-sm border border-slate-200 max-w-2xl">
+            <div className="mb-6">
+                <label className="block text-sm font-bold text-slate-700 mb-2">Select Provider</label>
+                <div className="flex gap-3">
+                    {['RESEND', 'SMTP', 'MAILGUN'].map(type => (
+                        <button
+                            key={type}
+                            onClick={() => setActiveType(type)}
+                            className={`px-4 py-2 rounded border ${activeType === type ? 'bg-blue-50 border-primary text-primary font-bold' : 'bg-white border-slate-200 text-slate-600'}`}
+                        >
+                            {type}
+                        </button>
+                    ))}
+                </div>
+            </div>
+
+            <h3 className="text-lg font-bold text-slate-800 mb-4">{activeType} Configuration</h3>
+
+            {activeType === 'RESEND' && (
+                <div className="space-y-4">
+                    <div>
+                        <label className="block text-xs font-bold text-slate-500 uppercase">API Key</label>
+                        <input
+                            type="password"
+                            className="w-full border p-2 rounded"
+                            value={form.config?.api_key || ''}
+                            onChange={e => setForm({ ...form, config: { ...form.config, api_key: e.target.value } })}
+                        />
+                    </div>
+                    <div>
+                        <label className="block text-xs font-bold text-slate-500 uppercase">Sending Domain</label>
+                        <input
+                            type="text"
+                            className="w-full border p-2 rounded"
+                            value={form.config?.domain || ''}
+                            onChange={e => setForm({ ...form, config: { ...form.config, domain: e.target.value } })}
+                        />
+                    </div>
+                </div>
+            )}
+
+            {activeType === 'SMTP' && (
+                <div className="grid grid-cols-2 gap-4">
+                    <div className="col-span-2">
+                        <label className="block text-xs font-bold text-slate-500 uppercase">Host</label>
+                        <input className="w-full border p-2 rounded" value={form.config?.host || ''} onChange={e => setForm({ ...form, config: { ...form.config, host: e.target.value } })} />
+                    </div>
+                    <div>
+                        <label className="block text-xs font-bold text-slate-500 uppercase">Port</label>
+                        <input className="w-full border p-2 rounded" value={form.config?.port || ''} onChange={e => setForm({ ...form, config: { ...form.config, port: e.target.value } })} />
+                    </div>
+                    <div>
+                        <label className="block text-xs font-bold text-slate-500 uppercase">Secure (SSL/TLS)</label>
+                        <input type="checkbox" className="mt-2" checked={form.config?.secure || false} onChange={e => setForm({ ...form, config: { ...form.config, secure: e.target.checked } })} />
+                    </div>
+                    <div>
+                        <label className="block text-xs font-bold text-slate-500 uppercase">User</label>
+                        <input className="w-full border p-2 rounded" value={form.config?.user || ''} onChange={e => setForm({ ...form, config: { ...form.config, user: e.target.value } })} />
+                    </div>
+                    <div>
+                        <label className="block text-xs font-bold text-slate-500 uppercase">Password</label>
+                        <input type="password" className="w-full border p-2 rounded" value={form.config?.pass || ''} onChange={e => setForm({ ...form, config: { ...form.config, pass: e.target.value } })} />
+                    </div>
+                </div>
+            )}
+
+            <div className="mt-6 border-t pt-4 flex justify-between items-center">
+                <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                        type="checkbox"
+                        checked={form.is_default || false}
+                        onChange={e => setForm({ ...form, is_default: e.target.checked, is_active: true })}
+                        className="w-5 h-5 text-primary rounded"
+                    />
+                    <span className="font-bold text-slate-700">Set as Active Provider</span>
+                </label>
+
+                <div className="flex gap-2">
+                    <button onClick={handleTest} className="px-4 py-2 text-slate-500 hover:text-slate-700 font-bold border border-slate-200 rounded">Test Connection</button>
+                    <button onClick={handleSave} className="px-4 py-2 bg-primary text-white font-bold rounded hover:bg-blue-600">Save Configuration</button>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+const EmailTemplateEditor = ({ templates, onSave }: any) => {
+    const [selectedId, setSelectedId] = useState<string | null>(null);
+    const [editorContent, setEditorContent] = useState('');
+    const [subject, setSubject] = useState('');
+    const { showToast } = useToast();
+
+    const selectedTemplate = templates.find((t: any) => t.id === selectedId);
+
+    useEffect(() => {
+        if (templates.length > 0 && !selectedId) {
+            setSelectedId(templates[0].id);
+        }
+    }, [templates]);
+
+    useEffect(() => {
+        if (selectedTemplate) {
+            setEditorContent(selectedTemplate.body_html);
+            setSubject(selectedTemplate.subject);
+        }
+    }, [selectedTemplate]);
+
+    const handleSave = () => {
+        if (!selectedTemplate) return;
+        onSave({ ...selectedTemplate, body_html: editorContent, subject });
+        showToast('Template saved.', 'success');
+    };
+
+    return (
+        <div className="flex gap-6 h-[600px]">
+            <div className="w-1/4 bg-white border border-slate-200 rounded-lg overflow-y-auto">
+                {templates.map((t: any) => (
+                    <button
+                        key={t.id}
+                        onClick={() => setSelectedId(t.id)}
+                        className={`w-full text-left p-3 border-b border-slate-100 hover:bg-slate-50 ${selectedId === t.id ? 'bg-blue-50 border-l-4 border-l-primary' : ''}`}
+                    >
+                        <div className="font-bold text-sm text-slate-800">{t.name}</div>
+                        <div className="text-xs text-slate-500">{t.event_trigger}</div>
+                    </button>
+                ))}
+            </div>
+
+            <div className="w-3/4 flex flex-col gap-4">
+                {selectedTemplate && (
+                    <>
+                        <div className="bg-white p-4 rounded-lg border border-slate-200">
+                            <label className="block text-xs font-bold text-slate-500 mb-1">Email Subject</label>
+                            <input className="w-full border p-2 rounded font-bold text-slate-700" value={subject} onChange={e => setSubject(e.target.value)} />
+                            <div className="mt-2 text-xs text-slate-500">
+                                <strong>Available Variables:</strong> {selectedTemplate.variables_help || '{{customer_name}}, {{order_number}}'}
+                            </div>
+                        </div>
+
+                        <div className="flex-1 flex gap-4 min-h-0">
+                            <div className="w-1/2 flex flex-col">
+                                <label className="text-xs font-bold text-slate-500 mb-1">HTML Source</label>
+                                <textarea
+                                    className="flex-1 w-full border border-slate-300 rounded p-2 font-mono text-xs resize-none focus:ring-2 focus:ring-primary outline-none"
+                                    value={editorContent}
+                                    onChange={e => setEditorContent(e.target.value)}
+                                    spellCheck={false}
+                                />
+                            </div>
+                            <div className="w-1/2 flex flex-col">
+                                <label className="text-xs font-bold text-slate-500 mb-1">Live Preview</label>
+                                <div className="flex-1 border border-slate-200 rounded bg-white overflow-y-auto">
+                                    <iframe
+                                        srcDoc={editorContent.replace(/{{.*?}}/g, '<span style="background:#eee; padding:0 2px; border-radius:2px;">$1</span>')}
+                                        className="w-full h-full pointer-events-none p-4"
+                                        title="Preview"
+                                    />
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="flex justify-end">
+                            <button onClick={handleSave} className="bg-primary text-white px-6 py-2 rounded font-bold hover:bg-blue-600 flex items-center gap-2">
+                                <Save size={18} /> Save Template
+                            </button>
+                        </div>
+                    </>
+                )}
+            </div>
+        </div>
+    );
+};
+
+const EmailTriggers = ({ templates, onSave }: any) => {
+    const { showToast } = useToast();
+
+    const handleToggle = (t: any) => {
+        onSave({ ...t, is_active: !t.is_active });
+        showToast(`Trigger ${!t.is_active ? 'Enabled' : 'Disabled'}`, 'success');
+    };
+
+    return (
+        <div className="bg-white rounded-lg border border-slate-200 shadow-sm">
+            <table className="w-full text-left">
+                <thead className="bg-slate-50 text-xs uppercase text-slate-500">
+                    <tr>
+                        <th className="px-6 py-4">Trigger Event</th>
+                        <th className="px-6 py-4">Description</th>
+                        <th className="px-6 py-4">Status</th>
+                        <th className="px-6 py-4">Actions</th>
+                    </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                    {templates.map((t: any) => (
+                        <tr key={t.id}>
+                            <td className="px-6 py-4 font-bold text-slate-700">{t.event_trigger}</td>
+                            <td className="px-6 py-4 text-sm text-slate-500">{t.description || 'Standard system event'}</td>
+                            <td className="px-6 py-4">
+                                <span className={`px-2 py-1 rounded text-xs font-bold ${t.is_active ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-500'}`}>
+                                    {t.is_active ? 'Active' : 'Disabled'}
+                                </span>
+                            </td>
+                            <td className="px-6 py-4">
+                                <label className="flex items-center cursor-pointer">
+                                    <input type="checkbox" checked={t.is_active} onChange={() => handleToggle(t)} className="sr-only peer" />
+                                    <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary relative"></div>
+                                </label>
+                            </td>
+                        </tr>
+                    ))}
+                </tbody>
+            </table>
+        </div>
+    );
+};
+
+// --- END EMAIL COMPONENTS ---
+
+export const AdminDashboard: React.FC = () => {
+    const {
+        logout, products, orders, deleteProduct, updateProduct, addProduct, categories,
+        toggleCategory, addCategory, seedCategories, updateCategory, deleteCategory, updateCategoryOrder,
+        adminProfile, updateAdminProfile, uploadImage, placeOrder, addManualOrder, notificationLogs,
+        updateProductFeaturedOrder, bulkDeleteProducts, paymentMethods, deliveryOptions, addPaymentMethod,
+        removePaymentMethod, togglePaymentMethod, updatePaymentMethodOrder, addDeliveryOption,
+        removeDeliveryOption, toggleDeliveryOption, updateDeliveryOption, updateOrderStatus,
+        emailProviders, emailTemplates, saveEmailProvider, saveEmailTemplate
+    } = useStore();
+    const { showToast } = useToast();
+
+    const [activeTab, setActiveTab] = useState<'overview' | 'products' | 'categories' | 'orders' | 'settings' | 'profile' | 'notifications' | 'system' | 'emails'>('overview');
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
     // Editor State
@@ -124,6 +427,14 @@ export const AdminDashboard: React.FC = () => {
             );
             case 'orders': return <OrderManager orders={orders} onUpdateStatus={updateOrderStatus} />;
             case 'notifications': return <NotificationLogView logs={notificationLogs} />;
+            case 'emails': return (
+                <EmailManager
+                    providers={emailProviders}
+                    templates={emailTemplates}
+                    onSaveProvider={saveEmailProvider}
+                    onSaveTemplate={saveEmailTemplate}
+                />
+            );
             case 'settings': return (
                 <SettingsManager
                     paymentMethods={paymentMethods}
@@ -174,6 +485,7 @@ export const AdminDashboard: React.FC = () => {
                         <SidebarItem icon={<Package size={20} />} label="Products" active={activeTab === 'products'} onClick={() => { setActiveTab('products'); setIsSidebarOpen(false); }} />
                         <SidebarItem icon={<List size={20} />} label="Categories" active={activeTab === 'categories'} onClick={() => { setActiveTab('categories'); setIsSidebarOpen(false); }} />
                         <SidebarItem icon={<ShoppingBag size={20} />} label="Orders" active={activeTab === 'orders'} onClick={() => { setActiveTab('orders'); setIsSidebarOpen(false); }} />
+                        <SidebarItem icon={<Mail size={20} />} label="Email System" active={activeTab === 'emails'} onClick={() => { setActiveTab('emails'); setIsSidebarOpen(false); }} />
                         <SidebarItem icon={<Bell size={20} />} label="Notifications" active={activeTab === 'notifications'} onClick={() => { setActiveTab('notifications'); setIsSidebarOpen(false); }} />
                         <SidebarItem icon={<Settings size={20} />} label="Settings" active={activeTab === 'settings'} onClick={() => { setActiveTab('settings'); setIsSidebarOpen(false); }} />
                         <SidebarItem icon={<User size={20} />} label="Profile" active={activeTab === 'profile'} onClick={() => { setActiveTab('profile'); setIsSidebarOpen(false); }} />
