@@ -556,7 +556,7 @@ export const StoreProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       console.error("Failed to fetch IP", e);
     }
 
-    // 2. Format Timestamp DD--MM-YYYY HH:MM:SS
+    // 2. Format Timestamp DD--MM-YYYY HH:MM:SS (Legacy Format to maintain sorting order with existing data)
     const now = new Date();
     const pad = (n: number) => n.toString().padStart(2, '0');
     const timestamp = `${pad(now.getDate())}--${pad(now.getMonth() + 1)}--${now.getFullYear()} ${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
@@ -637,11 +637,15 @@ export const StoreProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         const { error } = await supabase.from('orders').insert(orderPayload);
         if (error) {
           console.error("Error saving order to Supabase:", error);
+          // Try to notify the user if possible. requires showing toast from context or component.
+          // Since we are in context, we can't easily use hooks that depend on UI providers if they are outside? 
+          // But StoreProvider is inside ToastProvider? No, ToastProvider is separate.
+          // We will log heavily.
         } else {
           console.log('[ORDER] Saved successfully:', orderPayload.id);
         }
-      } catch (e) {
-        console.error("Error saving order to Supabase", e);
+      } catch (e: any) {
+        console.error("Error saving order to Supabase", e?.message || e);
       }
     }
 
