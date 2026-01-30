@@ -94,7 +94,8 @@ export const StoreProvider: React.FC<{ children: ReactNode }> = ({ children }) =
             name: pm.name,
             iconUrl: pm.icon_url,
             enabled: pm.enabled,
-            sortOrder: pm.sort_order || 0
+            sortOrder: pm.sort_order || 0,
+            instructions: pm.instructions
           }));
           mappedPm.sort((a: any, b: any) => (a.sortOrder || 0) - (b.sortOrder || 0));
           setPaymentMethods(mappedPm);
@@ -1041,6 +1042,21 @@ export const StoreProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     }
   };
 
+  const updatePaymentMethod = async (id: string, updates: Partial<PaymentMethod>) => {
+    setPaymentMethods(prev => prev.map(p => p.id === id ? { ...p, ...updates } : p));
+    if (supabase) {
+      const payload: any = {};
+      if (updates.name !== undefined) payload.name = updates.name;
+      if (updates.iconUrl !== undefined) payload.icon_url = updates.iconUrl;
+      if (updates.enabled !== undefined) payload.enabled = updates.enabled;
+      if (updates.instructions !== undefined) payload.instructions = updates.instructions;
+
+      if (Object.keys(payload).length > 0) {
+        await supabase.from('payment_methods').update(payload).eq('id', id);
+      }
+    }
+  };
+
   const addDeliveryOption = async (option: DeliveryOption) => {
     setDeliveryOptions(prev => [...prev, option]);
     if (supabase) await supabase.from('delivery_options').insert({
@@ -1197,6 +1213,7 @@ export const StoreProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         removePaymentMethod,
         togglePaymentMethod,
         updatePaymentMethodOrder,
+        updatePaymentMethod,
         addDeliveryOption,
         removeDeliveryOption,
         toggleDeliveryOption,

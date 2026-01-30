@@ -501,6 +501,8 @@ ${itemsList}
 
   // --- RENDER: SUCCESS SCREEN ---
   if (step === 'success') {
+    const selectedPm = paymentMethods.find(pm => pm.name === paymentData.method);
+
     return (
       <div className="flex-1 flex flex-col items-center justify-center bg-white py-20 px-4 animate-in fade-in zoom-in duration-500">
         <div className="w-24 h-24 bg-green-50 rounded-full flex items-center justify-center mb-6 border border-green-100 shadow-sm">
@@ -508,7 +510,19 @@ ${itemsList}
         </div>
         <h1 className="text-4xl font-extrabold text-slate-900 mb-4 tracking-tight">Thank You!</h1>
         <p className="text-xl text-slate-600 mb-2 font-medium">Your order has been placed successfully.</p>
-        <p className="text-slate-500 mb-10">We have sent a confirmation to your email.</p>
+
+        {selectedPm?.instructions ? (
+          <div className="bg-blue-50 p-6 rounded-lg border border-blue-100 my-8 max-w-2xl w-full text-center shadow-sm">
+            <h3 className="font-bold text-blue-900 mb-3 text-lg">Payment Confirmation Instructions</h3>
+            <div
+              className="whitespace-pre-wrap text-blue-800 text-base leading-relaxed prose prose-blue max-w-none"
+              dangerouslySetInnerHTML={{ __html: selectedPm.instructions }}
+            />
+          </div>
+        ) : (
+          <p className="text-slate-500 mb-10">We have sent a confirmation to your email.</p>
+        )}
+
         <button onClick={goHome} className="bg-primary hover:bg-blue-600 text-white px-10 py-4 rounded shadow-lg font-bold transition uppercase tracking-widest text-sm">
           Back to Store
         </button>

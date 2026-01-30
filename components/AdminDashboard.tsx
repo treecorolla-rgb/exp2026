@@ -367,7 +367,7 @@ export const AdminDashboard: React.FC = () => {
         updateProductFeaturedOrder, bulkDeleteProducts, paymentMethods, deliveryOptions, addPaymentMethod,
         removePaymentMethod, togglePaymentMethod, updatePaymentMethodOrder, addDeliveryOption,
         removeDeliveryOption, toggleDeliveryOption, updateDeliveryOption, updateOrderStatus, deleteOrder,
-        emailProviders, emailTemplates, saveEmailProvider, saveEmailTemplate
+        emailProviders, emailTemplates, saveEmailProvider, saveEmailTemplate, updatePaymentMethod
     } = useStore();
     const { showToast } = useToast();
 
@@ -464,6 +464,7 @@ export const AdminDashboard: React.FC = () => {
                     onRemovePayment={removePaymentMethod}
                     onTogglePayment={togglePaymentMethod}
                     onUpdatePaymentOrder={updatePaymentMethodOrder}
+                    onUpdatePayment={updatePaymentMethod}
                     onAddDelivery={addDeliveryOption}
                     onRemoveDelivery={removeDeliveryOption}
                     onToggleDelivery={toggleDeliveryOption}
@@ -1539,9 +1540,11 @@ const NotificationLogView = ({ logs }: any) => {
 };
 
 // --- 7. SETTINGS MANAGER ---
-const SettingsManager = ({ paymentMethods, deliveryOptions, onAddPayment, onRemovePayment, onTogglePayment, onUpdatePaymentOrder, onAddDelivery, onRemoveDelivery, onToggleDelivery, onUpdateDelivery, adminProfile, onUpdateProfile, onShowToast }: any) => {
+const SettingsManager = ({ paymentMethods, deliveryOptions, onAddPayment, onRemovePayment, onTogglePayment, onUpdatePaymentOrder, onUpdatePayment, onAddDelivery, onRemoveDelivery, onToggleDelivery, onUpdateDelivery, adminProfile, onUpdateProfile, onShowToast }: any) => {
     const [newPay, setNewPay] = useState({ name: '', iconUrl: '' });
     const [newDel, setNewDel] = useState({ name: '', price: 0, minDays: 5, maxDays: 10, icon: 'normal' });
+    const [editingPaymentId, setEditingPaymentId] = useState<string | null>(null);
+    const [tempInstructions, setTempInstructions] = useState('');
     const [editingDelivery, setEditingDelivery] = useState<DeliveryOption | null>(null);
     const [walletAddresses, setWalletAddresses] = useState({
         bitcoinWalletAddress: adminProfile?.bitcoinWalletAddress || '',
@@ -1572,33 +1575,93 @@ const SettingsManager = ({ paymentMethods, deliveryOptions, onAddPayment, onRemo
                 <div className="bg-white rounded-lg border border-slate-200 shadow-sm p-4 mb-4">
                     <div className="space-y-2 mb-4">
                         {[...paymentMethods].sort((a: PaymentMethod, b: PaymentMethod) => (a.sortOrder || 0) - (b.sortOrder || 0)).map((pm: PaymentMethod, index: number) => (
-                            <div key={pm.id} className="flex items-center justify-between bg-slate-50 p-2 rounded border border-slate-100">
-                                <div className="flex items-center gap-3">
-                                    <div className="flex flex-col gap-0.5">
-                                        <button
-                                            onClick={() => onUpdatePaymentOrder(pm.id, 'up')}
-                                            disabled={index === 0}
-                                            className={`p-0.5 rounded ${index === 0 ? 'text-slate-300' : 'text-slate-500 hover:bg-slate-200'}`}
-                                        >
-                                            <ArrowUp size={12} />
-                                        </button>
-                                        <button
-                                            onClick={() => onUpdatePaymentOrder(pm.id, 'down')}
-                                            disabled={index === paymentMethods.length - 1}
-                                            className={`p-0.5 rounded ${index === paymentMethods.length - 1 ? 'text-slate-300' : 'text-slate-500 hover:bg-slate-200'}`}
-                                        >
-                                            <ArrowDown size={12} />
-                                        </button>
+                            <div key={pm.id} className="bg-slate-50 p-3 rounded border border-slate-100">
+                                <div className="flex items-center justify-between mb-2">
+                                    <div className="flex items-center gap-3">
+                                        <div className="flex flex-col gap-0.5">
+                                            <button
+                                                onClick={() => onUpdatePaymentOrder(pm.id, 'up')}
+                                                disabled={index === 0}
+                                                className={`p-0.5 rounded ${index === 0 ? 'text-slate-300' : 'text-slate-500 hover:bg-slate-200'}`}
+                                            >
+                                                <ArrowUp size={12} />
+                                            </button>
+                                            <button
+                                                onClick={() => onUpdatePaymentOrder(pm.id, 'down')}
+                                                disabled={index === paymentMethods.length - 1}
+                                                className={`p-0.5 rounded ${index === paymentMethods.length - 1 ? 'text-slate-300' : 'text-slate-500 hover:bg-slate-200'}`}
+                                            >
+                                                <ArrowDown size={12} />
+                                            </button>
+                                        </div>
+                                        <img src={pm.iconUrl} className="h-6 w-10 object-contain" />
+                                        <span className="font-bold text-sm">{pm.name}</span>
                                     </div>
-                                    <img src={pm.iconUrl} className="h-6 w-10 object-contain" />
-                                    <span className="font-bold text-sm">{pm.name}</span>
+                                    <div className="flex items-center gap-2">
+                                        <button
+                                            onClick={() => {
+                                                if (editingPaymentId === pm.id) {
+                                                    setEditingPaymentId(null);
+                                                    setTempInstructions('');
+                                                } else {
+                                                    setEditingPaymentId(pm.id);
+                                                    setTempInstructions(pm.instructions || '');
+                                                }
+                                            }}
+                                            className="text-slate-500 hover:text-primary text-xs font-bold mr-2"
+                                        >
+                                            {editingPaymentId === pm.id ? 'Close' : 'Edit Instructions'}
+                                        </button>
+                                        <button onClick={() => onTogglePayment(pm.id)} className={`text-xs px-2 py-1 rounded ${pm.enabled ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                                            {pm.enabled ? 'ON' : 'OFF'}
+                                        </button>
+                                        <button onClick={() => onRemovePayment(pm.id)} className="text-red-500 p-1"><Trash2 size={14} /></button>
+                                    </div>
                                 </div>
-                                <div className="flex items-center gap-2">
-                                    <button onClick={() => onTogglePayment(pm.id)} className={`text-xs px-2 py-1 rounded ${pm.enabled ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
-                                        {pm.enabled ? 'ON' : 'OFF'}
-                                    </button>
-                                    <button onClick={() => onRemovePayment(pm.id)} className="text-red-500 p-1"><Trash2 size={14} /></button>
-                                </div>
+                                {editingPaymentId === pm.id && (
+                                    <div className="mt-2 pt-2 border-t border-slate-200">
+                                        <label className="block text-xs font-bold text-slate-500 mb-1">Thank You Page Instructions (HTML Supported)</label>
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <div>
+                                                <div className="text-[10px] uppercase font-bold text-slate-400 mb-1">Editor</div>
+                                                <textarea
+                                                    className="w-full border p-2 rounded text-sm h-48 font-mono text-xs"
+                                                    placeholder="Enter HTML or text instructions..."
+                                                    value={tempInstructions}
+                                                    onChange={(e) => setTempInstructions(e.target.value)}
+                                                />
+                                            </div>
+                                            <div>
+                                                <div className="text-[10px] uppercase font-bold text-slate-400 mb-1">Preview</div>
+                                                <div
+                                                    className="w-full border p-4 rounded text-sm h-48 overflow-y-auto bg-white prose prose-sm max-w-none"
+                                                    dangerouslySetInnerHTML={{ __html: tempInstructions || '<p class="text-slate-400 italic">Preview will appear here...</p>' }}
+                                                />
+                                            </div>
+                                        </div>
+                                        <div className="flex justify-between items-center mt-2">
+                                            <p className="text-[10px] text-slate-400">Please verify the preview before saving. Invalid HTML may break the layout.</p>
+                                            <div className="flex gap-2">
+                                                <button
+                                                    onClick={() => { setEditingPaymentId(null); setTempInstructions(''); }}
+                                                    className="px-3 py-1 text-slate-600 hover:bg-slate-100 rounded text-xs font-bold"
+                                                >
+                                                    Cancel
+                                                </button>
+                                                <button
+                                                    onClick={() => {
+                                                        onUpdatePayment(pm.id, { instructions: tempInstructions });
+                                                        onShowToast('Instructions saved successfully!', 'success');
+                                                        setEditingPaymentId(null);
+                                                    }}
+                                                    className="px-3 py-1 bg-green-600 hover:bg-green-700 text-white rounded text-xs font-bold"
+                                                >
+                                                    Save Instructions
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         ))}
                     </div>

@@ -140,6 +140,7 @@ export interface PaymentMethod {
   iconUrl?: string; // If null, use text
   enabled: boolean;
   sortOrder?: number; // For ordering in checkout dropdown
+  instructions?: string; // Custom instructions for Thank You page
 }
 
 export interface AdminProfile {
@@ -235,6 +236,7 @@ export interface StoreContextType {
   removePaymentMethod: (id: string) => void;
   togglePaymentMethod: (id: string) => void;
   updatePaymentMethodOrder: (id: string, direction: 'up' | 'down') => void;
+  updatePaymentMethod: (id: string, updates: Partial<PaymentMethod>) => void;
 
   // Delivery Options
   addDeliveryOption: (option: DeliveryOption) => void;
