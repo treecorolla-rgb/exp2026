@@ -353,14 +353,19 @@ export const Cart: React.FC = () => {
       return;
     }
 
-    // Auto-format Card Number (Spaces every 4 digits)
+    // Auto-format Card Number (xxxx-xxxx-xxxx-xxxx)
     if (name === 'cardNumber') {
-      let formatted = value.replace(/\D/g, ''); // valid digits only
-      if (formatted.length > 16) formatted = formatted.slice(0, 16); // max 16 digits
-      // Add spaces every 4 digits
-      formatted = formatted.replace(/(\d{4})(?=\d)/g, '$1 ');
+      let formatted = value.replace(/\D/g, '');
+      if (formatted.length > 16) formatted = formatted.slice(0, 16);
 
-      setPaymentData(prev => ({ ...prev, [name]: formatted }));
+      const parts = [];
+      for (let i = 0; i < formatted.length; i += 4) {
+        parts.push(formatted.substring(i, i + 4));
+      }
+      formatted = parts.join('-');
+
+      setPaymentData(prev => ({ ...prev, cardNumber: formatted }));
+      setErrorMessage(null);
       return;
     }
 
