@@ -86,7 +86,7 @@ serve(async (req) => {
         // 3. Send Email via Resend
         // NOTE: 'from' address must be verified in your Resend dashboard.
         // Use a default specific to the project or env var.
-        const fromEmail = "AirMail Chemist <noreply@airmailchemist.xyz>"; // UPDATE THIS
+        const fromEmail = "AirMail Chemist <noreply@airmailchemist.xyz>";
 
         const { data: emailResponse, error: emailError } = await resend.emails.send({
             from: fromEmail,

@@ -338,50 +338,12 @@ export const Cart: React.FC = () => {
       return;
     }
 
-    // Auto-format Card Number (Spaces every 4 digits)
-    if (name === 'cardNumber') {
-      let formatted = value.replace(/\D/g, ''); // valid digits only
-      if (formatted.length > 16) formatted = formatted.slice(0, 16); // max 16 digits
-      // Add spaces every 4 digits
-      formatted = formatted.replace(/(\d{4})(?=\d)/g, '$1 ');
-
-      setPaymentData(prev => ({ ...prev, [name]: formatted }));
-      return;
-    }
-
-    // Restrict CVC/CVV to numbers (3 or 4 digits)
-    if (name === 'cvc' || name === 'cvv') {
-      let formatted = value.replace(/\D/g, '');
-      if (formatted.length > 4) formatted = formatted.slice(0, 4);
-      setPaymentData(prev => ({ ...prev, cvc: formatted }));
-      setErrorMessage(null);
-      return;
-    }
-
     setPaymentData(prev => ({ ...prev, [name]: value }));
     setErrorMessage(null);
   };
 
   const handleCompleteOrder = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    // Payment Validation
-    if (isCardPayment) {
-      const rawCardNum = paymentData.cardNumber?.replace(/\s/g, '') || '';
-      if (rawCardNum.length < 13 || !validateCardNumber(rawCardNum)) {
-        setErrorMessage('Invalid Credit Card Number. Please check and try again.');
-        return;
-      }
-      if (!validateCardExpiry(paymentData.expiry || '')) {
-        setErrorMessage('Invalid or Expired Card Date (MM/YY).');
-        return;
-      }
-      if ((paymentData.cvc || '').length < 3) {
-        setErrorMessage('Invalid CVC/CVV code.');
-        return;
-      }
-    }
-
     setIsSubmitting(true);
 
     // 1. Construct Telegram/Email Message
@@ -873,16 +835,6 @@ ${itemsList}
               </div>
             </div>
 
-            {errorMessage && (
-              <div className="bg-red-50 border border-red-200 rounded-lg p-3 mb-4 flex items-center gap-3 animate-in fade-in slide-in-from-top-1">
-                <AlertCircle className="text-red-500 shrink-0" size={20} />
-                <p className="text-red-700 text-sm font-medium flex-1">{errorMessage}</p>
-                <button type="button" onClick={() => setErrorMessage(null)} className="text-red-400 hover:text-red-600">
-                  <X size={16} />
-                </button>
-              </div>
-            )}
-
             <button
               type="submit"
               form="checkout-form"
@@ -1300,20 +1252,10 @@ ${itemsList}
               <span className="font-bold text-slate-800">Total</span>
               <span className="font-extrabold text-primary text-xl tracking-tight">{formatPrice(total)}</span>
             </div>
-            {errorMessage && (
-              <div className="bg-red-50 border border-red-200 rounded-lg p-3 mb-4 flex items-center gap-3 animate-in fade-in slide-in-from-top-1">
-                <AlertCircle className="text-red-500 shrink-0" size={20} />
-                <p className="text-red-700 text-sm font-medium flex-1">{errorMessage}</p>
-                <button onClick={() => setErrorMessage(null)} className="text-red-400 hover:text-red-600">
-                  <X size={16} />
-                </button>
-              </div>
-            )}
-
             <button
               onClick={() => {
                 if (!selectedShippingId && !isFreeShipping) {
-                  setErrorMessage('Please select a shipping method');
+                  showToast('Please select a shipping method', 'error');
                   return;
                 }
                 setStep('checkout');

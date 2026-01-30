@@ -21,10 +21,10 @@ export const FloatingChat: React.FC = () => {
 
   return (
     <div id="floating-chat-container" className={`fixed z-[100] flex gap-2 animate-in slide-in-from-bottom-5 duration-500 ${useMiniMode
-        ? 'bottom-4 right-3 flex-row'
-        : isMobile
-          ? 'bottom-24 right-6 flex-col gap-3'
-          : 'bottom-6 right-6 flex-col gap-3'
+      ? 'bottom-4 right-3 flex-row'
+      : isMobile
+        ? 'bottom-24 right-6 flex-col gap-3'
+        : 'bottom-6 right-6 flex-col gap-3'
       }`}>
       {/* WhatsApp */}
       {whatsappNumber && (
