@@ -23,13 +23,26 @@ export const generateTrackingUrl = (carrier: string, trackingNumber: string): st
   return pattern.replace('{TRACKING_NUMBER}', trackingNumber);
 };
 
-// --- REAL EMAIL TRIGGER ---
+// --- REAL EMAIL TRIGGER COMPATIBILITY NOTE ---
+// Since we have a Database Trigger (on_order_email_v2) that automatically 
+// inserts into 'email_logs' on ORDER INSERT/UPDATE, we should NOT 
+// insert from the client side for standard events to avoid duplicate emails.
+//
+// This function is kept for custom events NOT handled by DB triggers, 
+// or if we disable DB triggers in the future.
+
 const triggerRealEmail = async (
   recipientEmail: string,
   recipientName: string,
   eventTrigger: string,
   contextData: any
 ): Promise<boolean> => {
+  // DB Trigger handles these now. Preventing client-side duplicate.
+  if (['ORDER_CREATED', 'ORDER_SHIPPED', 'ORDER_DELIVERED', 'PAYMENT_RECEIVED'].includes(eventTrigger)) {
+    console.log(`[EMAIL SERVICE] Skipping client-side trigger for ${eventTrigger} (Handled by DB Trigger)`);
+    return true;
+  }
+
   if (!supabase) {
     console.error('[EMAIL SERVICE] Supabase client not initialized. Cannot send real email.');
     return false;
@@ -46,9 +59,7 @@ const triggerRealEmail = async (
       .single();
 
     if (templateError || !template) {
-      console.warn(`[EMAIL SERVICE] Template not found for trigger '${eventTrigger}'. Using DB trigger or skipping.`);
-      // Note: If the Database Trigger (SQL) is active, we don't strictly need to do this insert here.
-      // We log it as 'Pending' in UI, but don't force a possibly invalid DB insert.
+      console.warn(`[EMAIL SERVICE] Template not found for trigger '${eventTrigger}'.`);
       return false;
     }
 

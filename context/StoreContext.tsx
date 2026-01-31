@@ -230,18 +230,64 @@ export const StoreProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     fetchEmailSystem();
   }, []);
 
-  const saveEmailProvider = async (provider: any) => {
-    if (!supabase) return;
-    // If setting default, unset others
-    if (provider.is_default) {
-      await supabase.from('email_providers').update({ is_default: false }).neq('id', provider.id);
+  // Simple XOR encryption function (client-side)
+  const encryptApiKey = (apiKey: string, encryptionKey: string): string => {
+    if (!apiKey) return '';
+    const keyBytes = new TextEncoder().encode(encryptionKey);
+    const apiKeyBytes = new TextEncoder().encode(apiKey);
+    const encrypted = new Uint8Array(apiKeyBytes.length);
+
+    for (let i = 0; i < apiKeyBytes.length; i++) {
+      encrypted[i] = apiKeyBytes[i] ^ keyBytes[i % keyBytes.length];
     }
 
-    const { error } = await supabase.from('email_providers').upsert(provider);
-    if (!error) {
-      // Refresh
-      const { data } = await supabase.from('email_providers').select('*').order('provider_type');
-      if (data) setEmailProviders(data);
+    // Convert to base64 and add prefix to indicate it's encrypted
+    return 'ENC:' + btoa(String.fromCharCode(...encrypted));
+  };
+
+  const saveEmailProvider = async (provider: any) => {
+    if (!supabase) return;
+
+    try {
+      // Get encryption key from database
+      const { data: keyData } = await supabase
+        .from('email_encryption_keys')
+        .select('encryption_key')
+        .eq('key_name', 'email_provider_key')
+        .single();
+
+      const encryptionKey = keyData?.encryption_key || '';
+
+      // Encrypt API key if present
+      let updatedProvider = { ...provider };
+      if (provider.config?.api_key && encryptionKey) {
+        // Only encrypt if not already encrypted
+        if (!provider.config.api_key.startsWith('ENC:')) {
+          updatedProvider = {
+            ...provider,
+            config: {
+              ...provider.config,
+              api_key: encryptApiKey(provider.config.api_key, encryptionKey)
+            }
+          };
+        }
+      }
+
+      // If setting default, unset others
+      if (updatedProvider.is_default) {
+        await supabase.from('email_providers').update({ is_default: false }).neq('id', updatedProvider.id);
+      }
+
+      const { error } = await supabase.from('email_providers').upsert(updatedProvider);
+      if (!error) {
+        // Refresh
+        const { data } = await supabase.from('email_providers').select('*').order('provider_type');
+        if (data) setEmailProviders(data);
+      } else {
+        console.error('Error saving email provider:', error);
+      }
+    } catch (err) {
+      console.error('Error in saveEmailProvider:', err);
     }
   };
 

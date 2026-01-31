@@ -84,39 +84,70 @@ const EmailManager = ({ providers, templates, onSaveProvider, onSaveTemplate }: 
 const EmailServerConfig = ({ providers, onSave }: any) => {
     const [activeType, setActiveType] = useState('RESEND');
     const [form, setForm] = useState<any>({});
+    const [apiKey, setApiKey] = useState('');
+    const [domain, setDomain] = useState('');
     const { showToast } = useToast();
 
     useEffect(() => {
         const current = providers.find((p: any) => p.provider_type === activeType);
         if (current) {
             setForm(current);
+            // Don't show actual keys from database - they're in environment variables
+            setApiKey('••••••••••••••••••••••••••••••••••••••••');
+            setDomain(current.config?.domain || '');
         } else {
             setForm({ provider_type: activeType, display_name: activeType, config: {}, is_active: false, is_default: false });
+            setApiKey('');
+            setDomain('');
         }
     }, [activeType, providers]);
 
-    const handleSave = () => {
-        onSave(form);
-        showToast('Server configuration saved.', 'success');
+    const handleSave = async () => {
+        // Save the domain to database (not sensitive)
+        // API key should be set via Supabase CLI or Dashboard
+        const updatedForm = {
+            ...form,
+            config: {
+                ...form.config,
+                domain: domain
+            }
+        };
+
+        await onSave(updatedForm);
+        showToast('Configuration saved! Remember to set API key via Supabase secrets.', 'success');
     };
 
     const handleTest = async () => {
-        if (!form.is_active || !form.is_default) {
-            if (!confirm('This provider is not currently active/default. The test will use the currently SAVED default provider in the database, not necessarily these unsaved settings. Continue?')) {
-                return;
-            }
-        }
-
         const email = prompt("Enter an email address to send a test message to:");
         if (!email) return;
 
         showToast('Sending test email...', 'info');
-        const result = await EmailBackend.trigger('ACCOUNT_WELCOME', email, {
-            customer_name: 'Admin Tester'
-        });
 
-        if (result.success) showToast('Test email sent successfully! Check inbox.', 'success');
-        else showToast(`Failed: ${result.error}`, 'error');
+        // Test by inserting into email_logs - the webhook will handle it
+        try {
+            const { data: template } = await supabase
+                .from('email_templates')
+                .select('id')
+                .eq('event_trigger', 'ORDER_CREATED')
+                .single();
+
+            if (template) {
+                await supabase.from('email_logs').insert({
+                    status: 'PENDING',
+                    recipient_email: email,
+                    recipient_name: 'Test User',
+                    template_id: template.id,
+                    context_data: {
+                        order_id: 'TEST-' + Date.now(),
+                        customer_name: 'Test User',
+                        total_amount: '$99.99'
+                    }
+                });
+                showToast('Test email queued! Check your inbox in 1-2 minutes.', 'success');
+            }
+        } catch (err: any) {
+            showToast(`Failed: ${err.message}`, 'error');
+        }
     };
 
     return (
@@ -138,51 +169,58 @@ const EmailServerConfig = ({ providers, onSave }: any) => {
 
             <h3 className="text-lg font-bold text-slate-800 mb-4">{activeType} Configuration</h3>
 
+            {/* Security Notice */}
+            <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                <div className="flex items-start gap-2">
+                    <AlertCircle className="text-blue-600 mt-0.5" size={18} />
+                    <div className="text-sm">
+                        <p className="font-bold text-blue-900 mb-1">🔐 Secure Configuration</p>
+                        <p className="text-blue-700">API keys are stored securely in your backend environment variables, not in the database. Set them via:</p>
+                        <code className="block mt-2 p-2 bg-white border border-blue-200 rounded text-xs">
+                            supabase secrets set RESEND_API_KEY=your_key_here<br />
+                            supabase secrets set RESEND_DOMAIN=yourdomain.com
+                        </code>
+                        <p className="text-blue-700 mt-2 text-xs">Or via Supabase Dashboard → Edge Functions → email-dispatcher → Settings → Secrets</p>
+                    </div>
+                </div>
+            </div>
+
             {activeType === 'RESEND' && (
                 <div className="space-y-4">
                     <div>
-                        <label className="block text-xs font-bold text-slate-500 uppercase">API Key</label>
+                        <label className="block text-xs font-bold text-slate-500 uppercase mb-1">API KEY</label>
                         <input
                             type="password"
-                            className="w-full border p-2 rounded"
-                            value={form.config?.api_key || ''}
-                            onChange={e => setForm({ ...form, config: { ...form.config, api_key: e.target.value } })}
+                            className="w-full border p-3 rounded bg-slate-50"
+                            value={apiKey}
+                            readOnly
+                            placeholder="Set via Supabase Secrets (RESEND_API_KEY)"
                         />
+                        <p className="text-xs text-slate-500 mt-1">⚠️ API key is stored in backend environment variables for security</p>
                     </div>
                     <div>
-                        <label className="block text-xs font-bold text-slate-500 uppercase">Sending Domain</label>
+                        <label className="block text-xs font-bold text-slate-500 uppercase mb-1">SENDING DOMAIN</label>
                         <input
                             type="text"
-                            className="w-full border p-2 rounded"
-                            value={form.config?.domain || ''}
-                            onChange={e => setForm({ ...form, config: { ...form.config, domain: e.target.value } })}
+                            className="w-full border p-3 rounded"
+                            value={domain}
+                            onChange={e => setDomain(e.target.value)}
+                            placeholder="airmailchemist.xyz"
                         />
+                        <p className="text-xs text-slate-500 mt-1">Your verified domain from Resend.com</p>
                     </div>
                 </div>
             )}
 
             {activeType === 'SMTP' && (
-                <div className="grid grid-cols-2 gap-4">
-                    <div className="col-span-2">
-                        <label className="block text-xs font-bold text-slate-500 uppercase">Host</label>
-                        <input className="w-full border p-2 rounded" value={form.config?.host || ''} onChange={e => setForm({ ...form, config: { ...form.config, host: e.target.value } })} />
-                    </div>
-                    <div>
-                        <label className="block text-xs font-bold text-slate-500 uppercase">Port</label>
-                        <input className="w-full border p-2 rounded" value={form.config?.port || ''} onChange={e => setForm({ ...form, config: { ...form.config, port: e.target.value } })} />
-                    </div>
-                    <div>
-                        <label className="block text-xs font-bold text-slate-500 uppercase">Secure (SSL/TLS)</label>
-                        <input type="checkbox" className="mt-2" checked={form.config?.secure || false} onChange={e => setForm({ ...form, config: { ...form.config, secure: e.target.checked } })} />
-                    </div>
-                    <div>
-                        <label className="block text-xs font-bold text-slate-500 uppercase">User</label>
-                        <input className="w-full border p-2 rounded" value={form.config?.user || ''} onChange={e => setForm({ ...form, config: { ...form.config, user: e.target.value } })} />
-                    </div>
-                    <div>
-                        <label className="block text-xs font-bold text-slate-500 uppercase">Password</label>
-                        <input type="password" className="w-full border p-2 rounded" value={form.config?.pass || ''} onChange={e => setForm({ ...form, config: { ...form.config, pass: e.target.value } })} />
-                    </div>
+                <div className="p-4 bg-yellow-50 border border-yellow-200 rounded">
+                    <p className="text-sm text-yellow-800">SMTP configuration coming soon. Use Resend for now.</p>
+                </div>
+            )}
+
+            {activeType === 'MAILGUN' && (
+                <div className="p-4 bg-yellow-50 border border-yellow-200 rounded">
+                    <p className="text-sm text-yellow-800">Mailgun configuration coming soon. Use Resend for now.</p>
                 </div>
             )}
 

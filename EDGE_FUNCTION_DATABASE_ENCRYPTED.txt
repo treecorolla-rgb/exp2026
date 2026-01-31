@@ -1,0 +1,295 @@
+// ==============================================================================
+// EMAIL DISPATCHER - Database Version with Encryption
+// ==============================================================================
+// This function reads email provider config from the database (not env vars)
+// API keys are encrypted in the database for security
+// Copy this to Supabase Dashboard: Edge Functions → dynamic-endpoint
+
+import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+
+const corsHeaders = {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+};
+
+// Simple XOR encryption/decryption (you can upgrade to AES if needed)
+function decryptApiKey(encryptedKey: string, encryptionKey: string): string {
+    try {
+        // If not encrypted (no prefix), return as-is for backward compatibility
+        if (!encryptedKey.startsWith('ENC:')) {
+            return encryptedKey;
+        }
+        
+        // Remove prefix and decode
+        const encrypted = encryptedKey.substring(4);
+        const keyBytes = new TextEncoder().encode(encryptionKey);
+        const encryptedBytes = Uint8Array.from(atob(encrypted), c => c.charCodeAt(0));
+        
+        // XOR decrypt
+        const decrypted = new Uint8Array(encryptedBytes.length);
+        for (let i = 0; i < encryptedBytes.length; i++) {
+            decrypted[i] = encryptedBytes[i] ^ keyBytes[i % keyBytes.length];
+        }
+        
+        return new TextDecoder().decode(decrypted);
+    } catch (err) {
+        console.error('Decryption error:', err);
+        return encryptedKey; // Return as-is if decryption fails
+    }
+}
+
+serve(async (req) => {
+    // Handle CORS preflight
+    if (req.method === 'OPTIONS') {
+        return new Response('ok', { headers: corsHeaders });
+    }
+
+    try {
+        console.log('📧 Email Dispatcher triggered');
+
+        // Parse webhook payload
+        const payload = await req.json();
+        console.log('Webhook payload type:', payload.type);
+
+        // Extract the email log record from webhook
+        const emailLog = payload.record || payload;
+        
+        if (!emailLog || !emailLog.id) {
+            throw new Error('Invalid webhook payload - missing email_logs record');
+        }
+
+        console.log(`Processing email log ID: ${emailLog.id}`);
+
+        // Initialize Supabase Admin Client
+        const supabaseAdmin = createClient(
+            Deno.env.get('SUPABASE_URL') ?? '',
+            Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+        );
+
+        // 1. Fetch the full email log with template
+        const { data: fullLog, error: logError } = await supabaseAdmin
+            .from('email_logs')
+            .select(`
+                *,
+                email_templates (
+                    event_trigger,
+                    subject,
+                    body_html
+                )
+            `)
+            .eq('id', emailLog.id)
+            .single();
+
+        if (logError || !fullLog) {
+            throw new Error(`Failed to fetch email log: ${logError?.message}`);
+        }
+
+        // Skip if already sent or failed
+        if (fullLog.status !== 'PENDING') {
+            console.log(`Email ${fullLog.id} already processed (status: ${fullLog.status})`);
+            return new Response(JSON.stringify({ skipped: true, reason: 'Already processed' }), {
+                headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+            });
+        }
+
+        // 2. Fetch active email provider from DATABASE
+        const { data: provider, error: providerError } = await supabaseAdmin
+            .from('email_providers')
+            .select('*')
+            .eq('is_active', true)
+            .eq('is_default', true)
+            .single();
+
+        if (providerError || !provider) {
+            console.error('No active email provider found:', providerError);
+            
+            await supabaseAdmin
+                .from('email_logs')
+                .update({ 
+                    status: 'FAILED', 
+                    error_message: 'No active email provider configured. Please configure via Admin Panel.' 
+                })
+                .eq('id', fullLog.id);
+
+            throw new Error('No active email provider configured');
+        }
+
+        console.log(`Using provider: ${provider.provider_type}`);
+
+        // 3. Get encryption key (if API key is encrypted)
+        const { data: keyData } = await supabaseAdmin
+            .from('email_encryption_keys')
+            .select('encryption_key')
+            .eq('key_name', 'email_provider_key')
+            .single();
+
+        const encryptionKey = keyData?.encryption_key || '';
+
+        // 4. Decrypt API key from config
+        const config = provider.config || {};
+        let apiKey = config.api_key || '';
+        
+        // Decrypt if encrypted
+        if (apiKey && encryptionKey) {
+            apiKey = decryptApiKey(apiKey, encryptionKey);
+        }
+
+        if (!apiKey) {
+            console.error('API key not configured');
+            
+            await supabaseAdmin
+                .from('email_logs')
+                .update({ 
+                    status: 'FAILED', 
+                    error_message: 'API key not configured. Please set it in Admin Panel → Email System → Server Config' 
+                })
+                .eq('id', fullLog.id);
+
+            throw new Error('API key not configured');
+        }
+
+        // 5. Render template with context data
+        const template = fullLog.email_templates;
+        const context = fullLog.context_data || {};
+
+        let subject = template.subject;
+        let body = template.body_html;
+
+        // Simple template replacement
+        Object.keys(context).forEach(key => {
+            const regex = new RegExp(`{{${key}}}`, 'g');
+            subject = subject.replace(regex, String(context[key] || ''));
+            body = body.replace(regex, String(context[key] || ''));
+        });
+
+        // 6. Send email based on provider type
+        let result;
+
+        if (provider.provider_type === 'RESEND') {
+            const domain = config.domain || '';
+            const fromEmail = domain ? `noreply@${domain}` : 'onboarding@resend.dev';
+
+            console.log(`📤 Sending via Resend from: ${fromEmail} to: ${fullLog.recipient_email}`);
+
+            const res = await fetch('https://api.resend.com/emails', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${apiKey}`
+                },
+                body: JSON.stringify({
+                    from: fromEmail,
+                    to: fullLog.recipient_email,
+                    subject: subject,
+                    html: body
+                })
+            });
+
+            const data = await res.json();
+            
+            if (!res.ok) {
+                console.error('❌ Resend API error:', data);
+                
+                await supabaseAdmin
+                    .from('email_logs')
+                    .update({ 
+                        status: 'FAILED', 
+                        error_message: `Resend API error: ${JSON.stringify(data)}` 
+                    })
+                    .eq('id', fullLog.id);
+                
+                throw new Error(`Resend API error: ${JSON.stringify(data)}`);
+            }
+
+            result = data;
+            console.log('✅ Email sent via Resend! ID:', data.id);
+        }
+        else if (provider.provider_type === 'MAILGUN') {
+            const domain = config.domain || '';
+            
+            const form = new FormData();
+            form.append('from', `noreply@${domain}`);
+            form.append('to', fullLog.recipient_email);
+            form.append('subject', subject);
+            form.append('html', body);
+
+            const auth = btoa(`api:${apiKey}`);
+            const res = await fetch(`https://api.mailgun.net/v3/${domain}/messages`, {
+                method: 'POST',
+                headers: { 'Authorization': `Basic ${auth}` },
+                body: form
+            });
+
+            const data = await res.json();
+            if (!res.ok) {
+                await supabaseAdmin
+                    .from('email_logs')
+                    .update({ 
+                        status: 'FAILED', 
+                        error_message: `Mailgun error: ${JSON.stringify(data)}` 
+                    })
+                    .eq('id', fullLog.id);
+                throw new Error(JSON.stringify(data));
+            }
+            
+            result = data;
+            console.log('✅ Email sent via Mailgun');
+        }
+        else {
+            throw new Error(`Unsupported provider type: ${provider.provider_type}`);
+        }
+
+        // 7. Update email log as SENT
+        await supabaseAdmin
+            .from('email_logs')
+            .update({ 
+                status: 'SENT', 
+                sent_at: new Date().toISOString(),
+                error_message: null
+            })
+            .eq('id', fullLog.id);
+
+        return new Response(JSON.stringify({ 
+            success: true, 
+            email_id: fullLog.id,
+            provider_result: result 
+        }), {
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+
+    } catch (err: any) {
+        console.error('❌ Email Dispatch Error:', err);
+        
+        // Try to update the log as failed
+        try {
+            const payload = await req.clone().json();
+            const emailLog = payload.record || payload;
+            
+            if (emailLog?.id) {
+                const supabaseAdmin = createClient(
+                    Deno.env.get('SUPABASE_URL') ?? '',
+                    Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+                );
+                
+                await supabaseAdmin
+                    .from('email_logs')
+                    .update({ 
+                        status: 'FAILED', 
+                        error_message: err.message 
+                    })
+                    .eq('id', emailLog.id);
+            }
+        } catch (updateErr) {
+            console.error('Failed to update error status:', updateErr);
+        }
+
+        return new Response(JSON.stringify({ 
+            error: err.message,
+            details: err.stack 
+        }), {
+            status: 500,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+    }
+});
