@@ -240,13 +240,13 @@ const sendAdminNotification = async (
 
   try {
     const { data: settings, error } = await supabase
-      .from('settings')
+      .from('store_settings')
       .select('*')
       .limit(1)
       .single();
 
     if (error || !settings) {
-      console.warn('[ADMIN NOTIFICATION] Admin settings not found');
+      console.warn('[ADMIN NOTIFICATION] Admin settings not found:', error);
       return;
     }
 

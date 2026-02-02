@@ -440,15 +440,8 @@ ${itemsList}
         });
       }
 
-      // 3. Send Email (Simulation)
-      if (adminProfile?.receiveEmailNotifications) {
-        console.log(`[SIMULATION] Sending Admin Email Notification to: ${adminProfile.email}`);
-        console.log("Subject: New Order Received");
-        console.log("Body:", message);
-        await new Promise(r => setTimeout(r, 1000));
-      } else {
-        await new Promise(r => setTimeout(r, 1000));
-      }
+      // Admin notifications are now handled by notificationService.ts
+      // No need for simulation here anymore
 
       // 4. Save to "Backend" with FULL Details
       await placeOrder(
