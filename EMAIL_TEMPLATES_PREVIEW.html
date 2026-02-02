@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Email Templates Preview</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 40px 20px;
+            min-height: 100vh;
+        }
+        
+        .page-header {
+            text-align: center;
+            color: white;
+            margin-bottom: 50px;
+        }
+        
+        .page-header h1 {
+            font-size: 42px;
+            font-weight: 700;
+            margin-bottom: 10px;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.2);
+        }
+        
+        .page-header p {
+            font-size: 18px;
+            opacity: 0.9;
+        }
+        
+        .templates-grid {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+            gap: 40px;
+        }
+        
+        .template-card {
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            transition: transform 0.3s ease;
+        }
+        
+        .template-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .template-header {
+            padding: 20px;
+            background: #f9fafb;
+            border-bottom: 2px solid #e5e7eb;
+        }
+        
+        .template-title {
+            font-size: 20px;
+            font-weight: 700;
+            color: #1f2937;
+            margin-bottom: 5px;
+        }
+        
+        .template-trigger {
+            font-size: 13px;
+            color: #6b7280;
+            font-family: 'Courier New', monospace;
+            background: #e5e7eb;
+            padding: 4px 8px;
+            border-radius: 4px;
+            display: inline-block;
+        }
+        
+        .template-preview {
+            padding: 20px;
+            background: #f5f5f5;
+            max-height: 600px;
+            overflow-y: auto;
+        }
+        
+        .template-preview iframe {
+            width: 100%;
+            min-height: 500px;
+            border: none;
+            background: white;
+            border-radius: 8px;
+        }
+        
+        .nav-buttons {
+            text-align: center;
+            margin-top: 40px;
+        }
+        
+        .nav-button {
+            display: inline-block;
+            background: white;
+            color: #667eea;
+            padding: 14px 32px;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 600;
+            margin: 0 10px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            transition: all 0.3s ease;
+        }
+        
+        .nav-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+        }
+        
+        @media (max-width: 768px) {
+            .templates-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .page-header h1 {
+                font-size: 32px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="page-header">
+        <h1>📧 Email Templates Preview</h1>
+        <p>Professional, responsive email templates for all triggers</p>
+    </div>
+    
+    <div class="templates-grid">
+        <!-- Template 1: ORDER_CREATED -->
+        <div class="template-card">
+            <div class="template-header">
+                <div class="template-title">1. Order Confirmation</div>
+                <span class="template-trigger">ORDER_CREATED</span>
+            </div>
+            <div class="template-preview">
+                <iframe srcdoc='<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body { margin: 0; padding: 20px; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background-color: #f5f5f5; }
+        .container { max-width: 600px; margin: 0 auto; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+        .header { background: white; padding: 30px; text-align: center; border-bottom: 1px solid #e0e0e0; }
+        .company-name { font-size: 18px; letter-spacing: 4px; color: #333; font-weight: 300; margin: 0; }
+        .icon-success { width: 48px; height: 48px; background: #10b981; border-radius: 50%; margin: 30px auto 20px; display: flex; align-items: center; justify-content: center; }
+        .icon-success::after { content: "✓"; color: white; font-size: 28px; font-weight: bold; }
+        .title { font-size: 28px; color: #1f2937; margin: 20px 0 10px; font-weight: 600; text-align: center; }
+        .subtitle { color: #6b7280; font-size: 15px; margin: 0 0 30px; text-align: center; }
+        .content { padding: 0 40px 40px; }
+        .info-label { color: #6b7280; font-size: 13px; margin-bottom: 5px; }
+        .info-value { color: #1f2937; font-size: 16px; font-weight: 600; margin-bottom: 20px; }
+        .order-summary { background: #f9fafb; padding: 20px; border-radius: 6px; margin: 20px 0; }
+        .total-value { color: #10b981; font-size: 20px; font-weight: 700; }
+        .footer { background: #f9fafb; padding: 30px; text-align: center; color: #6b7280; font-size: 14px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1 class="company-name">COMPANY</h1>
+        </div>
+        <div class="content">
+            <div class="icon-success"></div>
+            <h2 class="title">Thank you for your order</h2>
+            <p class="subtitle">We have received your order and will process it shortly</p>
+            <div class="info-label">Order Number:</div>
+            <div class="info-value">#12345</div>
+            <div class="info-label">Customer:</div>
+            <div class="info-value">John Doe</div>
+            <div class="order-summary">
+                <div class="total-value">$4000</div>
+            </div>
+        </div>
+        <div class="footer">We appreciate your business.</div>
+    </div>
+</body>
+</html>'></iframe>
+            </div>
+        </div>
+        
+        <!-- Template 2: PAYMENT_RECEIVED -->
+        <div class="template-card">
+            <div class="template-header">
+                <div class="template-title">2. Payment Confirmation (Screenshot Match)</div>
+                <span class="template-trigger">PAYMENT_RECEIVED</span>
+            </div>
+            <div class="template-preview">
+                <iframe srcdoc='<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body { margin: 0; padding: 20px; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background-color: #f5f5f5; }
+        .container { max-width: 600px; margin: 0 auto; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+        .header { background: white; padding: 30px; text-align: center; border-bottom: 1px solid #e0e0e0; }
+        .company-name { font-size: 18px; letter-spacing: 4px; color: #333; font-weight: 300; margin: 0; }
+        .icon-success { width: 48px; height: 48px; background: #10b981; border-radius: 50%; margin: 30px auto 20px; display: flex; align-items: center; justify-content: center; }
+        .icon-success::after { content: "✓"; color: white; font-size: 28px; font-weight: bold; }
+        .title { font-size: 28px; color: #1f2937; margin: 20px 0 10px; font-weight: 600; text-align: center; }
+        .subtitle { color: #6b7280; font-size: 15px; margin: 0 0 30px; text-align: center; }
+        .content { padding: 0 40px 40px; }
+        .invoice-label { font-size: 18px; color: #1f2937; font-weight: 600; margin: 30px 0 20px; }
+        .info-label { color: #6b7280; font-size: 13px; margin-bottom: 5px; }
+        .info-value { color: #1f2937; font-size: 16px; font-weight: 600; margin-bottom: 20px; }
+        .payment-summary { background: #f9fafb; padding: 20px; border-radius: 6px; margin: 20px 0; }
+        .total-value { color: #10b981; font-size: 20px; font-weight: 700; }
+        .disclaimer { background: #f9fafb; padding: 15px; border-radius: 6px; margin: 20px 0; font-size: 11px; color: #6b7280; }
+        .footer { background: #f9fafb; padding: 30px; text-align: center; color: #6b7280; font-size: 14px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1 class="company-name">COMPANY</h1>
+        </div>
+        <div class="content">
+            <div class="icon-success"></div>
+            <h2 class="title">Thank you for your order</h2>
+            <p class="subtitle">We have received your payment and here is a summary for the same</p>
+            <div class="invoice-label">Invoice #334</div>
+            <div class="info-label">Customer:</div>
+            <div class="info-value">John doe (Johndoe@gamil.com)</div>
+            <div class="info-label">Payment method:</div>
+            <div class="info-value">Credit Card</div>
+            <div class="info-label">Date of payment:</div>
+            <div class="info-value">5th July 2022</div>
+            <div class="payment-summary">
+                <div class="total-value">$4000</div>
+            </div>
+            <div class="disclaimer">
+                <strong>Disclaimer:</strong> Attached is the invoice for the services provided by the outlet.
+            </div>
+        </div>
+        <div class="footer">We appreciate your business.</div>
+    </div>
+</body>
+</html>'></iframe>
+            </div>
+        </div>
+        
+        <!-- Template 3: WELCOME_EMAIL -->
+        <div class="template-card">
+            <div class="template-header">
+                <div class="template-title">3. Welcome Email</div>
+                <span class="template-trigger">WELCOME_EMAIL</span>
+            </div>
+            <div class="template-preview">
+                <iframe srcdoc='<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body { margin: 0; padding: 20px; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background-color: #f5f5f5; }
+        .container { max-width: 600px; margin: 0 auto; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+        .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 50px 40px; text-align: center; }
+        .company-name { font-size: 24px; letter-spacing: 6px; color: white; font-weight: 300; margin: 0 0 20px; }
+        .header-title { font-size: 36px; color: white; margin: 0; font-weight: 700; }
+        .content { padding: 40px; }
+        .greeting { font-size: 20px; color: #1f2937; margin: 0 0 20px; font-weight: 600; }
+        .message { color: #6b7280; font-size: 16px; line-height: 1.6; margin: 0 0 30px; }
+        .cta-button { display: inline-block; background: #667eea; color: white; padding: 14px 32px; text-decoration: none; border-radius: 6px; font-weight: 600; }
+        .footer { background: #f9fafb; padding: 30px; text-align: center; color: #6b7280; font-size: 14px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1 class="company-name">COMPANY</h1>
+            <h2 class="header-title">Welcome!</h2>
+        </div>
+        <div class="content">
+            <p class="greeting">Hello John,</p>
+            <p class="message">Thank you for joining our community! We are thrilled to have you on board.</p>
+            <center><a href="#" class="cta-button">Start Shopping</a></center>
+        </div>
+        <div class="footer">Questions? Contact us at support@company.com</div>
+    </div>
+</body>
+</html>'></iframe>
+            </div>
+        </div>
+        
+        <!-- Template 4: ORDER_SHIPPED -->
+        <div class="template-card">
+            <div class="template-header">
+                <div class="template-title">4. Order Shipped</div>
+                <span class="template-trigger">ORDER_SHIPPED</span>
+            </div>
+            <div class="template-preview">
+                <iframe srcdoc='<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body { margin: 0; padding: 20px; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background-color: #f5f5f5; }
+        .container { max-width: 600px; margin: 0 auto; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+        .header { background: white; padding: 30px; text-align: center; border-bottom: 1px solid #e0e0e0; }
+        .company-name { font-size: 18px; letter-spacing: 4px; color: #333; font-weight: 300; margin: 0; }
+        .icon-shipping { width: 64px; height: 64px; background: #3b82f6; border-radius: 50%; margin: 30px auto 20px; display: flex; align-items: center; justify-content: center; font-size: 32px; }
+        .title { font-size: 28px; color: #1f2937; margin: 20px 0 10px; font-weight: 600; text-align: center; }
+        .subtitle { color: #6b7280; font-size: 15px; margin: 0 0 30px; text-align: center; }
+        .content { padding: 0 40px 40px; }
+        .tracking-box { background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); padding: 25px; border-radius: 8px; margin: 30px 0; text-align: center; color: white; }
+        .tracking-number { font-size: 20px; font-weight: 700; letter-spacing: 2px; }
+        .cta-button { display: inline-block; background: #3b82f6; color: white; padding: 14px 32px; text-decoration: none; border-radius: 6px; font-weight: 600; }
+        .footer { background: #f9fafb; padding: 30px; text-align: center; color: #6b7280; font-size: 14px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1 class="company-name">COMPANY</h1>
+        </div>
+        <div class="content">
+            <div class="icon-shipping">📦</div>
+            <h2 class="title">Your order is on its way!</h2>
+            <p class="subtitle">Your package has been shipped</p>
+            <div class="tracking-box">
+                <div class="tracking-number">1Z999AA10123456784</div>
+            </div>
+            <center><a href="#" class="cta-button">Track Your Package</a></center>
+        </div>
+        <div class="footer">Questions? Contact us at support@company.com</div>
+    </div>
+</body>
+</html>'></iframe>
+            </div>
+        </div>
+        
+        <!-- Template 5: ORDER_DELIVERED -->
+        <div class="template-card">
+            <div class="template-header">
+                <div class="template-title">5. Order Delivered</div>
+                <span class="template-trigger">ORDER_DELIVERED</span>
+            </div>
+            <div class="template-preview">
+                <iframe srcdoc='<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body { margin: 0; padding: 20px; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background-color: #f5f5f5; }
+        .container { max-width: 600px; margin: 0 auto; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+        .header { background: white; padding: 30px; text-align: center; border-bottom: 1px solid #e0e0e0; }
+        .company-name { font-size: 18px; letter-spacing: 4px; color: #333; font-weight: 300; margin: 0; }
+        .icon-delivered { width: 64px; height: 64px; background: #10b981; border-radius: 50%; margin: 30px auto 20px; display: flex; align-items: center; justify-content: center; font-size: 32px; }
+        .title { font-size: 28px; color: #1f2937; margin: 20px 0 10px; font-weight: 600; text-align: center; }
+        .subtitle { color: #6b7280; font-size: 15px; margin: 0 0 30px; text-align: center; }
+        .content { padding: 0 40px 40px; }
+        .feedback-box { background: #f9fafb; padding: 25px; border-radius: 8px; margin: 30px 0; text-align: center; }
+        .star-rating { font-size: 32px; margin: 15px 0; }
+        .cta-button { display: inline-block; background: #10b981; color: white; padding: 14px 32px; text-decoration: none; border-radius: 6px; font-weight: 600; }
+        .footer { background: #f9fafb; padding: 30px; text-align: center; color: #6b7280; font-size: 14px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1 class="company-name">COMPANY</h1>
+        </div>
+        <div class="content">
+            <div class="icon-delivered">🎉</div>
+            <h2 class="title">Your order has been delivered!</h2>
+            <p class="subtitle">We hope you enjoy your purchase</p>
+            <div class="feedback-box">
+                <div class="star-rating">⭐⭐⭐⭐⭐</div>
+                <a href="#" class="cta-button">Leave a Review</a>
+            </div>
+        </div>
+        <div class="footer">Thank you for shopping with us!</div>
+    </div>
+</body>
+</html>'></iframe>
+            </div>
+        </div>
+        
+        <!-- Template 6: ORDER_CANCELED -->
+        <div class="template-card">
+            <div class="template-header">
+                <div class="template-title">6. Order Canceled</div>
+                <span class="template-trigger">ORDER_CANCELED</span>
+            </div>
+            <div class="template-preview">
+                <iframe srcdoc='<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body { margin: 0; padding: 20px; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background-color: #f5f5f5; }
+        .container { max-width: 600px; margin: 0 auto; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+        .header { background: white; padding: 30px; text-align: center; border-bottom: 1px solid #e0e0e0; }
+        .company-name { font-size: 18px; letter-spacing: 4px; color: #333; font-weight: 300; margin: 0; }
+        .icon-canceled { width: 64px; height: 64px; background: #ef4444; border-radius: 50%; margin: 30px auto 20px; display: flex; align-items: center; justify-content: center; }
+        .icon-canceled::after { content: "✕"; color: white; font-size: 32px; font-weight: bold; }
+        .title { font-size: 28px; color: #1f2937; margin: 20px 0 10px; font-weight: 600; text-align: center; }
+        .subtitle { color: #6b7280; font-size: 15px; margin: 0 0 30px; text-align: center; }
+        .content { padding: 0 40px 40px; }
+        .refund-box { background: #f0fdf4; border: 2px solid #86efac; padding: 20px; border-radius: 8px; margin: 30px 0; }
+        .cta-button { display: inline-block; background: #3b82f6; color: white; padding: 14px 32px; text-decoration: none; border-radius: 6px; font-weight: 600; }
+        .footer { background: #f9fafb; padding: 30px; text-align: center; color: #6b7280; font-size: 14px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1 class="company-name">COMPANY</h1>
+        </div>
+        <div class="content">
+            <div class="icon-canceled"></div>
+            <h2 class="title">Order Canceled</h2>
+            <p class="subtitle">Your order has been successfully canceled</p>
+            <div class="refund-box">
+                <strong>💰 Refund Information</strong><br>
+                A full refund of $4000 will be processed within 5-7 business days.
+            </div>
+            <center><a href="#" class="cta-button">Continue Shopping</a></center>
+        </div>
+        <div class="footer">Questions? Contact us at support@company.com</div>
+    </div>
+</body>
+</html>'></iframe>
+            </div>
+        </div>
+    </div>
+    
+    <div class="nav-buttons">
+        <a href="#" class="nav-button" onclick="alert('Run EMAIL_TEMPLATES_PROFESSIONAL.sql in Supabase to install these templates'); return false;">📥 Install Templates</a>
+        <a href="EMAIL_TEMPLATES_GUIDE.md" class="nav-button">📖 View Documentation</a>
+    </div>
+</body>
+</html>
