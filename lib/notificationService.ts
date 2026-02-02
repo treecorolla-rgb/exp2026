@@ -361,11 +361,14 @@ const sendAdminNotification = async (
     // 1. Send Telegram Notification
     console.log('[ADMIN NOTIFICATION] Checking Telegram conditions:', { receiveTelegram, hasToken: !!telegramBotToken, hasChatId: !!telegramChatId });
     if (receiveTelegram && telegramBotToken && telegramChatId && telegramBotToken !== 'YOUR_BOT_TOKEN_HERE') {
+      console.log(`[ADMIN NOTIFICATION] Attempting to send Telegram for order: ${order.id}`);
+      console.log(`[ADMIN NOTIFICATION] Current time: ${new Date().toISOString()}`);
+
       // Check for duplicates
       if (isDuplicate(order.id, 'telegram')) {
-        console.log('[ADMIN NOTIFICATION] Telegram notification already sent for this order');
+        console.log(`[ADMIN NOTIFICATION] ⛔ BLOCKED - Telegram notification already sent for ${order.id}`);
       } else {
-        console.log('[ADMIN NOTIFICATION] Sending Telegram notification...');
+        console.log(`[ADMIN NOTIFICATION] ✅ SENDING - First Telegram notification for ${order.id}`);
         const telegramMessage = `
 🛒 *NEW ORDER RECEIVED!*
 ------------------------
