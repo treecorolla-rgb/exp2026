@@ -150,6 +150,7 @@ export interface AdminProfile {
   telegramChatId: string;
   receiveEmailNotifications: boolean;
   receiveTelegramNotifications: boolean;
+  resendApiKey?: string; // For direct email sending via Resend API
   // Contact Numbers Configuration
   usPhoneNumber: string;
   ukPhoneNumber: string;

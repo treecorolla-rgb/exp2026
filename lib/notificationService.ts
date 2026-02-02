@@ -23,6 +23,22 @@ export const generateTrackingUrl = (carrier: string, trackingNumber: string): st
   return pattern.replace('{TRACKING_NUMBER}', trackingNumber);
 };
 
+// --- DEDUPLICATION MECHANISM ---
+// Track recently sent notifications to prevent duplicates
+const recentNotifications = new Set<string>();
+
+const isDuplicate = (orderId: string, type: 'telegram' | 'email'): boolean => {
+  const key = `${orderId}-${type}`;
+  if (recentNotifications.has(key)) {
+    console.log(`[DEDUP] Skipping duplicate ${type} notification for ${orderId}`);
+    return true;
+  }
+  recentNotifications.add(key);
+  // Clear after 5 seconds
+  setTimeout(() => recentNotifications.delete(key), 5000);
+  return false;
+};
+
 // --- REAL EMAIL TRIGGER COMPATIBILITY NOTE ---
 // Since we have a Database Trigger (on_order_email_v2) that automatically 
 // inserts into 'email_logs' on ORDER INSERT/UPDATE, we should NOT 
@@ -83,6 +99,74 @@ const triggerRealEmail = async (
   }
 };
 
+// --- ADMIN EMAIL FUNCTION (Database Queue - Edge Function will process) ---
+const triggerAdminEmail = async (
+  recipientEmail: string,
+  recipientName: string,
+  eventTrigger: string,
+  contextData: any
+): Promise<boolean> => {
+  // Queue email in database - Edge Function will send it
+  // We can't call Resend API directly from browser due to CORS
+  console.log(`[ADMIN EMAIL] Queuing admin email for ${recipientEmail} (Event: ${eventTrigger})`);
+
+  if (!supabase) {
+    console.error('[ADMIN EMAIL] Supabase client not initialized.');
+    return false;
+  }
+
+  try {
+    // 1. Fetch Template ID for ORDER_CREATED
+    const { data: template, error: templateError } = await supabase
+      .from('email_templates')
+      .select('id')
+      .eq('event_trigger', eventTrigger)
+      .single();
+
+    if (templateError || !template) {
+      console.warn(`[ADMIN EMAIL] Template not found for trigger '${eventTrigger}'. Creating admin notification anyway.`);
+
+      // If no template exists, insert directly into email_logs without template_id
+      // The Edge Function should handle this gracefully
+      const { error: insertError } = await supabase.from('email_logs').insert({
+        status: 'PENDING',
+        recipient_email: recipientEmail,
+        recipient_name: recipientName,
+        template_id: null, // No template - Edge Function will use default
+        context_data: contextData
+      });
+
+      if (insertError) {
+        console.error('[ADMIN EMAIL] Failed to queue email:', insertError);
+        return false;
+      }
+
+      console.log('[ADMIN EMAIL] Email queued successfully (no template)');
+      return true;
+    }
+
+    // 2. Insert into email_logs with template
+    const { error: insertError } = await supabase.from('email_logs').insert({
+      status: 'PENDING',
+      recipient_email: recipientEmail,
+      recipient_name: recipientName,
+      template_id: template.id,
+      context_data: contextData
+    });
+
+    if (insertError) {
+      console.error('[ADMIN EMAIL] Failed to queue email:', insertError);
+      return false;
+    }
+
+    console.log('[ADMIN EMAIL] Email queued successfully - Edge Function will process');
+    return true;
+  } catch (err) {
+    console.error('[ADMIN EMAIL] Unexpected error:', err);
+    return false;
+  }
+};
+
 // --- SIMULATED SMS/WHATSAPP (Keep simulated for now unless Gateway is added) ---
 const sendSMS = async (to: string, message: string): Promise<boolean> => {
   console.log(`[SMS SERVICE] Sending to ${to}: ${message}`);
@@ -118,6 +202,8 @@ export const handleOrderNotification = async (
   newStatus: OrderStatus,
   logCallback: (log: NotificationLog) => void
 ) => {
+  console.log('[NOTIFICATION] handleOrderNotification called for order:', order.id, 'status:', newStatus);
+
   const timestamp = new Date().toLocaleString();
   const email = order.details?.email || order.customerEmail || 'customer@example.com';
   const phone = order.details?.phone || order.customerPhone || '555-0000';
@@ -232,6 +318,8 @@ const sendAdminNotification = async (
 ) => {
   const timestamp = new Date().toLocaleString();
 
+  console.log('[ADMIN NOTIFICATION] Starting admin notification process...');
+
   // Fetch admin profile from Supabase
   if (!supabase) {
     console.warn('[ADMIN NOTIFICATION] Supabase not initialized');
@@ -239,6 +327,7 @@ const sendAdminNotification = async (
   }
 
   try {
+    console.log('[ADMIN NOTIFICATION] Fetching store_settings from Supabase...');
     const { data: settings, error } = await supabase
       .from('store_settings')
       .select('*')
@@ -249,6 +338,14 @@ const sendAdminNotification = async (
       console.warn('[ADMIN NOTIFICATION] Admin settings not found:', error);
       return;
     }
+
+    console.log('[ADMIN NOTIFICATION] Settings loaded:', {
+      email: settings.email,
+      hasToken: !!settings.telegram_bot_token,
+      hasChatId: !!settings.telegram_chat_id,
+      receiveEmail: settings.receive_email_notifications,
+      receiveTelegram: settings.receive_telegram_notifications
+    });
 
     const adminEmail = settings.email || settings.support_email;
     const telegramBotToken = settings.telegram_bot_token;
@@ -262,8 +359,14 @@ const sendAdminNotification = async (
     ).join('\n');
 
     // 1. Send Telegram Notification
+    console.log('[ADMIN NOTIFICATION] Checking Telegram conditions:', { receiveTelegram, hasToken: !!telegramBotToken, hasChatId: !!telegramChatId });
     if (receiveTelegram && telegramBotToken && telegramChatId && telegramBotToken !== 'YOUR_BOT_TOKEN_HERE') {
-      const telegramMessage = `
+      // Check for duplicates
+      if (isDuplicate(order.id, 'telegram')) {
+        console.log('[ADMIN NOTIFICATION] Telegram notification already sent for this order');
+      } else {
+        console.log('[ADMIN NOTIFICATION] Sending Telegram notification...');
+        const telegramMessage = `
 🛒 *NEW ORDER RECEIVED!*
 ------------------------
 *Order ID:* ${order.id}
@@ -287,42 +390,46 @@ ${itemsList}
 ------------------------
       `.trim();
 
-      try {
-        const response = await fetch(`https://api.telegram.org/bot${telegramBotToken}/sendMessage`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            chat_id: telegramChatId,
-            text: telegramMessage,
-            parse_mode: 'Markdown'
-          }),
-        });
+        try {
+          const response = await fetch(`https://api.telegram.org/bot${telegramBotToken}/sendMessage`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              chat_id: telegramChatId,
+              text: telegramMessage,
+              parse_mode: 'Markdown'
+            }),
+          });
 
-        const success = response.ok;
-        logCallback({
-          id: `log_${Date.now()}_admin_telegram`,
-          orderId: order.id,
-          channel: 'SMS', // Using SMS channel for Telegram
-          type: 'Confirmation',
-          recipient: `Admin (Telegram: ${telegramChatId})`,
-          status: success ? 'Sent' : 'Failed',
-          timestamp,
-          details: 'Admin Telegram notification'
-        });
+          const success = response.ok;
+          console.log('[ADMIN NOTIFICATION] Telegram response:', { success, status: response.status });
+          logCallback({
+            id: `log_${Date.now()}_admin_telegram`,
+            orderId: order.id,
+            channel: 'SMS', // Using SMS channel for Telegram
+            type: 'Confirmation',
+            recipient: `Admin (Telegram: ${telegramChatId})`,
+            status: success ? 'Sent' : 'Failed',
+            timestamp,
+            details: 'Admin Telegram notification'
+          });
 
-        console.log('[ADMIN NOTIFICATION] Telegram sent:', success);
-      } catch (err) {
-        console.error('[ADMIN NOTIFICATION] Telegram failed:', err);
-      }
-    }
+          console.log('[ADMIN NOTIFICATION] Telegram sent:', success);
+        } catch (err) {
+          console.error('[ADMIN NOTIFICATION] Telegram failed:', err);
+        }
+      } // Close else block
+    } // Close if (receiveTelegram)
 
     // 2. Send Email Notification to Admin
+    console.log('[ADMIN NOTIFICATION] Checking Email conditions:', { receiveEmail, hasEmail: !!adminEmail });
     if (receiveEmail && adminEmail) {
+      console.log('[ADMIN NOTIFICATION] Sending admin email notification...');
       // Create admin notification email template
-      const adminEmailSuccess = await triggerRealEmail(
+      const adminEmailSuccess = await triggerAdminEmail(
         adminEmail,
         'Admin',
-        'ORDER_CREATED', // Reuse ORDER_CREATED template or create ADMIN_ORDER_NOTIFICATION
+        'ADMIN_ORDER_NOTIFICATION', // Custom template for admin notifications
         {
           order_id: order.id,
           customer_name: order.customerName,

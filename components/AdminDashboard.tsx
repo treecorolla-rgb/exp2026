@@ -1931,6 +1931,21 @@ const ProfileManager = ({ profile, onSave, onShowToast }: any) => {
                                 </div>
                             </div>
                         )}
+                        {formData.receiveEmailNotifications && (
+                            <div className="pl-9 space-y-3 bg-slate-50 p-4 rounded border border-slate-100 mt-3">
+                                <div>
+                                    <label className="block text-xs font-bold text-slate-500 mb-1">Resend API Key</label>
+                                    <input
+                                        className="w-full border p-2 rounded font-mono text-xs"
+                                        type="password"
+                                        placeholder="re_xxxxxxxxxxxxx"
+                                        value={formData.resendApiKey || ''}
+                                        onChange={e => setFormData({ ...formData, resendApiKey: e.target.value })}
+                                    />
+                                    <p className="text-xs text-slate-500 mt-1">Get your API key from <a href="https://resend.com/api-keys" target="_blank" className="text-blue-600 hover:underline">resend.com/api-keys</a></p>
+                                </div>
+                            </div>
+                        )}
                     </div>
                 </div>
 

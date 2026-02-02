@@ -193,6 +193,7 @@ export const StoreProvider: React.FC<{ children: ReactNode }> = ({ children }) =
             telegramChatId: s.telegram_chat_id || '',
             receiveEmailNotifications: s.receive_email_notifications,
             receiveTelegramNotifications: s.receive_telegram_notifications,
+            resendApiKey: s.resend_api_key || '',
             usPhoneNumber: s.us_phone_number,
             ukPhoneNumber: s.uk_phone_number,
             whatsappNumber: s.whatsapp_number,
@@ -695,8 +696,8 @@ export const StoreProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       }
     }
 
-    // Trigger Notification for New Order
-    handleOrderNotification(newOrder, 'Pending', (log) => setNotificationLogs(prev => [log, ...prev]));
+    // Notification will be triggered by realtime subscription
+    // Removed duplicate call to prevent multiple notifications
 
     if (!isCustomerAuthenticated && financialData?.createAccount) {
       setCustomerUser(details);
@@ -1164,6 +1165,7 @@ export const StoreProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         support_email: profile.supportEmail,
         telegram_bot_token: profile.telegramBotToken,
         telegram_chat_id: profile.telegramChatId,
+        resend_api_key: profile.resendApiKey,
         receive_email_notifications: profile.receiveEmailNotifications,
         receive_telegram_notifications: profile.receiveTelegramNotifications,
         us_phone_number: profile.usPhoneNumber,
