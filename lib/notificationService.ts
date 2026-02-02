@@ -125,6 +125,7 @@ export const handleOrderNotification = async (
 
   // 1. PENDING (New Order Confirmation)
   if (newStatus === 'Pending') {
+    // Send customer confirmation email
     const success = await triggerRealEmail(
       email,
       name,
@@ -148,6 +149,9 @@ export const handleOrderNotification = async (
       timestamp,
       details: `Queued via Supabase (Template: ORDER_CREATED)`
     });
+
+    // 2. SEND ADMIN NOTIFICATION (NEW!)
+    await sendAdminNotification(order, logCallback);
   }
 
   // 2. SHIPPED -> SMS & Email with Tracking
@@ -218,5 +222,144 @@ export const handleOrderNotification = async (
       timestamp,
       details: `Template: delivery_confirmation_v1`
     });
+  }
+};
+
+// --- ADMIN NOTIFICATION FUNCTION (NEW!) ---
+const sendAdminNotification = async (
+  order: Order,
+  logCallback: (log: NotificationLog) => void
+) => {
+  const timestamp = new Date().toLocaleString();
+
+  // Fetch admin profile from Supabase
+  if (!supabase) {
+    console.warn('[ADMIN NOTIFICATION] Supabase not initialized');
+    return;
+  }
+
+  try {
+    const { data: settings, error } = await supabase
+      .from('settings')
+      .select('*')
+      .limit(1)
+      .single();
+
+    if (error || !settings) {
+      console.warn('[ADMIN NOTIFICATION] Admin settings not found');
+      return;
+    }
+
+    const adminEmail = settings.email || settings.support_email;
+    const telegramBotToken = settings.telegram_bot_token;
+    const telegramChatId = settings.telegram_chat_id;
+    const receiveEmail = settings.receive_email_notifications;
+    const receiveTelegram = settings.receive_telegram_notifications;
+
+    // Prepare order details
+    const itemsList = (order.items || []).map(i =>
+      `- ${i.name} (${i.packageName || 'Std'}) x ${i.quantity}: $${(i.price * i.quantity).toFixed(2)}`
+    ).join('\n');
+
+    // 1. Send Telegram Notification
+    if (receiveTelegram && telegramBotToken && telegramChatId && telegramBotToken !== 'YOUR_BOT_TOKEN_HERE') {
+      const telegramMessage = `
+🛒 *NEW ORDER RECEIVED!*
+------------------------
+*Order ID:* ${order.id}
+*Customer:* ${order.customerName}
+*Phone:* ${order.customerPhone || order.details?.phone || 'N/A'}
+*Email:* ${order.customerEmail || order.details?.email || 'N/A'}
+
+*Shipping Address:*
+${order.shipAddress || 'N/A'}
+${order.shipCity}, ${order.shipState} ${order.shipZip}
+${order.shipCountry}
+
+*Order Details:*
+${itemsList}
+
+*Payment Method:* ${order.paymentMethod || 'N/A'}
+*Subtotal:* $${order.totalAmount?.toFixed(2) || '0.00'}
+*Shipping:* $${order.shippingCost?.toFixed(2) || '0.00'}
+*Discount:* -$${order.discount?.toFixed(2) || '0.00'}
+*TOTAL:* $${order.grandTotal?.toFixed(2) || '0.00'}
+------------------------
+      `.trim();
+
+      try {
+        const response = await fetch(`https://api.telegram.org/bot${telegramBotToken}/sendMessage`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            chat_id: telegramChatId,
+            text: telegramMessage,
+            parse_mode: 'Markdown'
+          }),
+        });
+
+        const success = response.ok;
+        logCallback({
+          id: `log_${Date.now()}_admin_telegram`,
+          orderId: order.id,
+          channel: 'SMS', // Using SMS channel for Telegram
+          type: 'Confirmation',
+          recipient: `Admin (Telegram: ${telegramChatId})`,
+          status: success ? 'Sent' : 'Failed',
+          timestamp,
+          details: 'Admin Telegram notification'
+        });
+
+        console.log('[ADMIN NOTIFICATION] Telegram sent:', success);
+      } catch (err) {
+        console.error('[ADMIN NOTIFICATION] Telegram failed:', err);
+      }
+    }
+
+    // 2. Send Email Notification to Admin
+    if (receiveEmail && adminEmail) {
+      // Create admin notification email template
+      const adminEmailSuccess = await triggerRealEmail(
+        adminEmail,
+        'Admin',
+        'ORDER_CREATED', // Reuse ORDER_CREATED template or create ADMIN_ORDER_NOTIFICATION
+        {
+          order_id: order.id,
+          customer_name: order.customerName,
+          customer_email: order.customerEmail || order.details?.email || 'N/A',
+          customer_phone: order.customerPhone || order.details?.phone || 'N/A',
+          total_amount: order.grandTotal?.toFixed(2),
+          order_date: order.orderDate || new Date().toLocaleString(),
+          shipping_address: `${order.shipAddress}, ${order.shipCity}, ${order.shipState} ${order.shipZip}, ${order.shipCountry}`,
+          items_html: (order.items || []).map(i =>
+            `<tr style="border-bottom: 1px solid #e2e8f0;">
+              <td style="padding: 8px;">${i.name} (${i.packageName || 'Std'})</td>
+              <td align="center" style="padding: 8px;">${i.quantity}</td>
+              <td align="right" style="padding: 8px;">$${(i.price * i.quantity).toFixed(2)}</td>
+            </tr>`
+          ).join(''),
+          payment_method: order.paymentMethod || 'N/A',
+          subtotal: order.totalAmount?.toFixed(2) || '0.00',
+          shipping_cost: order.shippingCost?.toFixed(2) || '0.00',
+          discount: order.discount?.toFixed(2) || '0.00'
+        }
+      );
+
+      logCallback({
+        id: `log_${Date.now()}_admin_email`,
+        orderId: order.id,
+        channel: 'Email',
+        type: 'Confirmation',
+        recipient: `Admin (${adminEmail})`,
+        status: adminEmailSuccess ? 'Sent' : 'Failed',
+        timestamp,
+        details: 'Admin email notification'
+      });
+
+      console.log('[ADMIN NOTIFICATION] Email queued:', adminEmailSuccess);
+    }
+
+  } catch (err) {
+    console.error('[ADMIN NOTIFICATION] Error:', err);
   }
 };
