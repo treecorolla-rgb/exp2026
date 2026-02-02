@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Order Shipped</title>
+</head>
+
+<body
+    style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #f5f5f5;">
+    <div
+        style="max-width: 600px; margin: 40px auto; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+        <!-- Header -->
+        <div style="background: white; padding: 30px 40px; text-align: center; border-bottom: 1px solid #e0e0e0;">
+            <h1 style="font-size: 18px; letter-spacing: 4px; color: #333; font-weight: 300; margin: 0;">COMPANY</h1>
+        </div>
+
+        <!-- Content -->
+        <div style="padding: 0 40px 40px;">
+            <!-- Shipping Icon -->
+            <div
+                style="width: 64px; height: 64px; background: #3b82f6; border-radius: 50%; margin: 30px auto 20px; display: flex; align-items: center; justify-content: center; font-size: 32px;">
+                📦</div>
+
+            <h2 style="font-size: 28px; color: #1f2937; margin: 20px 0 10px; font-weight: 600; text-align: center;">Your
+                order is on its way!</h2>
+            <p style="color: #6b7280; font-size: 15px; margin: 0 0 30px; text-align: center;">Your package has been
+                shipped and will arrive soon</p>
+
+            <!-- Tracking Box -->
+            <div
+                style="background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); padding: 25px; border-radius: 8px; margin: 30px 0; text-align: center;">
+                <div style="color: rgba(255,255,255,0.9); font-size: 13px; margin-bottom: 8px;">Tracking Number</div>
+                <p style="color: white; font-size: 20px; font-weight: 700; letter-spacing: 2px; margin: 0;">
+                    {{tracking_number}}</p>
+            </div>
+
+            <!-- Order Info -->
+            <div style="margin: 30px 0;">
+                <div style="color: #6b7280; font-size: 13px; margin-bottom: 5px;">Order Number:</div>
+                <div style="color: #1f2937; font-size: 16px; font-weight: 600; margin-bottom: 20px;">{{order_id}}</div>
+
+                <div style="color: #6b7280; font-size: 13px; margin-bottom: 5px;">Carrier:</div>
+                <div style="color: #1f2937; font-size: 16px; font-weight: 600; margin-bottom: 20px;">{{carrier}}</div>
+
+                <div style="color: #6b7280; font-size: 13px; margin-bottom: 5px;">Estimated Delivery:</div>
+                <div style="color: #1f2937; font-size: 16px; font-weight: 600; margin-bottom: 20px;">
+                    {{estimated_delivery}}</div>
+            </div>
+
+            <!-- Track Button -->
+            <div style="text-align: center; margin: 30px 0;">
+                <a href="{{tracking_url}}"
+                    style="display: inline-block; background: #3b82f6; color: white; padding: 14px 32px; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 16px;">Track
+                    Your Package</a>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div style="background: #f9fafb; padding: 30px 40px; text-align: center; color: #6b7280; font-size: 14px;">
+            Questions about your delivery? Contact us at support@company.com
+        </div>
+    </div>
+</body>
+
+</html>

@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Order Confirmation</title>
+</head>
+
+<body
+    style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #f5f5f5;">
+    <div
+        style="max-width: 600px; margin: 40px auto; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+        <!-- Header -->
+        <div style="background: white; padding: 30px 40px; text-align: center; border-bottom: 1px solid #e0e0e0;">
+            <h1 style="font-size: 18px; letter-spacing: 4px; color: #333; font-weight: 300; margin: 0;">COMPANY</h1>
+        </div>
+
+        <!-- Content -->
+        <div style="padding: 0 40px 40px;">
+            <!-- Success Icon -->
+            <div
+                style="width: 48px; height: 48px; background: #10b981; border-radius: 50%; margin: 30px auto 20px; display: flex; align-items: center; justify-content: center; color: white; font-size: 28px; font-weight: bold;">
+                ✓</div>
+
+            <h2 style="font-size: 28px; color: #1f2937; margin: 20px 0 10px; font-weight: 600; text-align: center;">
+                Thank you for your order</h2>
+            <p style="color: #6b7280; font-size: 15px; margin: 0 0 30px; text-align: center;">We've received your order
+                and will process it shortly</p>
+
+            <!-- Order Info -->
+            <div style="margin: 30px 0;">
+                <div style="color: #6b7280; font-size: 13px; margin-bottom: 5px;">Order Number:</div>
+                <div style="color: #1f2937; font-size: 16px; font-weight: 600; margin-bottom: 20px;">{{order_id}}</div>
+
+                <div style="color: #6b7280; font-size: 13px; margin-bottom: 5px;">Customer:</div>
+                <div style="color: #1f2937; font-size: 16px; font-weight: 600; margin-bottom: 20px;">{{customer_name}}
+                </div>
+
+                <div style="color: #6b7280; font-size: 13px; margin-bottom: 5px;">Order Date:</div>
+                <div style="color: #1f2937; font-size: 16px; font-weight: 600; margin-bottom: 20px;">{{order_date}}
+                </div>
+            </div>
+
+            <div style="height: 1px; background: #e5e7eb; margin: 30px 0;"></div>
+
+            <!-- Order Items -->
+            <div style="background: #f9fafb; padding: 20px; border-radius: 6px; margin: 20px 0;">
+                <h3 style="margin: 0 0 15px; color: #1f2937; font-size: 16px;">Order Summary</h3>
+                <table width="100%" style="border-collapse: collapse;">
+                    <tr style="border-bottom: 1px solid #e2e8f0;">
+                        <th align="left" style="padding: 8px; color: #6b7280; font-size: 13px; font-weight: 600;">
+                            Product</th>
+                        <th align="center" style="padding: 8px; color: #6b7280; font-size: 13px; font-weight: 600;">Qty
+                        </th>
+                        <th align="right" style="padding: 8px; color: #6b7280; font-size: 13px; font-weight: 600;">Price
+                        </th>
+                    </tr>
+                    {{items_html}}
+                </table>
+                <div
+                    style="display: flex; justify-content: space-between; margin-top: 15px; padding-top: 15px; border-top: 2px solid #e5e7eb;">
+                    <span style="color: #1f2937; font-size: 16px; font-weight: 600;">Total amount</span>
+                    <span style="color: #10b981; font-size: 20px; font-weight: 700;">${{total_amount}}</span>
+                </div>
+            </div>
+
+            <!-- Shipping Address -->
+            <div style="margin: 20px 0;">
+                <div style="color: #6b7280; font-size: 13px; margin-bottom: 5px;">Shipping To:</div>
+                <div style="color: #1f2937; font-size: 14px; line-height: 1.6;">
+                    {{shipping_address}}
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div style="background: #f9fafb; padding: 30px 40px; text-align: center; color: #6b7280; font-size: 14px;">
+            We appreciate your business.
+        </div>
+    </div>
+</body>
+
+</html>
